@@ -1,14 +1,10 @@
-import './assets/global.css'
+import ReactDOM from "react-dom/client";
+import "dockview/dist/styles/dockview.css";
+import { StrictMode } from "react";
+import { App } from "@renderer/App";
 
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import { App } from './App'
-import { initializeMonaco } from '@renderer/components/monaco-editor'
-
-initializeMonaco()
-
-ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
-  <React.StrictMode>
+ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
+  <StrictMode>
     <App />
-  </React.StrictMode>
-)
+  </StrictMode>,
+);
