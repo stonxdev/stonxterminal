@@ -43,6 +43,7 @@
     "monaco-editor": "^0.52.2",
     "npm": "^11.3.0",
     "openai": "^4.93.0",
+    "pixi.js": "^8.11.0",
     "postcss": "^8.5.3",
     "react-monaco-editor": "^0.58.0",
     "tailwindcss": "^4.1.3",
