@@ -1,5 +1,3 @@
-import PixiSquare from "@renderer/components/PixiExample";
-
 export interface DockProps {
   leftPanel?: React.ReactNode;
   centerPanel?: React.ReactNode;
