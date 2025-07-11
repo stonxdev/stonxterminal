@@ -8,6 +8,7 @@ export const LeftPanel: React.FC = () => {
         height: "100%",
         padding: "16px",
         backgroundColor: "#f3f4f6",
+        boxSizing: "border-box",
       }}
     >
       <h3 style={{ margin: "0 0 16px 0", fontSize: "18px", fontWeight: "600" }}>
@@ -33,6 +34,7 @@ export const CenterPanel: React.FC = () => {
         width: "100%",
         height: "100%",
         padding: "16px",
+        boxSizing: "border-box",
         backgroundColor: "#ffffff",
       }}
     >
@@ -89,6 +91,7 @@ export const RightPanel: React.FC = () => {
         height: "100%",
         padding: "16px",
         backgroundColor: "#f3f4f6",
+        boxSizing: "border-box",
       }}
     >
       <h3 style={{ margin: "0 0 16px 0", fontSize: "18px", fontWeight: "600" }}>
