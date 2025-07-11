@@ -28,6 +28,15 @@ export const DockSystem: React.FC<DockProps> = ({
   });
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const startDimensionsRef = useRef<DockDimensions | null>(null);
+
+  const handleResizeStart = useCallback(() => {
+    startDimensionsRef.current = dimensions;
+  }, [dimensions]);
+
+  const handleResizeEnd = useCallback(() => {
+    startDimensionsRef.current = null;
+  }, []);
 
   const updateDimensions = useCallback(
     (newDimensions: Partial<DockDimensions>) => {
@@ -42,14 +51,12 @@ export const DockSystem: React.FC<DockProps> = ({
 
   const handleLeftResize = useCallback(
     (deltaX: number) => {
-      const container = containerRef.current;
-      if (!container) return;
-
+      if (!startDimensionsRef.current) return;
+      const startWidth = startDimensionsRef.current.leftPaneWidth;
       const newWidth = Math.max(
         dimensions.minLeftWidth,
-        Math.min(dimensions.maxLeftWidth, dimensions.leftPaneWidth + deltaX),
+        Math.min(dimensions.maxLeftWidth, startWidth + deltaX),
       );
-
       updateDimensions({ leftPaneWidth: newWidth });
     },
     [dimensions, updateDimensions],
@@ -57,14 +64,12 @@ export const DockSystem: React.FC<DockProps> = ({
 
   const handleRightResize = useCallback(
     (deltaX: number) => {
-      const container = containerRef.current;
-      if (!container) return;
-
+      if (!startDimensionsRef.current) return;
+      const startWidth = startDimensionsRef.current.rightPaneWidth;
       const newWidth = Math.max(
         dimensions.minRightWidth,
-        Math.min(dimensions.maxRightWidth, dimensions.rightPaneWidth - deltaX),
+        Math.min(dimensions.maxRightWidth, startWidth - deltaX),
       );
-
       updateDimensions({ rightPaneWidth: newWidth });
     },
     [dimensions, updateDimensions],
@@ -72,17 +77,12 @@ export const DockSystem: React.FC<DockProps> = ({
 
   const handleBottomResize = useCallback(
     (deltaY: number) => {
-      const container = containerRef.current;
-      if (!container) return;
-
+      if (!startDimensionsRef.current) return;
+      const startHeight = startDimensionsRef.current.bottomPaneHeight;
       const newHeight = Math.max(
         dimensions.minBottomHeight,
-        Math.min(
-          dimensions.maxBottomHeight,
-          dimensions.bottomPaneHeight - deltaY,
-        ),
+        Math.min(dimensions.maxBottomHeight, startHeight - deltaY),
       );
-
       updateDimensions({ bottomPaneHeight: newHeight });
     },
     [dimensions, updateDimensions],
@@ -115,6 +115,8 @@ export const DockSystem: React.FC<DockProps> = ({
           <ResizeHandle
             direction="vertical"
             onResize={handleLeftResize}
+            onResizeStart={handleResizeStart}
+            onResizeEnd={handleResizeEnd}
             style={{
               width: "4px",
               backgroundColor: "#d1d5db",
@@ -152,6 +154,8 @@ export const DockSystem: React.FC<DockProps> = ({
                 <ResizeHandle
                   direction="horizontal"
                   onResize={handleBottomResize}
+                  onResizeStart={handleResizeStart}
+                  onResizeEnd={handleResizeEnd}
                   style={{
                     height: "4px",
                     backgroundColor: "#d1d5db",
@@ -178,6 +182,8 @@ export const DockSystem: React.FC<DockProps> = ({
               <ResizeHandle
                 direction="vertical"
                 onResize={handleRightResize}
+                onResizeStart={handleResizeStart}
+                onResizeEnd={handleResizeEnd}
                 style={{
                   width: "4px",
                   backgroundColor: "#d1d5db",

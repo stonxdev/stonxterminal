@@ -3,6 +3,8 @@ import React, { useRef, useCallback } from "react";
 interface ResizeHandleProps {
   direction: "horizontal" | "vertical";
   onResize: (delta: number) => void;
+  onResizeStart?: () => void;
+  onResizeEnd?: () => void;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -10,6 +12,8 @@ interface ResizeHandleProps {
 export const ResizeHandle: React.FC<ResizeHandleProps> = ({
   direction,
   onResize,
+  onResizeStart,
+  onResizeEnd,
   className = "",
   style = {},
 }) => {
@@ -20,6 +24,7 @@ export const ResizeHandle: React.FC<ResizeHandleProps> = ({
     (event: React.MouseEvent) => {
       event.preventDefault();
       startPositionRef.current = { x: event.clientX, y: event.clientY };
+      onResizeStart?.();
 
       const handleMouseMove = (moveEvent: MouseEvent): void => {
         if (!startPositionRef.current) return;
@@ -30,22 +35,19 @@ export const ResizeHandle: React.FC<ResizeHandleProps> = ({
             : moveEvent.clientY - startPositionRef.current.y;
 
         onResize(delta);
-        startPositionRef.current = {
-          x: moveEvent.clientX,
-          y: moveEvent.clientY,
-        };
       };
 
       const handleMouseUp = (): void => {
         startPositionRef.current = null;
         document.removeEventListener("mousemove", handleMouseMove);
         document.removeEventListener("mouseup", handleMouseUp);
+        onResizeEnd?.();
       };
 
       document.addEventListener("mousemove", handleMouseMove);
       document.addEventListener("mouseup", handleMouseUp);
     },
-    [direction, onResize],
+    [direction, onResize, onResizeStart, onResizeEnd],
   );
 
   return (
