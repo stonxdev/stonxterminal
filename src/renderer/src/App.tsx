@@ -1,20 +1,24 @@
-// import { useDockableLocalStorage } from "@renderer/components/dockable";
 import "./App.css";
+import { DockSystem } from "./components/dock";
+import {
+  LeftPanel,
+  CenterPanel,
+  BottomPanel,
+  RightPanel,
+} from "./components/panels/DemoPanels";
 
 export const App: React.FC = () => {
-  // const { layout, setLayout } = useDockableLocalStorage(2);
-
   return (
     <div style={{ width: "100vw", height: "100vh" }}>
-      Hello
-      {/* <Dockable.Root layout={layout} onChange={setLayout}>
-        <Dockable.Tab id={"1"} name={"View 1"}>
-          {"testing content"}
-        </Dockable.Tab>
-        <Dockable.Tab id={"2"} name={"View 2"}>
-          {"testing content"}
-        </Dockable.Tab>
-      </Dockable.Root> */}
+      <DockSystem
+        leftPanel={<LeftPanel />}
+        centerPanel={<CenterPanel />}
+        bottomPanel={<BottomPanel />}
+        rightPanel={<RightPanel />}
+        onDimensionsChange={(dimensions) => {
+          console.log("Dock dimensions changed:", dimensions);
+        }}
+      />
     </div>
   );
 };
