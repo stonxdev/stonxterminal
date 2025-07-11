@@ -1,4 +1,4 @@
-import React, { useRef, useCallback } from "react";
+import React, { useRef, useCallback, useState } from "react";
 
 interface ResizeHandleProps {
   direction: "horizontal" | "vertical";
@@ -19,6 +19,7 @@ export const ResizeHandle: React.FC<ResizeHandleProps> = ({
 }) => {
   const elementRef = useRef<HTMLDivElement>(null);
   const startPositionRef = useRef<{ x: number; y: number } | null>(null);
+  const [isHovering, setIsHovering] = useState(false);
 
   const handleMouseDown = useCallback(
     (event: React.MouseEvent) => {
@@ -50,16 +51,42 @@ export const ResizeHandle: React.FC<ResizeHandleProps> = ({
     [direction, onResize, onResizeStart, onResizeEnd],
   );
 
+  const newStyle: React.CSSProperties = {
+    ...style,
+    userSelect: "none",
+    transition: "background-color 0.15s ease",
+    backgroundColor: isHovering
+      ? style.backgroundColor || "#d1d5db"
+      : "transparent",
+    position: "relative",
+    zIndex: 1,
+    boxSizing: "border-box",
+  };
+
+  const interactionPadding = "3px";
+
+  if (direction === "vertical") {
+    const width = style.width || "0px";
+    newStyle.paddingLeft = interactionPadding;
+    newStyle.paddingRight = interactionPadding;
+    newStyle.marginRight = `-${width}`;
+    newStyle.transform = "translateX(-50%)";
+  } else {
+    const height = style.height || "0px";
+    newStyle.paddingTop = interactionPadding;
+    newStyle.paddingBottom = interactionPadding;
+    newStyle.marginBottom = `-${height}`;
+    newStyle.transform = "translateY(-50%)";
+  }
+
   return (
     <div
       ref={elementRef}
-      className={`select-none transition-colors duration-150 ${className}`}
-      style={{
-        userSelect: "none",
-        transition: "background-color 0.15s",
-        ...style,
-      }}
+      className={`select-none ${className}`}
+      style={newStyle}
       onMouseDown={handleMouseDown}
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
     />
   );
 };

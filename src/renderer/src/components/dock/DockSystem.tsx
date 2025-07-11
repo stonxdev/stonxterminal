@@ -119,7 +119,7 @@ export const DockSystem: React.FC<DockProps> = ({
             onResizeEnd={handleResizeEnd}
             style={{
               width: "4px",
-              backgroundColor: "#d1d5db",
+              backgroundColor: "#9CA3AF",
               cursor: "col-resize",
             }}
           />
@@ -158,7 +158,7 @@ export const DockSystem: React.FC<DockProps> = ({
                   onResizeEnd={handleResizeEnd}
                   style={{
                     height: "4px",
-                    backgroundColor: "#d1d5db",
+                    backgroundColor: "#9CA3AF",
                     cursor: "row-resize",
                   }}
                 />
@@ -186,7 +186,7 @@ export const DockSystem: React.FC<DockProps> = ({
                 onResizeEnd={handleResizeEnd}
                 style={{
                   width: "4px",
-                  backgroundColor: "#d1d5db",
+                  backgroundColor: "#9CA3AF",
                   cursor: "col-resize",
                 }}
               />
