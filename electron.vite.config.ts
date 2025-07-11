@@ -1,5 +1,6 @@
 import { resolve } from "path";
 import { defineConfig, externalizeDepsPlugin } from "electron-vite";
+import { viteStaticCopy } from "vite-plugin-static-copy";
 
 export default defineConfig({
   main: {
@@ -14,6 +15,15 @@ export default defineConfig({
         "@renderer": resolve("src/renderer/src"),
       },
     },
-    plugins: [],
+    plugins: [
+      viteStaticCopy({
+        targets: [
+          {
+            src: "src/renderer/src/fonts/Source_Code_Pro",
+            dest: "assets/fonts",
+          },
+        ],
+      }),
+    ],
   },
 });

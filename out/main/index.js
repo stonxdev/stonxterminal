@@ -16,8 +16,14 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, "../preload/index.js"),
       sandbox: false,
-      contextIsolation: true
+      contextIsolation: true,
       // Recommended for security
+      webSecurity: false,
+      // Allow unsafe-eval for Pixi.js in development
+      nodeIntegration: false,
+      // Keep this false for security
+      allowRunningInsecureContent: true
+      // Allow mixed content
     }
   });
   mainWindow.on("ready-to-show", () => {

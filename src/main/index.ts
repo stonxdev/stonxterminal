@@ -28,6 +28,9 @@ function createWindow(): void {
       preload: join(__dirname, "../preload/index.js"),
       sandbox: false,
       contextIsolation: true, // Recommended for security
+      webSecurity: false, // Allow unsafe-eval for Pixi.js in development
+      nodeIntegration: false, // Keep this false for security
+      allowRunningInsecureContent: true, // Allow mixed content
     },
   });
 
