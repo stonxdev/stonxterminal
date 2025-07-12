@@ -4,10 +4,7 @@ export const LeftPanel: React.FC = () => {
   return (
     <div
       style={{
-        width: "100%",
-        height: "100%",
         padding: "16px",
-        backgroundColor: "#f3f4f6",
         boxSizing: "border-box",
       }}
     >
@@ -87,10 +84,7 @@ export const RightPanel: React.FC = () => {
   return (
     <div
       style={{
-        width: "100%",
-        height: "100%",
         padding: "16px",
-        backgroundColor: "#f3f4f6",
         boxSizing: "border-box",
       }}
     >
