@@ -1,0 +1,59 @@
+.panel {
+  padding: 16px;
+  box-sizing: border-box;
+  height: 100%;
+  width: 100%;
+}
+
+.title {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.explorerItem {
+  padding: 8px;
+  cursor: pointer;
+}
+
+.explorerItemNested {
+  padding-left: 24px;
+}
+
+.centerPanel {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+.featureList {
+  margin-top: 8px;
+  padding-left: 16px;
+}
+
+.bottomPanel {
+  background-color: #1e1e1e;
+  color: #00ff00;
+}
+
+.bottomPanel .title {
+  color: #ffffff;
+}
+
+.terminalLine {
+}
+
+.extensionCard {
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+
+.extensionName {
+  font-weight: 500;
+}
+
+.extensionDescription {
+  font-size: 14px;
+  color: #6b7280;
+}
