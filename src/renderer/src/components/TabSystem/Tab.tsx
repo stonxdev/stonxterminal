@@ -10,7 +10,7 @@ import {
   extractClosestEdge,
   type Edge,
 } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
-import styles from "./TabSystem.module.css";
+import styles from "./Tab.module.css";
 import type { TabData } from "./types";
 
 type TabProps = {
