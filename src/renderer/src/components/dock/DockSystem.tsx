@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useRef } from "react";
 import { ResizeHandle } from "./ResizeHandle";
 import { useResize } from "./useResize";
+import styles from "./DockSystem.module.css";
 
 export const DockSystem: React.FC = () => {
   const [leftWidth, setLeftWidth] = useState(300);
@@ -36,49 +37,32 @@ export const DockSystem: React.FC = () => {
   );
 
   return (
-    <div
-      ref={containerRef}
-      style={{ display: "flex", height: "100vh", width: "100vw" }}
-    >
+    <div ref={containerRef} className={styles.container}>
       <div
+        className={styles.panel}
         style={{
           width: leftWidth,
-          backgroundColor: "var(--color-surface-0)",
-          position: "relative",
         }}
       >
-        <p style={{ color: "white", padding: 10 }}>Left Panel</p>
+        <p className={styles.panelText}>Left Panel</p>
         <div
-          style={{
-            position: "absolute",
-            right: 0,
-            top: 0,
-            bottom: 0,
-            width: "0px",
-          }}
+          className={`${styles.resizeHandleContainer} ${styles.resizeHandleLeft}`}
         >
           <ResizeHandle direction="vertical" onMouseDown={handleLeftResize} />
         </div>
       </div>
-      <div style={{ flex: 1, backgroundColor: "var(--color-surface-1)" }}>
-        <p style={{ color: "white", padding: 10 }}>Center Panel</p>
+      <div className={styles.centerPanel}>
+        <p className={styles.panelText}>Center Panel</p>
       </div>
       <div
+        className={styles.panel}
         style={{
           width: rightWidth,
-          backgroundColor: "var(--color-surface-0)",
-          position: "relative",
         }}
       >
-        <p style={{ color: "white", padding: 10 }}>Right Panel</p>
+        <p className={styles.panelText}>Right Panel</p>
         <div
-          style={{
-            position: "absolute",
-            left: 0,
-            top: 0,
-            bottom: 0,
-            width: "0px",
-          }}
+          className={`${styles.resizeHandleContainer} ${styles.resizeHandleRight}`}
         >
           <ResizeHandle direction="vertical" onMouseDown={handleRightResize} />
         </div>

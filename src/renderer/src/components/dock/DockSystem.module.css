@@ -1,0 +1,35 @@
+.container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+}
+
+.panel {
+  background-color: var(--color-surface-0);
+  position: relative;
+}
+
+.centerPanel {
+  flex: 1;
+  background-color: var(--color-surface-1);
+}
+
+.panelText {
+  color: white;
+  padding: 10px;
+}
+
+.resizeHandleContainer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0px;
+}
+
+.resizeHandleLeft {
+  right: 0;
+}
+
+.resizeHandleRight {
+  left: 0;
+}
