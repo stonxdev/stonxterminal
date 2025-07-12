@@ -11,7 +11,7 @@ import {
   type Edge,
 } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import styles from "./Tab.module.css";
-import type { TabData } from "./types";
+import type { TabData } from "@renderer/components/Tabs/types";
 
 type TabProps = {
   item: TabData;

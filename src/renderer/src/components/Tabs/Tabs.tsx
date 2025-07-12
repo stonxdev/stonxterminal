@@ -1,20 +1,20 @@
 import { useState, useRef, useEffect, useId } from "react";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
-import styles from "./TabSystem.module.css";
+import styles from "./Tabs.module.css";
 import { Tab } from "./Tab";
 import type { TabData } from "./types";
 
-type TabSystemProps = {
+type TabsProps = {
   items: TabData[];
   onReorder: (startIndex: number, finishIndex: number) => void;
   onDropToAnotherTabSystem: (item: TabData, finishIndex?: number) => void;
 };
 
-export const TabSystem = ({
+export const Tabs = ({
   items,
   onReorder,
   onDropToAnotherTabSystem,
-}: TabSystemProps): React.ReactElement => {
+}: TabsProps): React.ReactElement => {
   const [selectedTab, setSelectedTab] = useState<string | null>(
     items.length > 0 ? items[0].id : null,
   );

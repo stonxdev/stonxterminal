@@ -4,7 +4,7 @@ import {
   CenterPanel,
   BottomPanel,
   RightPanel,
-} from "@renderer/components/panels/DemoPanels";
+} from "@renderer/components/layout/panels/DemoPanels";
 
 export const App: React.FC = () => {
   return (

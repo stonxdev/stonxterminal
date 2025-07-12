@@ -1,14 +1,14 @@
 import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react";
-import { TabSystem } from "./TabSystem";
+import { Tabs } from "@renderer/components/Tabs/Tabs";
 
-const meta: Meta<typeof TabSystem> = {
-  title: "Components/TabSystem",
-  component: TabSystem,
+const meta: Meta<typeof Tabs> = {
+  title: "Components/Tabs",
+  component: Tabs,
 };
 
 export default meta;
-type Story = StoryObj<typeof TabSystem>;
+type Story = StoryObj<typeof Tabs>;
 
 const initialTabs1 = [
   { id: "1", label: "Tab 1" },
@@ -55,13 +55,13 @@ const DraggableTabs = () => {
 
   return (
     <div>
-      <TabSystem
+      <Tabs
         items={tabs1}
         onReorder={handleReorder1}
         onDropToAnotherTabSystem={handleDropInTab1}
       />
       <div style={{ marginTop: "20px" }} />
-      <TabSystem
+      <Tabs
         items={tabs2}
         onReorder={handleReorder2}
         onDropToAnotherTabSystem={handleDropInTab2}
