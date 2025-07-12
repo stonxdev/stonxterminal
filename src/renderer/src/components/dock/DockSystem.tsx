@@ -1,33 +1,38 @@
 import React, { useState, useCallback, useRef } from "react";
 import { ResizeHandle } from "./ResizeHandle";
+import { useResize } from "./useResize";
 
 export const DockSystem: React.FC = () => {
   const [leftWidth, setLeftWidth] = useState(300);
+  const [rightWidth, setRightWidth] = useState(300);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      const startX = e.clientX;
-      const startWidth = leftWidth;
+  const getLeftConstraints = useCallback(() => {
+    if (containerRef.current) {
+      const maxWidth = containerRef.current.offsetWidth - rightWidth - 100; // Ensure center panel has at least 100px
+      return { min: 100, max: maxWidth };
+    }
+    return { min: 100, max: Infinity };
+  }, [rightWidth]);
 
-      const handleMouseMove = (moveEvent: MouseEvent) => {
-        const newWidth = startWidth + (moveEvent.clientX - startX);
-        if (containerRef.current) {
-          const maxWidth = containerRef.current.offsetWidth - 100; // Ensure right panel has at least 100px
-          setLeftWidth(Math.max(100, Math.min(newWidth, maxWidth)));
-        }
-      };
+  const getRightConstraints = useCallback(() => {
+    if (containerRef.current) {
+      const maxWidth = containerRef.current.offsetWidth - leftWidth - 100; // Ensure center panel has at least 100px
+      return { min: 100, max: maxWidth };
+    }
+    return { min: 100, max: Infinity };
+  }, [leftWidth]);
 
-      const handleMouseUp = () => {
-        document.removeEventListener("mousemove", handleMouseMove);
-        document.removeEventListener("mouseup", handleMouseUp);
-      };
-
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
-    },
-    [leftWidth],
+  const handleLeftResize = useResize(
+    setLeftWidth,
+    () => leftWidth,
+    getLeftConstraints,
+  );
+  const handleRightResize = useResize(
+    setRightWidth,
+    () => rightWidth,
+    getRightConstraints,
+    true,
   );
 
   return (
@@ -52,11 +57,31 @@ export const DockSystem: React.FC = () => {
             width: "0px",
           }}
         >
-          <ResizeHandle direction="vertical" onMouseDown={handleMouseDown} />
+          <ResizeHandle direction="vertical" onMouseDown={handleLeftResize} />
         </div>
       </div>
       <div style={{ flex: 1, backgroundColor: "var(--color-surface-1)" }}>
+        <p style={{ color: "white", padding: 10 }}>Center Panel</p>
+      </div>
+      <div
+        style={{
+          width: rightWidth,
+          backgroundColor: "var(--color-surface-0)",
+          position: "relative",
+        }}
+      >
         <p style={{ color: "white", padding: 10 }}>Right Panel</p>
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: "0px",
+          }}
+        >
+          <ResizeHandle direction="vertical" onMouseDown={handleRightResize} />
+        </div>
       </div>
     </div>
   );
