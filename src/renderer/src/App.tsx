@@ -5,7 +5,6 @@ import {
   BottomPanel,
   RightPanel,
 } from "@renderer/components/panels/DemoPanels";
-import "./App.css"; // Import your global styles
 
 export const App: React.FC = () => {
   return (

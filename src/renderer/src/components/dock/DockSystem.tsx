@@ -38,7 +38,7 @@ export const DockSystem: React.FC = () => {
       <div
         style={{
           width: leftWidth,
-          backgroundColor: "#2C2C2C",
+          backgroundColor: "var(--color-surface-0)",
           position: "relative",
         }}
       >
@@ -55,7 +55,7 @@ export const DockSystem: React.FC = () => {
           <ResizeHandle direction="vertical" onMouseDown={handleMouseDown} />
         </div>
       </div>
-      <div style={{ flex: 1, backgroundColor: "#1E1E1E" }}>
+      <div style={{ flex: 1, backgroundColor: "var(--color-surface-1)" }}>
         <p style={{ color: "white", padding: 10 }}>Right Panel</p>
       </div>
     </div>

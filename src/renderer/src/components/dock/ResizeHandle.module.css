@@ -1,20 +1,27 @@
 /* ResizeHandle.module.css */
 .interactionArea {
+  /*
+    --handle-size controls both the visible thickness of the handle on hover
+    and the invisible grab area around it.
+  */
+  --handle-size: 20px;
   position: absolute;
 }
 
 .interactionAreaVertical {
   top: 0;
   bottom: 0;
-  left: -5px;
-  right: -5px;
+  /* The grab area extends on both sides by the handle size */
+  left: calc(var(--handle-size) * -0.5);
+  right: calc(var(--handle-size) * -0.5);
 }
 
 .interactionAreaHorizontal {
   left: 0;
   right: 0;
-  top: -5px;
-  bottom: -5px;
+  /* The grab area extends on both sides by the handle size */
+  top: calc(var(--handle-size) * -0.5);
+  bottom: calc(var(--handle-size) * -0.5);
 }
 
 .handle {
@@ -43,14 +50,14 @@
 }
 
 .handleHover {
-  background-color: #4A90E2;
+  background-color: var(--color-primary);
   opacity: 0.2;
 }
 
 .handleVertical.handleHover {
-  width: 6px;
+  width: var(--handle-size);
 }
 
 .handleHorizontal.handleHover {
-  height: 6px;
+  height: var(--handle-size);
 }

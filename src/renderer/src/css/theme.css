@@ -1,0 +1,15 @@
+/* 
+  CSS variables are defined here and synced with src/renderer/src/theme/colors.ts
+  This ensures consistency between Tailwind CSS and JavaScript/Pixi.js usage
+*/
+@theme {
+  --color-primary: #ff0000;
+  --color-secondary: #00ff00;
+  --color-accent: #0000ff;
+  --color-background: #ffffff;
+  --color-surface: #f5f5f5;
+  --color-text: #333333;
+
+  --color-surface-0: #000000;
+  --color-surface-1: #121212;
+}
