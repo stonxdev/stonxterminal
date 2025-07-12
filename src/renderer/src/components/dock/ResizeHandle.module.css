@@ -1,0 +1,56 @@
+/* ResizeHandle.module.css */
+.interactionArea {
+  position: absolute;
+}
+
+.interactionAreaVertical {
+  top: 0;
+  bottom: 0;
+  left: -5px;
+  right: -5px;
+}
+
+.interactionAreaHorizontal {
+  left: 0;
+  right: 0;
+  top: -5px;
+  bottom: -5px;
+}
+
+.handle {
+  position: absolute;
+  z-index: 10;
+  transition: all 0.2s ease;
+  background-color: transparent;
+}
+
+.handleVertical {
+  cursor: col-resize;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  transform: translateX(-50%);
+}
+
+.handleHorizontal {
+  cursor: row-resize;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 0;
+  transform: translateY(-50%);
+}
+
+.handleHover {
+  background-color: #4A90E2;
+  opacity: 0.2;
+}
+
+.handleVertical.handleHover {
+  width: 6px;
+}
+
+.handleHorizontal.handleHover {
+  height: 6px;
+}
