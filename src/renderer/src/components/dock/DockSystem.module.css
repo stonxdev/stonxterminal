@@ -9,9 +9,22 @@
   position: relative;
 }
 
+.centerPanelContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
 .centerPanel {
   flex: 1;
   background-color: var(--color-surface-1);
+  position: relative;
+}
+
+.bottomPanel {
+  background-color: var(--color-surface-2);
+  position: relative;
 }
 
 .panelText {
@@ -21,9 +34,20 @@
 
 .resizeHandleContainer {
   position: absolute;
+  z-index: 10;
+}
+
+.resizeHandleVertical {
   top: 0;
   bottom: 0;
   width: 0px;
+}
+
+.resizeHandleHorizontal {
+  left: 0;
+  right: 0;
+  height: 0px;
+  bottom: 0;
 }
 
 .resizeHandleLeft {
