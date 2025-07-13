@@ -15,9 +15,9 @@ type Story = StoryObj<typeof DockSystem>;
 
 export const Default: Story = {
   args: {
-    leftPanel: <div>Left Panel Content</div>,
-    centerPanel: <div>Center Panel Content</div>,
-    rightPanel: <div>Right Panel Content</div>,
-    bottomPanel: <div>Bottom Panel Content</div>,
+    leftTop: <div>Left Top Panel Content</div>,
+    center: <div>Center Panel Content</div>,
+    rightTop: <div>Right Top Panel Content</div>,
+    centerBottom: <div>Center Bottom Panel Content</div>,
   },
 };

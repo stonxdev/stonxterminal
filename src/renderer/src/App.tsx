@@ -10,10 +10,12 @@ export const App: React.FC = () => {
   return (
     <div style={{ width: "100vw", height: "100vh", overflow: "auto" }}>
       <DockSystem
-        leftPanel={<LeftPanel />}
-        centerPanel={<CenterPanel />}
-        bottomPanel={<BottomPanel />}
-        rightPanel={<RightPanel />}
+        leftTop={<LeftPanel />}
+        leftBottom={<LeftPanel />}
+        center={<CenterPanel />}
+        centerBottom={<BottomPanel />}
+        rightTop={<RightPanel />}
+        rightBottom={<RightPanel />}
       />
     </div>
   );

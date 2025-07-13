@@ -9,6 +9,20 @@
   position: relative;
 }
 
+.leftPanelContainer {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background-color: var(--color-surface-0);
+}
+
+.rightPanelContainer {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background-color: var(--color-surface-0);
+}
+
 .centerPanelContainer {
   flex: 1;
   display: flex;
@@ -22,7 +36,29 @@
   position: relative;
 }
 
-.bottomPanel {
+.leftTopPanel {
+  flex: 1;
+  background-color: var(--color-surface-1);
+  position: relative;
+}
+
+.leftBottomPanel {
+  background-color: var(--color-surface-2);
+  position: relative;
+}
+
+.rightTopPanel {
+  flex: 1;
+  background-color: var(--color-surface-1);
+  position: relative;
+}
+
+.rightBottomPanel {
+  background-color: var(--color-surface-2);
+  position: relative;
+}
+
+.centerBottomPanel {
   background-color: var(--color-surface-2);
   position: relative;
 }

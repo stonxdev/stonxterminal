@@ -4,45 +4,87 @@ import { useResize } from "./useResize";
 import styles from "./DockSystem.module.css";
 
 export interface DockSystemProps {
-  centerPanel: React.ReactNode;
-  leftPanel?: React.ReactNode;
-  rightPanel?: React.ReactNode;
-  bottomPanel?: React.ReactNode;
+  center: React.ReactNode;
+  leftTop?: React.ReactNode;
+  leftBottom?: React.ReactNode;
+  rightTop?: React.ReactNode;
+  rightBottom?: React.ReactNode;
+  centerBottom?: React.ReactNode;
+  defaultLeftWidth?: number;
+  defaultRightWidth?: number;
+  defaultCenterBottomHeight?: number;
+  defaultLeftBottomHeight?: number;
+  defaultRightBottomHeight?: number;
 }
 
 export const DockSystem: React.FC<DockSystemProps> = ({
-  centerPanel,
-  leftPanel,
-  rightPanel,
-  bottomPanel,
+  center,
+  leftTop,
+  leftBottom,
+  rightTop,
+  rightBottom,
+  centerBottom,
+  defaultLeftWidth = 300,
+  defaultRightWidth = 300,
+  defaultCenterBottomHeight = 300,
+  defaultLeftBottomHeight = 300,
+  defaultRightBottomHeight = 300,
 }) => {
-  const [leftWidth, setLeftWidth] = useState(300);
-  const [rightWidth, setRightWidth] = useState(300);
-  const [bottomHeight, setBottomHeight] = useState(200);
+  const [leftWidth, setLeftWidth] = useState(defaultLeftWidth);
+  const [rightWidth, setRightWidth] = useState(defaultRightWidth);
+  const [centerBottomHeight, setCenterBottomHeight] = useState(
+    defaultCenterBottomHeight,
+  );
+  const [leftBottomHeight, setLeftBottomHeight] = useState(
+    defaultLeftBottomHeight,
+  );
+  const [rightBottomHeight, setRightBottomHeight] = useState(
+    defaultRightBottomHeight,
+  );
   const containerRef = useRef<HTMLDivElement>(null);
   const centerPanelRef = useRef<HTMLDivElement>(null);
 
   const getLeftConstraints = useCallback(() => {
     if (containerRef.current) {
       const maxWidth =
-        containerRef.current.offsetWidth - (rightPanel ? rightWidth : 0) - 100;
+        containerRef.current.offsetWidth -
+        (rightTop || rightBottom ? rightWidth : 0) -
+        100;
       return { min: 100, max: maxWidth };
     }
     return { min: 100, max: Infinity };
-  }, [rightWidth, rightPanel]);
+  }, [rightWidth, rightTop, rightBottom]);
 
   const getRightConstraints = useCallback(() => {
     if (containerRef.current) {
       const maxWidth =
-        containerRef.current.offsetWidth - (leftPanel ? leftWidth : 0) - 100;
+        containerRef.current.offsetWidth -
+        (leftTop || leftBottom ? leftWidth : 0) -
+        100;
       return { min: 100, max: maxWidth };
     }
     return { min: 100, max: Infinity };
-  }, [leftWidth, leftPanel]);
+  }, [leftWidth, leftTop, leftBottom]);
 
-  const getBottomConstraints = useCallback(() => {
+  const getCenterBottomConstraints = useCallback(() => {
     if (centerPanelRef.current) {
       const maxHeight = centerPanelRef.current.offsetHeight - 100;
+      return { min: 50, max: maxHeight };
+    }
+    return { min: 50, max: Infinity };
+  }, []);
+
+  const getLeftBottomConstraints = useCallback(() => {
+    if (containerRef.current) {
+      const maxHeight = containerRef.current.offsetHeight - 100;
+      return { min: 50, max: maxHeight };
+    }
+    return { min: 50, max: Infinity };
+  }, []);
+
+  const getRightBottomConstraints = useCallback(() => {
+    if (containerRef.current) {
+      const maxHeight = containerRef.current.offsetHeight - 100;
       return { min: 50, max: maxHeight };
     }
     return { min: 50, max: Infinity };
@@ -59,24 +101,59 @@ export const DockSystem: React.FC<DockSystemProps> = ({
     getRightConstraints,
     true,
   );
-  const handleBottomResize = useResize(
-    setBottomHeight,
-    () => bottomHeight,
-    getBottomConstraints,
+  const handleCenterBottomResize = useResize(
+    setCenterBottomHeight,
+    () => centerBottomHeight,
+    getCenterBottomConstraints,
+    true,
+    true,
+  );
+  const handleLeftBottomResize = useResize(
+    setLeftBottomHeight,
+    () => leftBottomHeight,
+    getLeftBottomConstraints,
+    true,
+    true,
+  );
+  const handleRightBottomResize = useResize(
+    setRightBottomHeight,
+    () => rightBottomHeight,
+    getRightBottomConstraints,
     true,
     true,
   );
 
   return (
     <div ref={containerRef} className={styles.container}>
-      {leftPanel && (
+      {(leftTop || leftBottom) && (
         <div
-          className={styles.panel}
+          className={styles.leftPanelContainer}
           style={{
             width: leftWidth,
           }}
         >
-          {leftPanel}
+          <div className={styles.leftTopPanel}>{leftTop}</div>
+          {leftBottom && (
+            <div
+              className={styles.leftBottomPanel}
+              style={{
+                height: leftBottomHeight,
+              }}
+            >
+              {leftBottom}
+            </div>
+          )}
+          {leftBottom && (
+            <div
+              className={`${styles.resizeHandleContainer} ${styles.resizeHandleHorizontal}`}
+              style={{ bottom: leftBottomHeight }}
+            >
+              <ResizeHandle
+                direction="horizontal"
+                onMouseDown={handleLeftBottomResize}
+              />
+            </div>
+          )}
           <div
             className={`${styles.resizeHandleContainer} ${styles.resizeHandleVertical} ${styles.resizeHandleLeft}`}
           >
@@ -85,37 +162,58 @@ export const DockSystem: React.FC<DockSystemProps> = ({
         </div>
       )}
       <div ref={centerPanelRef} className={styles.centerPanelContainer}>
-        <div className={styles.centerPanel}>{centerPanel}</div>
-        {bottomPanel && (
+        <div className={styles.centerPanel}>{center}</div>
+        {centerBottom && (
           <div
-            className={styles.bottomPanel}
+            className={styles.centerBottomPanel}
             style={{
-              height: bottomHeight,
+              height: centerBottomHeight,
             }}
           >
-            {bottomPanel}
+            {centerBottom}
           </div>
         )}
-        {bottomPanel && (
+        {centerBottom && (
           <div
             className={`${styles.resizeHandleContainer} ${styles.resizeHandleHorizontal}`}
-            style={{ bottom: bottomHeight }}
+            style={{ bottom: centerBottomHeight }}
           >
             <ResizeHandle
               direction="horizontal"
-              onMouseDown={handleBottomResize}
+              onMouseDown={handleCenterBottomResize}
             />
           </div>
         )}
       </div>
-      {rightPanel && (
+      {(rightTop || rightBottom) && (
         <div
-          className={styles.panel}
+          className={styles.rightPanelContainer}
           style={{
             width: rightWidth,
           }}
         >
-          {rightPanel}
+          <div className={styles.rightTopPanel}>{rightTop}</div>
+          {rightBottom && (
+            <div
+              className={styles.rightBottomPanel}
+              style={{
+                height: rightBottomHeight,
+              }}
+            >
+              {rightBottom}
+            </div>
+          )}
+          {rightBottom && (
+            <div
+              className={`${styles.resizeHandleContainer} ${styles.resizeHandleHorizontal}`}
+              style={{ bottom: rightBottomHeight }}
+            >
+              <ResizeHandle
+                direction="horizontal"
+                onMouseDown={handleRightBottomResize}
+              />
+            </div>
+          )}
           <div
             className={`${styles.resizeHandleContainer} ${styles.resizeHandleVertical} ${styles.resizeHandleRight}`}
           >
