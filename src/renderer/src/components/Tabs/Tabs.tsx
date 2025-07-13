@@ -8,16 +8,30 @@ type TabsProps = {
   items: TabData[];
   onReorder: (startIndex: number, finishIndex: number) => void;
   onDropToAnotherTabSystem: (item: TabData, finishIndex?: number) => void;
+  selectedTab?: string | null;
+  onTabSelect?: (tabId: string) => void;
 };
 
 export const Tabs = ({
   items,
   onReorder,
   onDropToAnotherTabSystem,
+  selectedTab: controlledSelectedTab,
+  onTabSelect,
 }: TabsProps): React.ReactElement => {
-  const [selectedTab, setSelectedTab] = useState<string | null>(
+  const [internalSelectedTab, setInternalSelectedTab] = useState<string | null>(
     items.length > 0 ? items[0].id : null,
   );
+
+  // Use controlled selection if provided, otherwise use internal state
+  const selectedTab = controlledSelectedTab !== undefined ? controlledSelectedTab : internalSelectedTab;
+  const handleTabSelect = (tabId: string) => {
+    if (onTabSelect) {
+      onTabSelect(tabId);
+    } else {
+      setInternalSelectedTab(tabId);
+    }
+  };
   const ref = useRef<HTMLDivElement>(null);
   const tabSystemId = useId();
 
@@ -45,7 +59,7 @@ export const Tabs = ({
           item={item}
           index={index}
           isSelected={selectedTab === item.id}
-          onSelect={() => setSelectedTab(item.id)}
+          onSelect={() => handleTabSelect(item.id)}
           onReorder={onReorder}
           onDropToAnotherTabSystem={onDropToAnotherTabSystem}
           tabSystemId={tabSystemId}
