@@ -1,4 +1,4 @@
-appId: com.nebline.app
+appId: com.colony.app
 productName: Nebline
 directories:
   buildResources: build

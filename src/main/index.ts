@@ -13,7 +13,7 @@ import { dirname, join } from "path"; // Added dirname
 import { exec, spawn } from "child_process"; // Import child_process methods
 import icon from "../../resources/icon.png?asset";
 
-app.name = "Nebline";
+app.name = "Colony";
 
 function createWindow(): void {
   // Create the browser window.
@@ -195,7 +195,7 @@ function createWindow(): void {
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
   // Set app user model id for windows
-  electronApp.setAppUserModelId("com.nebline.app");
+  electronApp.setAppUserModelId("com.colony.app");
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.
