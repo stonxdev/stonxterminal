@@ -5,7 +5,7 @@ const fs = require("fs/promises");
 const path = require("path");
 const child_process = require("child_process");
 const icon = path.join(__dirname, "../../resources/icon.png");
-electron.app.name = "Nebline";
+electron.app.name = "Colony";
 function createWindow() {
   const mainWindow = new electron.BrowserWindow({
     width: 900,
@@ -161,7 +161,7 @@ function createWindow() {
   }
 }
 electron.app.whenReady().then(() => {
-  utils.electronApp.setAppUserModelId("com.nebline.app");
+  utils.electronApp.setAppUserModelId("com.colony.app");
   electron.app.on("browser-window-created", (_, window) => {
     utils.optimizer.watchWindowShortcuts(window);
   });
