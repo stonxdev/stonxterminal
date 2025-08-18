@@ -4,7 +4,6 @@ import { Application, Graphics } from "pixi.js";
 import type React from "react";
 import { useEffect, useRef } from "react";
 import "pixi.js/unsafe-eval";
-import { getCSSVariable } from "@renderer/utils/cssVariables";
 
 const PixiSquare: React.FC = () => {
   const pixiContainer = useRef<HTMLDivElement>(null);
@@ -14,14 +13,12 @@ const PixiSquare: React.FC = () => {
     let isEffectActive = true;
 
     const setupPixi: () => Promise<void> = async () => {
-      const primaryColor = getCSSVariable("--color-accent");
-      console.info("Primary color from CSS variable:", primaryColor);
       if (pixiContainer.current) {
         const app = new Application();
         await app.init({
           width: 200,
           height: 200,
-          backgroundColor: primaryColor,
+          backgroundColor: 0x1a1a1a,
           antialias: true,
         });
 
