@@ -1,7 +1,8 @@
-import React, { useState, useCallback, useRef } from "react";
+import type React from "react";
+import { useCallback, useRef, useState } from "react";
+import styles from "./DockSystem.module.css";
 import { ResizeHandle } from "./ResizeHandle";
 import { useResize } from "./useResize";
-import styles from "./DockSystem.module.css";
 
 export interface DockSystemProps {
   center: React.ReactNode;

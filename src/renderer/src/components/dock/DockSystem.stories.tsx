@@ -1,5 +1,5 @@
 import { DockSystem } from "@renderer/components/dock/DockSystem";
-import { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react";
 
 const meta = {
   title: "Components/DockSystem",

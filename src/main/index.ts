@@ -1,3 +1,6 @@
+import { exec, spawn } from "node:child_process"; // Import child_process methods
+import fs from "node:fs/promises"; // Use promises API for async operations
+import { dirname, join } from "node:path"; // Added dirname
 import { electronApp, is, optimizer } from "@electron-toolkit/utils";
 import {
   app,
@@ -8,9 +11,6 @@ import {
   net,
   shell,
 } from "electron"; // Added Menu, dialog, net
-import fs from "fs/promises"; // Use promises API for async operations
-import { dirname, join } from "path"; // Added dirname
-import { exec, spawn } from "child_process"; // Import child_process methods
 import icon from "../../resources/icon.png?asset";
 
 app.name = "Colony";
@@ -183,8 +183,8 @@ function createWindow(): void {
 
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
-  if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
-    mainWindow.loadURL(process.env["ELECTRON_RENDERER_URL"]);
+  if (is.dev && process.env.ELECTRON_RENDERER_URL) {
+    mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL);
   } else {
     mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
   }
@@ -504,7 +504,7 @@ app.whenReady().then(() => {
 
   createWindow();
 
-  app.on("activate", function () {
+  app.on("activate", () => {
     // On macOS it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

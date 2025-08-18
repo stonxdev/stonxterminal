@@ -1,17 +1,17 @@
-import { useState, useRef, useEffect } from "react";
+import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import {
   draggable,
   dropTargetForElements,
 } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview";
-import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import {
   attachClosestEdge,
-  extractClosestEdge,
   type Edge,
+  extractClosestEdge,
 } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
-import styles from "./Tab.module.css";
 import type { TabData } from "@renderer/components/Tabs/types";
+import { useEffect, useRef, useState } from "react";
+import styles from "./Tab.module.css";
 
 type TabProps = {
   item: TabData;

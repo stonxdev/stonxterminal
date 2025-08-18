@@ -10,17 +10,17 @@
  */
 export async function showErrorDialog(
   message: string,
-  title = 'Error',
-  detail?: string
+  title = "Error",
+  detail?: string,
 ): Promise<void> {
   await window.api.showMessageBox({
-    type: 'error',
+    type: "error",
     title,
     message,
     detail,
-    buttons: ['OK'],
-    defaultId: 0
-  })
+    buttons: ["OK"],
+    defaultId: 0,
+  });
 }
 
 /**
@@ -31,17 +31,17 @@ export async function showErrorDialog(
  */
 export async function showInfoDialog(
   message: string,
-  title = 'Information',
-  detail?: string
+  title = "Information",
+  detail?: string,
 ): Promise<void> {
   await window.api.showMessageBox({
-    type: 'info',
+    type: "info",
     title,
     message,
     detail,
-    buttons: ['OK'],
-    defaultId: 0
-  })
+    buttons: ["OK"],
+    defaultId: 0,
+  });
 }
 
 /**
@@ -52,17 +52,17 @@ export async function showInfoDialog(
  */
 export async function showWarningDialog(
   message: string,
-  title = 'Warning',
-  detail?: string
+  title = "Warning",
+  detail?: string,
 ): Promise<void> {
   await window.api.showMessageBox({
-    type: 'warning',
+    type: "warning",
     title,
     message,
     detail,
-    buttons: ['OK'],
-    defaultId: 0
-  })
+    buttons: ["OK"],
+    defaultId: 0,
+  });
 }
 
 /**
@@ -74,16 +74,16 @@ export async function showWarningDialog(
  */
 export async function showConfirmDialog(
   message: string,
-  title = 'Confirm',
-  detail?: string
+  title = "Confirm",
+  detail?: string,
 ): Promise<boolean> {
   const { response } = await window.api.showMessageBox({
-    type: 'question',
+    type: "question",
     title,
     message,
     detail,
-    buttons: ['Yes', 'No'],
-    defaultId: 0
-  })
-  return response === 0 // 0 = "Yes" button
+    buttons: ["Yes", "No"],
+    defaultId: 0,
+  });
+  return response === 0; // 0 = "Yes" button
 }

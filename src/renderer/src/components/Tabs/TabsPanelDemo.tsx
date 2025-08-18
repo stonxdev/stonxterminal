@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 import { TabsPanel } from "./TabsPanel";
 import type { TabData } from "./types";
 

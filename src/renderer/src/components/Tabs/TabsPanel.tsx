@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Tabs } from "./Tabs";
-import type { TabsPanelProps } from "./types";
 import styles from "./TabsPanel.module.css";
+import type { TabsPanelProps } from "./types";
 
 export const TabsPanel = ({
   tabs,

@@ -88,6 +88,14 @@ export type IpcApi = typeof ipcApi;
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise
 // just add to the DOM global.
+// Extend the Window interface to declare 'electron' and 'api'
+declare global {
+  interface Window {
+    electron: typeof electronAPI;
+    api: IpcApi;
+  }
+}
+
 if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld("electron", electronAPI);
@@ -96,8 +104,6 @@ if (process.contextIsolated) {
     console.error(error);
   }
 } else {
-  // @ts-ignore (define in dts)
   window.electron = electronAPI;
-  // @ts-ignore (define in dts)
   window.api = ipcApi; // Also update here for non-isolated context
 }

@@ -1,6 +1,6 @@
 import { Logs } from "@renderer/components/layout/widgets/Logs/Logs";
 import { WorldMap } from "@renderer/components/layout/widgets/WorldMap/WorldMap";
-import React from "react";
+import type React from "react";
 
 export type WidgetDefinition = {
   label: string;

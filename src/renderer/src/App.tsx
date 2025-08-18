@@ -1,8 +1,8 @@
 import { DockSystem } from "@renderer/components/dock/DockSystem";
 import {
-  LeftPanel,
-  CenterPanel,
   BottomPanel,
+  CenterPanel,
+  LeftPanel,
   RightPanel,
 } from "@renderer/components/layout/panels-old/DemoPanels";
 

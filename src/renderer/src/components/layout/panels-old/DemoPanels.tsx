@@ -1,4 +1,5 @@
-import React from "react";
+import PixiSquare from "@renderer/components/PixiExample";
+import type React from "react";
 import styles from "./DemoPanels.module.css";
 
 export const LeftPanel: React.FC = () => {
@@ -21,15 +22,7 @@ export const LeftPanel: React.FC = () => {
 export const CenterPanel: React.FC = () => {
   return (
     <div className={`${styles.panel} ${styles.centerPanel}`}>
-      <h3 className={styles.title}>Center Panel - Main Editor</h3>
-      <div>Welcome to the VS Code-inspired dock system!</div>
-      <div style={{ marginTop: "16px" }}>Features:</div>
-      <ul className={styles.featureList}>
-        <li>Resizable left, right, and bottom panels</li>
-        <li>Fixed panel sizes with draggable resize handles</li>
-        <li>Flexible center panel that adapts to available space</li>
-        <li>VS Code-like layout and styling</li>
-      </ul>
+      <PixiSquare />
     </div>
   );
 };

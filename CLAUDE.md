@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Colony (formerly Nebline) is an Electron-based desktop application built with TypeScript, React, and Vite. It features a sophisticated docking system UI with resizable panels and appears to be evolving from a journaling app with AI insights to a more general-purpose application framework.
+Colony is a colony simulation game
 
 ## Essential Commands
 

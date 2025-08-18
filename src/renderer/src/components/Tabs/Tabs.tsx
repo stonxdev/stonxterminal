@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect, useId } from "react";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
-import styles from "./Tabs.module.css";
+import { useEffect, useId, useRef, useState } from "react";
 import { Tab } from "./Tab";
+import styles from "./Tabs.module.css";
 import type { TabData } from "./types";
 
 type TabsProps = {
@@ -24,7 +24,10 @@ export const Tabs = ({
   );
 
   // Use controlled selection if provided, otherwise use internal state
-  const selectedTab = controlledSelectedTab !== undefined ? controlledSelectedTab : internalSelectedTab;
+  const selectedTab =
+    controlledSelectedTab !== undefined
+      ? controlledSelectedTab
+      : internalSelectedTab;
   const handleTabSelect = (tabId: string) => {
     if (onTabSelect) {
       onTabSelect(tabId);

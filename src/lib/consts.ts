@@ -12,5 +12,5 @@ export const LOCAL_STORAGE_KEYS = {
   /**
    * Key for storing the selected folder path
    */
-  SELECTED_FOLDER: 'nebline:selectedFolder'
-} as const
+  SELECTED_FOLDER: "nebline:selectedFolder",
+} as const;

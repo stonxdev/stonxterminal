@@ -1,7 +1,8 @@
 // src/PixiSquare.tsx
 
-import React, { useRef, useEffect } from "react";
 import { Application, Graphics } from "pixi.js";
+import type React from "react";
+import { useEffect, useRef } from "react";
 import "pixi.js/unsafe-eval";
 import { getCSSVariable } from "@renderer/utils/cssVariables";
 

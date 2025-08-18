@@ -1,4 +1,4 @@
-import { WidgetId } from "@renderer/components/layout/widgets/widget-map";
+import type { WidgetId } from "@renderer/components/layout/widgets/widget-map";
 
 export type Layout = {
   leftTopPanel: {
