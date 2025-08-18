@@ -1,0 +1,239 @@
+import type React from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useRef,
+  useState,
+} from "react";
+import { HorizontalResizeHandle } from "../resize-handle/HorizontalResizeHandle";
+import { VerticalResizeHandle } from "../resize-handle/VerticalResizeHandle";
+import { useResize } from "./useResize";
+
+const DockContext = createContext<boolean>(false);
+
+export interface DockProps {
+  center: React.ReactNode;
+  leftTop?: React.ReactNode;
+  leftBottom?: React.ReactNode;
+  rightTop?: React.ReactNode;
+  rightBottom?: React.ReactNode;
+  centerBottom?: React.ReactNode;
+  defaultLeftWidth?: number;
+  defaultRightWidth?: number;
+  defaultCenterBottomHeight?: number;
+  defaultLeftBottomHeight?: number;
+  defaultRightBottomHeight?: number;
+}
+
+export const Dock: React.FC<DockProps> = ({
+  center,
+  leftTop,
+  leftBottom,
+  rightTop,
+  rightBottom,
+  centerBottom,
+  defaultLeftWidth = 300,
+  defaultRightWidth = 300,
+  defaultCenterBottomHeight = 300,
+  defaultLeftBottomHeight = 300,
+  defaultRightBottomHeight = 300,
+}) => {
+  const [leftWidth, setLeftWidth] = useState(defaultLeftWidth);
+  const [rightWidth, setRightWidth] = useState(defaultRightWidth);
+  const [centerBottomHeight, setCenterBottomHeight] = useState(
+    defaultCenterBottomHeight,
+  );
+  const [leftBottomHeight, setLeftBottomHeight] = useState(
+    defaultLeftBottomHeight,
+  );
+  const [rightBottomHeight, setRightBottomHeight] = useState(
+    defaultRightBottomHeight,
+  );
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const isNested = useContext(DockContext);
+
+  const getLeftConstraints = useCallback(() => {
+    if (containerRef.current) {
+      const maxWidth =
+        containerRef.current.offsetWidth -
+        (rightTop || rightBottom ? rightWidth : 0) -
+        100;
+      return { min: 100, max: maxWidth };
+    }
+    return { min: 100, max: Number.POSITIVE_INFINITY };
+  }, [rightWidth, rightTop, rightBottom]);
+
+  const getRightConstraints = useCallback(() => {
+    if (containerRef.current) {
+      const maxWidth =
+        containerRef.current.offsetWidth -
+        (leftTop || leftBottom ? leftWidth : 0) -
+        100;
+      return { min: 100, max: maxWidth };
+    }
+    return { min: 100, max: Number.POSITIVE_INFINITY };
+  }, [leftWidth, leftTop, leftBottom]);
+
+  const getCenterBottomConstraints = useCallback(() => {
+    if (containerRef.current) {
+      const maxHeight = containerRef.current.offsetHeight - 100;
+      return { min: 50, max: maxHeight };
+    }
+    return { min: 50, max: Number.POSITIVE_INFINITY };
+  }, []);
+
+  const getLeftBottomConstraints = useCallback(() => {
+    if (containerRef.current) {
+      const maxHeight = containerRef.current.offsetHeight - 100;
+      return { min: 50, max: maxHeight };
+    }
+    return { min: 50, max: Number.POSITIVE_INFINITY };
+  }, []);
+
+  const getRightBottomConstraints = useCallback(() => {
+    if (containerRef.current) {
+      const maxHeight = containerRef.current.offsetHeight - 100;
+      return { min: 50, max: maxHeight };
+    }
+    return { min: 50, max: Number.POSITIVE_INFINITY };
+  }, []);
+
+  const handleLeftResize = useResize(
+    setLeftWidth,
+    () => leftWidth,
+    getLeftConstraints,
+  );
+  const handleRightResize = useResize(
+    setRightWidth,
+    () => rightWidth,
+    getRightConstraints,
+    true,
+  );
+  const handleCenterBottomResize = useResize(
+    setCenterBottomHeight,
+    () => centerBottomHeight,
+    getCenterBottomConstraints,
+    true,
+    true,
+  );
+  const handleLeftBottomResize = useResize(
+    setLeftBottomHeight,
+    () => leftBottomHeight,
+    getLeftBottomConstraints,
+    true,
+    true,
+  );
+  const handleRightBottomResize = useResize(
+    setRightBottomHeight,
+    () => rightBottomHeight,
+    getRightBottomConstraints,
+    true,
+    true,
+  );
+
+  const hasLeft = leftTop || leftBottom;
+  const hasRight = rightTop || rightBottom;
+
+  return (
+    <DockContext.Provider value={true}>
+      <div
+        ref={containerRef}
+        className={`flex h-full w-full min-h-0 min-w-0 ${isNested ? "h-auto w-auto" : "h-screen w-screen"}`}
+      >
+        {hasLeft && (
+          <div
+            className="flex flex-col relative bg-background border-r border-border"
+            style={{
+              width: leftWidth,
+            }}
+          >
+            {leftTop && (
+              <div className="flex-1 bg-background relative overflow-y-auto">
+                {leftTop}
+              </div>
+            )}
+            {leftBottom && leftTop && (
+              <VerticalResizeHandle
+                onMouseDown={handleLeftBottomResize}
+                align="top"
+              />
+            )}
+            {leftBottom && (
+              <div
+                className="bg-background relative overflow-y-auto"
+                style={{
+                  height: leftBottomHeight,
+                }}
+              >
+                {leftBottom}
+              </div>
+            )}
+            <HorizontalResizeHandle
+              onMouseDown={handleLeftResize}
+              align="right"
+            />
+          </div>
+        )}
+
+        <div className="flex-1 flex flex-col relative">
+          <div className="flex-1 bg-background relative overflow-y-auto">
+            {center}
+          </div>
+          {centerBottom && (
+            <>
+              <VerticalResizeHandle
+                onMouseDown={handleCenterBottomResize}
+                align="top"
+              />
+              <div
+                className="bg-background relative overflow-y-auto border-t border-border"
+                style={{
+                  height: centerBottomHeight,
+                }}
+              >
+                {centerBottom}
+              </div>
+            </>
+          )}
+        </div>
+
+        {hasRight && (
+          <div
+            className="flex flex-col relative bg-background border-l border-border"
+            style={{
+              width: rightWidth,
+            }}
+          >
+            {rightTop && (
+              <div className="flex-1 bg-background relative overflow-y-auto">
+                {rightTop}
+              </div>
+            )}
+            {rightBottom && rightTop && (
+              <VerticalResizeHandle
+                onMouseDown={handleRightBottomResize}
+                align="top"
+              />
+            )}
+            {rightBottom && (
+              <div
+                className="bg-background relative overflow-y-auto"
+                style={{
+                  height: rightBottomHeight,
+                }}
+              >
+                {rightBottom}
+              </div>
+            )}
+            <HorizontalResizeHandle
+              onMouseDown={handleRightResize}
+              align="left"
+            />
+          </div>
+        )}
+      </div>
+    </DockContext.Provider>
+  );
+};
