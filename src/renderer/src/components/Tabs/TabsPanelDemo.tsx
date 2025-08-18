@@ -34,6 +34,7 @@ const SettingsContent = () => (
       </label>
     </div>
     <button
+      type="button"
       style={{
         padding: "10px 20px",
         backgroundColor: "#007bff",

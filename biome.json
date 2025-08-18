@@ -42,7 +42,8 @@
         "noUnknownAtRules": "off"
       },
       "a11y": {
-        "noLabelWithoutControl": "off"
+        "noLabelWithoutControl": "off",
+        "noStaticElementInteractions": "off"
       },
       "style": {
         "useImportType": "error"

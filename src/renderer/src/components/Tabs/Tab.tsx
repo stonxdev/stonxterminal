@@ -99,6 +99,7 @@ export const Tab = ({
   return (
     <div style={{ position: "relative" }}>
       <button
+        type="button"
         ref={ref}
         className={`${styles.tab} ${isSelected ? styles.selected : ""} ${isDragging ? styles.dragging : ""}`}
         onClick={onSelect}

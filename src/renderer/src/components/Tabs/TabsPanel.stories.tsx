@@ -60,7 +60,9 @@ const ThirdTabContent = () => (
   <div style={{ padding: "20px" }}>
     <h2>Third Tab Content</h2>
     <p>This is the content for the third tab.</p>
-    <button onClick={() => alert("Button clicked!")}>Click me!</button>
+    <button type="button" onClick={() => alert("Button clicked!")}>
+      Click me!
+    </button>
   </div>
 );
 

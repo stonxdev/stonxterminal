@@ -6,7 +6,7 @@
   }
 
   body {
-    font-family: "Source Code Pro";
+    font-family: "Source Code Pro", monospace;
     background-color: var(--color-surface-0);
   }
 }
