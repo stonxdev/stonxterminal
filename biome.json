@@ -25,7 +25,7 @@
       "!**/.claude",
       "!**/.claude-flow",
       "!**/theme.css",
-      "!**/src/renderer/src/lib/viewport/external/**"
+      "!src/renderer/src/lib/viewport/external"
     ]
   },
   "formatter": {

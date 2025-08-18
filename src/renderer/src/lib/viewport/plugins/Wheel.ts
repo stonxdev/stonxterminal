@@ -157,7 +157,7 @@ export class Wheel extends Plugin {
     if (this.smoothing) {
       const point = this.smoothingCenter;
       const change = this.smoothing;
-      let oldPoint: IPointData | undefined;
+      let oldPoint: PointData | undefined;
 
       if (!this.options.center) {
         oldPoint = this.parent.toLocal(point as PointData);

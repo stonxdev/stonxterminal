@@ -1243,7 +1243,8 @@ export class Viewport extends Container {
       resizeToFit &&
       (width > this.worldScreenWidth || height > this.worldScreenHeight)
     ) {
-      // biome-ignore lint/suspicious/noFocusedTests: fit() is a viewport method, not a test\n      this.fit(true, width, height);
+      // biome-ignore lint/suspicious/noFocusedTests: fit() is a viewport method, not a test
+      this.fit(true, width, height);
       this.emit("zoomed", { viewport: this, type: "ensureVisible" });
     }
     let moved = false;

@@ -164,7 +164,7 @@ export class Snap extends Plugin {
       const snapping = this.snapping;
 
       snapping.time += elapsed;
-      let finished: boolean;
+      let finished = false;
       let x: number;
       let y: number;
 
