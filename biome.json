@@ -24,7 +24,8 @@
       "!**/.docusaurus",
       "!**/.claude",
       "!**/.claude-flow",
-      "!**/theme.css"
+      "!**/theme.css",
+      "!**/src/renderer/src/lib/viewport/external/**"
     ]
   },
   "formatter": {
