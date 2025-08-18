@@ -1,5 +1,5 @@
 import { Dock } from "@renderer/components/dock/Dock";
-import PixiSquare from "./components/PixiExample";
+import PixiSquare from "./components/pixi/PixiExample";
 
 export const App: React.FC = () => {
   return (
