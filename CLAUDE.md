@@ -25,12 +25,21 @@ npm run start            # Preview production build
 
 ### Code Quality
 ```bash
-npm run lint             # Run ESLint
+npm run lint             # Run Biome linter
+npm run lint:fix         # Run Biome with auto-fix
 npm run typecheck        # Run TypeScript type checking (both node and web)
 npm run typecheck:node   # Type check Node/Electron main process
 npm run typecheck:web    # Type check renderer/React code
-npm run format           # Format code with Prettier
+npm run format           # Format code with Biome
 ```
+
+## IMPORTANT: Code Quality Checks
+**After making any code changes, ALWAYS run:**
+```bash
+npm run typecheck        # Ensure TypeScript types are correct
+npm run lint:fix         # Fix linting and formatting issues
+```
+These commands must pass before considering any task complete.
 
 ## Architecture
 

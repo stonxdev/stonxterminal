@@ -1,9 +1,10 @@
 "use strict";
+const node_child_process = require("node:child_process");
+const fs = require("node:fs/promises");
+const node_path = require("node:path");
 const utils = require("@electron-toolkit/utils");
 const electron = require("electron");
-const fs = require("fs/promises");
 const path = require("path");
-const child_process = require("child_process");
 const icon = path.join(__dirname, "../../resources/icon.png");
 electron.app.name = "Colony";
 function createWindow() {
@@ -14,7 +15,7 @@ function createWindow() {
     // autoHideMenuBar: true, // Remove this to show the menu
     ...{ icon },
     webPreferences: {
-      preload: path.join(__dirname, "../preload/index.js"),
+      preload: node_path.join(__dirname, "../preload/index.js"),
       sandbox: false,
       contextIsolation: true,
       // Recommended for security
@@ -84,13 +85,13 @@ function createWindow() {
             if (currentProject?.projectPath) {
               if (process.platform === "darwin") {
                 const terminalCommand = `open -a Terminal "${currentProject.projectPath}"`;
-                child_process.exec(terminalCommand, (error) => {
+                node_child_process.exec(terminalCommand, (error) => {
                   if (error) {
                     console.error("Failed to open Terminal:", error);
                   }
                 });
               } else if (process.platform === "win32") {
-                child_process.spawn(
+                node_child_process.spawn(
                   "cmd.exe",
                   ["/K", `cd /d "${currentProject.projectPath}"`],
                   {
@@ -99,7 +100,7 @@ function createWindow() {
                   }
                 );
               } else {
-                child_process.spawn(
+                node_child_process.spawn(
                   "xterm",
                   ["-e", `cd "${currentProject.projectPath}" && bash`],
                   {
@@ -154,10 +155,10 @@ function createWindow() {
   ];
   const menu = electron.Menu.buildFromTemplate(menuTemplate);
   electron.Menu.setApplicationMenu(menu);
-  if (utils.is.dev && process.env["ELECTRON_RENDERER_URL"]) {
-    mainWindow.loadURL(process.env["ELECTRON_RENDERER_URL"]);
+  if (utils.is.dev && process.env.ELECTRON_RENDERER_URL) {
+    mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL);
   } else {
-    mainWindow.loadFile(path.join(__dirname, "../renderer/index.html"));
+    mainWindow.loadFile(node_path.join(__dirname, "../renderer/index.html"));
   }
 }
 electron.app.whenReady().then(() => {
@@ -167,7 +168,7 @@ electron.app.whenReady().then(() => {
   });
   electron.ipcMain.on("ping", () => console.log("pong"));
   electron.ipcMain.handle("fs:joinPath", (_event, ...paths) => {
-    return path.join(...paths);
+    return node_path.join(...paths);
   });
   electron.ipcMain.handle("zoom:increase", (event) => {
     const webContents = event.sender;
@@ -213,15 +214,15 @@ electron.app.whenReady().then(() => {
   });
   electron.ipcMain.handle(
     "fs:ensureFileExists",
-    async (_event, path$1, defaultContent = "") => {
+    async (_event, path2, defaultContent = "") => {
       try {
-        await fs.access(path$1);
+        await fs.access(path2);
       } catch {
         try {
-          await fs.mkdir(path.dirname(path$1), { recursive: true });
-          await fs.writeFile(path$1, defaultContent, "utf-8");
+          await fs.mkdir(node_path.dirname(path2), { recursive: true });
+          await fs.writeFile(path2, defaultContent, "utf-8");
         } catch (writeError) {
-          console.error(`Failed to create file: ${path$1}`, writeError);
+          console.error(`Failed to create file: ${path2}`, writeError);
           throw writeError;
         }
       }
@@ -297,7 +298,7 @@ electron.app.whenReady().then(() => {
     try {
       if (process.platform === "darwin") {
         const terminalCommand = `open -a Terminal "${folderPath}"`;
-        child_process.exec(terminalCommand, (error) => {
+        node_child_process.exec(terminalCommand, (error) => {
           if (error) {
             console.error("Failed to open Terminal:", error);
             return false;
@@ -307,13 +308,13 @@ electron.app.whenReady().then(() => {
         });
         return true;
       } else if (process.platform === "win32") {
-        child_process.spawn("cmd.exe", ["/K", `cd /d "${folderPath}"`], {
+        node_child_process.spawn("cmd.exe", ["/K", `cd /d "${folderPath}"`], {
           detached: true,
           stdio: "ignore"
         });
         return true;
       } else {
-        child_process.spawn("xterm", ["-e", `cd "${folderPath}" && bash`], {
+        node_child_process.spawn("xterm", ["-e", `cd "${folderPath}" && bash`], {
           detached: true,
           stdio: "ignore"
         });
@@ -388,7 +389,7 @@ electron.app.whenReady().then(() => {
     }
   });
   createWindow();
-  electron.app.on("activate", function() {
+  electron.app.on("activate", () => {
     if (electron.BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
@@ -397,3 +398,4 @@ electron.app.on("window-all-closed", () => {
     electron.app.quit();
   }
 });
+//# sourceMappingURL=index.js.map

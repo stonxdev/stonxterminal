@@ -54,3 +54,4 @@ if (process.contextIsolated) {
   window.electron = preload.electronAPI;
   window.api = ipcApi;
 }
+//# sourceMappingURL=index.js.map
