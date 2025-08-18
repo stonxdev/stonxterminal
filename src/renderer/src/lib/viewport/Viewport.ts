@@ -10,32 +10,7 @@ import {
 } from "pixi.js";
 import { InputManager } from "./InputManager";
 import { PluginManager } from "./PluginManager";
-import {
-  Animate,
-  Bounce,
-  Clamp,
-  ClampZoom,
-  Decelerate,
-  Drag,
-  Follow,
-  type IAnimateOptions,
-  type IBounceOptions,
-  type IClampOptions,
-  type IClampZoomOptions,
-  type IDecelerateOptions,
-  type IDragOptions,
-  type IFollowOptions,
-  type IMouseEdgesOptions,
-  type IPinchOptions,
-  type ISnapOptions,
-  type ISnapZoomOptions,
-  type IWheelOptions,
-  MouseEdges,
-  Pinch,
-  Snap,
-  SnapZoom,
-  Wheel,
-} from "./plugins";
+import { Drag, type IDragOptions, type IWheelOptions, Wheel } from "./plugins";
 
 /** Options for {@link Viewport}. */
 export interface IViewportOptions {
@@ -52,7 +27,7 @@ export interface IViewportOptions {
   worldHeight?: number | null;
 
   /**
-   * Number of pixels to move to trigger an input event (e.g., drag, pinch) or disable a clicked event
+   * Number of pixels to move to trigger an input event (e.g., drag) or disable a clicked event
    *
    * @default 5
    */
@@ -74,7 +49,6 @@ export interface IViewportOptions {
   /**
    * Whether to stop drag when the pointer is out of the viewport
    */
-
   allowPreserveDragOutside?: boolean;
 
   /**
@@ -147,27 +121,10 @@ const DEFAULT_VIEWPORT_OPTIONS: Partial<ICompleteViewportOptions> = {
  * @fires drag-start
  * @fires drag-end
  * @fires drag-remove
- * @fires pinch-start
- * @fires pinch-end
- * @fires pinch-remove
- * @fires snap-start
- * @fires snap-end
- * @fires snap-remove
- * @fires snap-zoom-start
- * @fires snap-zoom-end
- * @fires snap-zoom-remove
- * @fires bounce-x-start
- * @fires bounce-x-end
- * @fires bounce-y-start
- * @fires bounce-y-end
- * @fires bounce-remove
  * @fires wheel-start
  * @fires wheel-remove
  * @fires wheel-scroll
  * @fires wheel-scroll-remove
- * @fires mouse-edge-start
- * @fires mouse-edge-end
- * @fires mouse-edge-remove
  * @fires moved
  * @fires moved-end
  * @fires zoomed
@@ -181,7 +138,7 @@ export class Viewport extends Container {
   public screenWidth: number;
   public screenHeight: number;
 
-  /** Number of pixels to move to trigger an input event (e.g., drag, pinch) or disable a clicked event */
+  /** Number of pixels to move to trigger an input event (e.g., drag) or disable a clicked event */
   public threshold: number;
 
   public readonly input: InputManager;
@@ -212,7 +169,7 @@ export class Viewport extends Container {
    * @param {number} [options.screenHeight=window.innerHeight]
    * @param {number} [options.worldWidth=this.width]
    * @param {number} [options.worldHeight=this.height]
-   * @param {number} [options.threshold=5] number of pixels to move to trigger an input event (e.g., drag, pinch)
+   * @param {number} [options.threshold=5] number of pixels to move to trigger an input event (e.g., drag)
    * or disable a clicked event
    * @param {boolean} [options.passiveWheel=true] whether the 'wheel' event is set to passive (note: if false,
    * e.preventDefault() will be called when wheel is used over the viewport)
@@ -333,7 +290,7 @@ export class Viewport extends Container {
   }
 
   /**
-   * Use this to set screen and world sizes, needed for pinch/wheel/clamp/bounce.
+   * Use this to set screen and world sizes, needed for wheel zoom.
    * @param {number} screenWidth=window.innerWidth
    * @param {number} screenHeight=window.innerHeight
    * @param {number} [worldWidth]
@@ -517,10 +474,10 @@ export class Viewport extends Container {
     this.moveCorner(value);
   }
 
-  /** Move Viewport's top-left corner; also clamps and resets decelerate and bounce (as needed) */
+  /** Move Viewport's top-left corner */
   public moveCorner(x: number, y: number): Viewport;
 
-  /** move Viewport's top-left corner; also clamps and resets decelerate and bounce (as needed) */
+  /** move Viewport's top-left corner */
   public moveCorner(center: Point): Viewport;
 
   /**
@@ -618,15 +575,9 @@ export class Viewport extends Container {
    * @param width - width in world coordinates
    * @param center - maintain the same center
    * @param scaleY - whether to set scaleY=scaleX
-   * @param noClamp - whether to disable clamp-zoom
    * @returns {Viewport} this
    */
-  fitWidth(
-    width = this.worldWidth,
-    center?: boolean,
-    scaleY = true,
-    noClamp?: boolean,
-  ): Viewport {
+  fitWidth(width = this.worldWidth, center?: boolean, scaleY = true): Viewport {
     let save: Point | undefined;
 
     if (center) {
@@ -636,12 +587,6 @@ export class Viewport extends Container {
 
     if (scaleY) {
       this.scale.y = this.scale.x;
-    }
-
-    const clampZoom = this.plugins.get("clamp-zoom", true);
-
-    if (!noClamp && clampZoom) {
-      clampZoom.clamp();
     }
 
     if (center && save) {
@@ -657,14 +602,12 @@ export class Viewport extends Container {
    * @param {number} [height=this.worldHeight] in world coordinates
    * @param {boolean} [center] maintain the same center of the screen after zoom
    * @param {boolean} [scaleX=true] whether to set scaleX = scaleY
-   * @param {boolean} [noClamp] whether to disable clamp-zoom
    * @returns {Viewport} this
    */
   fitHeight(
     height = this.worldHeight,
     center?: boolean,
     scaleX = true,
-    noClamp?: boolean,
   ): Viewport {
     let save: Point | undefined;
 
@@ -675,12 +618,6 @@ export class Viewport extends Container {
 
     if (scaleX) {
       this.scale.x = this.scale.y;
-    }
-
-    const clampZoom = this.plugins.get("clamp-zoom", true);
-
-    if (!noClamp && clampZoom) {
-      clampZoom.clamp();
     }
 
     if (center && save) {
@@ -710,12 +647,6 @@ export class Viewport extends Container {
       this.scale.y = this.scale.x;
     } else {
       this.scale.x = this.scale.y;
-    }
-
-    const clampZoom = this.plugins.get("clamp-zoom", true);
-
-    if (clampZoom) {
-      clampZoom.clamp();
     }
 
     if (center && save) {
@@ -752,11 +683,7 @@ export class Viewport extends Container {
     } else {
       this.scale.x = this.scale.y;
     }
-    const clampZoom = this.plugins.get("clamp-zoom", true);
 
-    if (clampZoom) {
-      clampZoom.clamp();
-    }
     if (center && save) {
       this.moveCenter(save);
     }
@@ -778,11 +705,7 @@ export class Viewport extends Container {
       save = this.center;
     }
     this.scale.set(scale);
-    const clampZoom = this.plugins.get("clamp-zoom", true);
 
-    if (clampZoom) {
-      clampZoom.clamp();
-    }
     if (center && save) {
       this.moveCenter(save);
     }
@@ -820,29 +743,6 @@ export class Viewport extends Container {
   }
   set scaled(scale: number) {
     this.setZoom(scale, true);
-  }
-
-  /**
-   * Returns zoom to the desired scale
-   *
-   * @param {ISnapZoomOptions} options
-   * @param {number} [options.width=0] - the desired width to snap (to maintain aspect ratio, choose width or height)
-   * @param {number} [options.height=0] - the desired height to snap (to maintain aspect ratio, choose width or height)
-   * @param {number} [options.time=1000] - time for snapping in ms
-   * @param {(string|function)} [options.ease=easeInOutSine] ease function or name (see http://easings.net/
-   *   for supported names)
-   * @param {PIXI.Point} [options.center] - place this point at center during zoom instead of center of the viewport
-   * @param {boolean} [options.interrupt=true] - pause snapping with any user input on the viewport
-   * @param {boolean} [options.removeOnComplete] - removes this plugin after snapping is complete
-   * @param {boolean} [options.removeOnInterrupt] - removes this plugin if interrupted by any user input
-   * @param {boolean} [options.forceStart] - starts the snap immediately regardless of whether the viewport is at the
-   *   desired zoom
-   * @param {boolean} [options.noMove] - zoom but do not move
-   */
-  snapZoom(options?: ISnapZoomOptions): Viewport {
-    this.plugins.add("snap-zoom", new SnapZoom(this, options));
-
-    return this;
   }
 
   /** Is container out of world bounds */
@@ -942,7 +842,6 @@ export class Viewport extends Container {
    * @param {boolean} [options.wheel=true] use wheel to scroll in direction (unless wheel plugin is active)
    * @param {number} [options.wheelScroll=1] number of pixels to scroll with each wheel spin
    * @param {boolean} [options.reverse] reverse the direction of the wheel scroll
-   * @param {(boolean|string)} [options.clampWheel=false] clamp wheel(to avoid weird bounce with mouse wheel)
    * @param {string} [options.underflow=center] where to place world if too small for screen
    * @param {number} [options.factor=1] factor to multiply drag to increase the speed of movement
    * @param {string} [options.mouseButtons=all] changes which mouse buttons trigger drag, use: 'all', 'left',
@@ -957,154 +856,6 @@ export class Viewport extends Container {
    */
   public drag(options?: IDragOptions): Viewport {
     this.plugins.add("drag", new Drag(this, options));
-
-    return this;
-  }
-
-  /**
-   * Clamp to world boundaries or other provided boundaries
-   * There are three ways to clamp:
-   * 1. direction: 'all' = the world is clamped to its world boundaries, ie, you cannot drag any part of offscreen
-   *    direction: 'x' | 'y' = only the x or y direction is clamped to its world boundary
-   * 2. left, right, top, bottom = true | number = the world is clamped to the world's pixel location for each side;
-   *    if any of these are set to true, then the location is set to the boundary
-   *    [0, viewport.worldWidth/viewport.worldHeight], eg: to allow the world to be completely dragged offscreen,
-   *    set [-viewport.worldWidth, -viewport.worldHeight, viewport.worldWidth * 2, viewport.worldHeight * 2]
-   *
-   * Underflow determines what happens when the world is smaller than the viewport
-   * 1. none = the world is clamped but there is no special behavior
-   * 2. center = the world is centered on the viewport
-   * 3. combination of top/bottom/center and left/right/center (case insensitive) = the world is stuck to the
-   *     appropriate boundaries
-   *
-   * NOTES:
-   *   clamp is disabled if called with no options; use { direction: 'all' } for all edge clamping
-   *   screenWidth, screenHeight, worldWidth, and worldHeight needs to be set for this to work properly
-   *
-   * @param {object} [options]
-   * @param {(number|boolean)} [options.left=false] - clamp left; true = 0
-   * @param {(number|boolean)} [options.right=false] - clamp right; true = viewport.worldWidth
-   * @param {(number|boolean)} [options.top=false] - clamp top; true = 0
-   * @param {(number|boolean)} [options.bottom=false] - clamp bottom; true = viewport.worldHeight
-   * @param {string} [direction] - (all, x, or y) using clamps of [0, viewport.worldWidth/viewport.worldHeight];
-   *  replaces left/right/top/bottom if set
-   * @param {string} [underflow=center] - where to place world if too small for screen (e.g., top-right, center,
-   *  none, bottomLeft)     * @returns {Viewport} this
-   */
-  public clamp(options?: IClampOptions): Viewport {
-    this.plugins.add("clamp", new Clamp(this, options));
-
-    return this;
-  }
-
-  /**
-   * Decelerate after a move
-   *
-   * NOTE: this fires 'moved' event during deceleration
-   *
-   * @param {IDecelerateOptions} [options]
-   * @param {number} [options.friction=0.95] - percent to decelerate after movement
-   * @param {number} [options.bounce=0.8] - percent to decelerate when past boundaries (only applicable when
-   *   viewport.bounce() is active)
-   * @param {number} [options.minSpeed=0.01] - minimum velocity before stopping/reversing acceleration
-   * @return {Viewport} this
-   */
-  public decelerate(options?: IDecelerateOptions): Viewport {
-    this.plugins.add("decelerate", new Decelerate(this, options));
-
-    return this;
-  }
-
-  /**
-   * Bounce on borders
-   * NOTES:
-   *    screenWidth, screenHeight, worldWidth, and worldHeight needs to be set for this to work properly
-   *    fires 'moved', 'bounce-x-start', 'bounce-y-start', 'bounce-x-end', and 'bounce-y-end' events
-   * @param {object} [options]
-   * @param {string} [options.sides=all] - all, horizontal, vertical, or combination of top, bottom, right, left
-   *  (e.g., 'top-bottom-right')
-   * @param {number} [options.friction=0.5] - friction to apply to decelerate if active
-   * @param {number} [options.time=150] - time in ms to finish bounce
-   * @param {object} [options.bounceBox] - use this bounceBox instead of (0, 0, viewport.worldWidth, viewport.worldHeight)
-   * @param {number} [options.bounceBox.x=0]
-   * @param {number} [options.bounceBox.y=0]
-   * @param {number} [options.bounceBox.width=viewport.worldWidth]
-   * @param {number} [options.bounceBox.height=viewport.worldHeight]
-   * @param {string|function} [options.ease=easeInOutSine] - ease function or name
-   *  (see http://easings.net/ for supported names)
-   * @param {string} [options.underflow=center] - (top/bottom/center and left/right/center, or center)
-   *  where to place world if too small for screen
-   * @return {Viewport} this
-   */
-  public bounce(options?: IBounceOptions): Viewport {
-    this.plugins.add("bounce", new Bounce(this, options));
-
-    return this;
-  }
-
-  /**
-   * Enable pinch to zoom and two-finger touch to drag
-   *
-   * @param {PinchOptions} [options]
-   * @param {boolean} [options.noDrag] - disable two-finger dragging
-   * @param {number} [options.percent=1] - percent to modify pinch speed
-   * @param {number} [options.factor=1] - factor to multiply two-finger drag to increase the speed of movement
-   * @param {PIXI.Point} [options.center] - place this point at center during zoom instead of center of two fingers
-   * @param {('all'|'x'|'y')} [options.axis=all] - axis to zoom
-   * @return {Viewport} this
-   */
-  public pinch(options?: IPinchOptions): Viewport {
-    this.plugins.add("pinch", new Pinch(this, options));
-
-    return this;
-  }
-
-  /**
-   * Snap to a point
-   *
-   * @param {number} x
-   * @param {number} y
-   * @param {ISnapOptions} [options]
-   * @param {boolean} [options.topLeft] - snap to the top-left of viewport instead of center
-   * @param {number} [options.friction=0.8] - friction/frame to apply if decelerate is active
-   * @param {number} [options.time=1000] - time in ms to snap
-   * @param {string|function} [options.ease=easeInOutSine] - ease function or name (see http://easings.net/
-   *   for supported names)
-   * @param {boolean} [options.interrupt=true] - pause snapping with any user input on the viewport
-   * @param {boolean} [options.removeOnComplete] - removes this plugin after snapping is complete
-   * @param {boolean} [options.removeOnInterrupt] - removes this plugin if interrupted by any user input
-   * @param {boolean} [options.forceStart] - starts the snap immediately regardless of whether the viewport is at
-   *   the desired location
-   * @return {Viewport} this
-   */
-  public snap(x: number, y: number, options?: ISnapOptions): Viewport {
-    this.plugins.add("snap", new Snap(this, x, y, options));
-
-    return this;
-  }
-
-  /**
-   * Follow a target
-   *
-   * NOTES:
-   *    uses the (x, y) as the center to follow; for PIXI.Sprite to work properly, use sprite.anchor.set(0.5)
-   *    options.acceleration is not perfect as it doesn't know the velocity of the target. It adds acceleration
-   *    to the start of movement and deceleration to the end of movement when the target is stopped.
-   *    To cancel the follow, use: `viewport.plugins.remove('follow')`
-   *
-   * @fires 'moved' event
-   *
-   * @param {PIXI.DisplayObject} target to follow
-   * @param {IFollowOptions} [options]
-   * @param {number} [options.speed=0] - to follow in pixels/frame (0=teleport to location)
-   * @param {number} [options.acceleration] - set acceleration to accelerate and decelerate at this rate; speed
-   *   cannot be 0 to use acceleration
-   * @param {number} [options.radius] - radius (in world coordinates) of center circle where movement is allowed
-   *   without moving the viewport     * @returns {Viewport} this
-   * @returns {Viewport} this
-   */
-  public follow(target: Container, options?: IFollowOptions): Viewport {
-    this.plugins.add("follow", new Follow(this, target, options));
 
     return this;
   }
@@ -1130,84 +881,7 @@ export class Viewport extends Container {
     return this;
   }
 
-  /**
-   * Animate the position and/or scale of the viewport
-   * To set the zoom level, use: (1) scale, (2) scaleX and scaleY, or (3) width and/or height
-   * @param {object} options
-   * @param {number} [options.time=1000] - time to animate
-   * @param {PIXI.Point} [options.position=viewport.center] - position to move viewport
-   * @param {number} [options.width] - desired viewport width in world pixels (use instead of scale;
-   *  aspect ratio is maintained if height is not provided)
-   * @param {number} [options.height] - desired viewport height in world pixels (use instead of scale;
-   *  aspect ratio is maintained if width is not provided)
-   * @param {number} [options.scale] - scale to change zoom (scale.x = scale.y)
-   * @param {number} [options.scaleX] - independently change zoom in x-direction
-   * @param {number} [options.scaleY] - independently change zoom in y-direction
-   * @param {(function|string)} [options.ease=linear] - easing function to use
-   * @param {function} [options.callbackOnComplete]
-   * @param {boolean} [options.removeOnInterrupt] removes this plugin if interrupted by any user input
-   * @returns {Viewport} this
-   */
-  public animate(options: IAnimateOptions): Viewport {
-    this.plugins.add("animate", new Animate(this, options));
-
-    return this;
-  }
-
-  /**
-   * Enable clamping of zoom to constraints
-   *
-   * The minWidth/Height settings are how small the world can get (as it would appear on the screen)
-   * before clamping. The maxWidth/maxHeight is how larger the world can scale (as it would appear on
-   * the screen) before clamping.
-   *
-   * For example, if you have a world size of 1000 x 1000 and a screen size of 100 x 100, if you set
-   * minWidth/Height = 100 then the world will not be able to zoom smaller than the screen size (ie,
-   * zooming out so it appears smaller than the screen). Similarly, if you set maxWidth/Height = 100
-   * the world will not be able to zoom larger than the screen size (ie, zooming in so it appears
-   * larger than the screen).
-   *
-   * @param {object} [options]
-   * @param {number} [options.minWidth] - minimum width
-   * @param {number} [options.minHeight] - minimum height
-   * @param {number} [options.maxWidth] - maximum width
-   * @param {number} [options.maxHeight] - maximum height
-   * @param {number} [options.minScale] - minimum scale
-   * @param {number} [options.maxScale] - minimum scale
-   * @return {Viewport} this
-   */
-  public clampZoom(options: IClampZoomOptions): Viewport {
-    this.plugins.add("clamp-zoom", new ClampZoom(this, options));
-
-    return this;
-  }
-
-  /**
-   * Scroll viewport when mouse hovers near one of the edges or radius-distance from center of screen.
-   *
-   * NOTES: fires 'moved' event; there's a known bug where the mouseEdges does not work properly with "windowed" viewports
-   *
-   * @param {IMouseEdgesOptions} [options]
-   * @param {number} [options.radius] - distance from center of screen in screen pixels
-   * @param {number} [options.distance] - distance from all sides in screen pixels
-   * @param {number} [options.top] - alternatively, set top distance (leave unset for no top scroll)
-   * @param {number} [options.bottom] - alternatively, set bottom distance (leave unset for no top scroll)
-   * @param {number} [options.left] - alternatively, set left distance (leave unset for no top scroll)
-   * @param {number} [options.right] - alternatively, set right distance (leave unset for no top scroll)
-   * @param {number} [options.speed=8] - speed in pixels/frame to scroll viewport
-   * @param {boolean} [options.reverse] - reverse direction of scroll
-   * @param {boolean} [options.noDecelerate] - don't use decelerate plugin even if it's installed
-   * @param {boolean} [options.linear] - if using radius, use linear movement (+/- 1, +/- 1) instead of angled
-   *   movement (Math.cos(angle from center), Math.sin(angle from center))
-   * @param {boolean} [options.allowButtons] allows plugin to continue working even when there's a mousedown event
-   */
-  public mouseEdges(options: IMouseEdgesOptions): Viewport {
-    this.plugins.add("mouse-edges", new MouseEdges(this, options));
-
-    return this;
-  }
-
-  /** Pause viewport (including animation updates such as decelerate) */
+  /** Pause viewport (including animation updates) */
   get pause(): boolean {
     return !!this._pause;
   }
@@ -1297,66 +971,6 @@ export class Viewport extends Container {
  */
 
 /**
- * Fires when a pinch starts
- * @event Viewport#pinch-start
- * @type {Viewport}
- */
-
-/**
- * Fires when a pinch end
- * @event Viewport#pinch-end
- * @type {Viewport}
- */
-
-/**
- * Fires when a snap starts
- * @event Viewport#snap-start
- * @type {Viewport}
- */
-
-/**
- * Fires when a snap ends
- * @event Viewport#snap-end
- * @type {Viewport}
- */
-
-/**
- * Fires when a snap-zoom starts
- * @event Viewport#snap-zoom-start
- * @type {Viewport}
- */
-
-/**
- * Fires when a snap-zoom ends
- * @event Viewport#snap-zoom-end
- * @type {Viewport}
- */
-
-/**
- * Fires when a bounce starts in the x direction
- * @event Viewport#bounce-x-start
- * @type {Viewport}
- */
-
-/**
- * Fires when a bounce ends in the x direction
- * @event Viewport#bounce-x-end
- * @type {Viewport}
- */
-
-/**
- * Fires when a bounce starts in the y direction
- * @event Viewport#bounce-y-start
- * @type {Viewport}
- */
-
-/**
- * Fires when a bounce ends in the y direction
- * @event Viewport#bounce-y-end
- * @type {Viewport}
- */
-
-/**
  * Fires when for a mouse wheel event
  * @event Viewport#wheel-start
  * @type {object}
@@ -1371,32 +985,19 @@ export class Viewport extends Container {
  */
 
 /**
- * Fires when a mouse-edge starts to scroll
- * @event Viewport#mouse-edge-start
- * @type {Viewport}
- */
-
-/**
- * Fires when the mouse-edge scrolling ends
- * @event Viewport#mouse-edge-end
- * @type {Viewport}
- */
-
-/**
- * Fires when viewport moves through UI interaction, deceleration, ensureVisible, or follow
+ * Fires when viewport moves through UI interaction or ensureVisible
  * @event Viewport#moved
  * @type {object}
  * @property {Viewport} viewport
- * @property {string} type - (drag, snap, pinch, follow, bounce-x, bounce-y,
- *  clamp-x, clamp-y, decelerate, mouse-edges, wheel, ensureVisible)
+ * @property {string} type - (drag, wheel, ensureVisible)
  */
 
 /**
- * Fires when viewport moves through UI interaction, deceleration, ensureVisible, or follow
+ * Fires when viewport moves through UI interaction or ensureVisible
  * @event Viewport#zoomed
  * @type {object}
  * @property {Viewport} viewport
- * @property {string} type (drag-zoom, pinch, wheel, clamp-zoom, ensureVisible)
+ * @property {string} type (drag-zoom, wheel, ensureVisible)
  */
 
 /**

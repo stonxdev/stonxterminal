@@ -1,7 +1,6 @@
 import type { FederatedPointerEvent, PointData } from "pixi.js";
 import { Point } from "pixi.js";
 import type { Viewport } from "../Viewport";
-import type { Decelerate } from "./Decelerate";
 import { Plugin } from "./Plugin";
 
 /** Options for {@link Drag}. */
@@ -130,7 +129,7 @@ export class Drag extends Plugin {
   /** Flags when viewport is moving. */
   protected moved: boolean;
 
-  /** Factor to apply from {@link IDecelerateOptions}'s reverse. */
+  /** Factor to apply for reverse direction. */
   protected reverse: 1 | -1;
 
   /** Holds whether dragging is enabled along the x-axis. */
@@ -467,9 +466,6 @@ export class Drag extends Plugin {
   }
 
   public clamp(): void {
-    const decelerate: Partial<Decelerate> =
-      this.parent.plugins.get("decelerate", true) || {};
-
     if (this.options.clampWheel !== "y") {
       if (this.parent.screenWorldWidth < this.parent.screenWidth) {
         switch (this.underflowX) {
@@ -486,12 +482,10 @@ export class Drag extends Plugin {
         }
       } else if (this.parent.left < 0) {
         this.parent.x = 0;
-        decelerate.x = 0;
       } else if (this.parent.right > this.parent.worldWidth) {
         this.parent.x =
           -this.parent.worldWidth * this.parent.scale.x +
           this.parent.screenWidth;
-        decelerate.x = 0;
       }
     }
     if (this.options.clampWheel !== "x") {
@@ -511,13 +505,11 @@ export class Drag extends Plugin {
       } else {
         if (this.parent.top < 0) {
           this.parent.y = 0;
-          decelerate.y = 0;
         }
         if (this.parent.bottom > this.parent.worldHeight) {
           this.parent.y =
             -this.parent.worldHeight * this.parent.scale.y +
             this.parent.screenHeight;
-          decelerate.y = 0;
         }
       }
     }

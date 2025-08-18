@@ -170,11 +170,6 @@ export class Wheel extends Plugin {
       }
 
       this.parent.emit("zoomed", { viewport: this.parent, type: "wheel" });
-      const clamp = this.parent.plugins.get("clamp-zoom", true);
-
-      if (clamp) {
-        clamp.clamp();
-      }
       if (this.options.center) {
         this.parent.moveCenter(this.options.center);
       } else {
@@ -221,11 +216,6 @@ export class Wheel extends Plugin {
       this.parent.scale.y *= change;
     }
     this.parent.emit("zoomed", { viewport: this.parent, type: "wheel" });
-    const clamp = this.parent.plugins.get("clamp-zoom", true);
-
-    if (clamp) {
-      clamp.clamp();
-    }
     if (this.options.center) {
       this.parent.moveCenter(this.options.center);
     } else {
@@ -297,11 +287,6 @@ export class Wheel extends Plugin {
           this.parent.scale.y *= change;
         }
         this.parent.emit("zoomed", { viewport: this.parent, type: "wheel" });
-        const clamp = this.parent.plugins.get("clamp-zoom", true);
-
-        if (clamp) {
-          clamp.clamp();
-        }
         if (this.options.center) {
           this.parent.moveCenter(this.options.center);
         } else {

@@ -1,56 +1,24 @@
 import type { FederatedEvent } from "pixi.js";
-import type {
-  Animate,
-  Bounce,
-  Clamp,
-  ClampZoom,
-  Decelerate,
-  Drag,
-  Follow,
-  MouseEdges,
-  Pinch,
-  Plugin,
-  Snap,
-  SnapZoom,
-  Wheel,
-} from "./plugins";
+import type { Drag, Plugin, Wheel } from "./plugins";
 import type { Viewport } from "./Viewport";
 
-const PLUGIN_ORDER = [
-  "drag",
-  "pinch",
-  "wheel",
-  "follow",
-  "mouse-edges",
-  "decelerate",
-  "animate",
-  "bounce",
-  "snap-zoom",
-  "clamp-zoom",
-  "snap",
-  "clamp",
-];
+const PLUGIN_ORDER = ["drag", "wheel"];
 
 /**
- * Use this to access current plugins or add user-defined plugins
+ * Use this to access all plugins or add new plugins
  *
  * @public
  */
 export class PluginManager {
-  /** Maps mounted plugins by their type */
+  /** Maps plugin names to plugins */
   public plugins: Partial<Record<string, Plugin>>;
 
-  /**
-   * List of plugins mounted
-   *
-   * This list is kept sorted by the internal priority of plugins (hard-coded).
-   */
+  /** List of plugins in order of execution */
   public list: Array<Plugin>;
 
-  /** The viewport using the plugins managed by `this`. */
+  /** The viewport */
   public readonly viewport: Viewport;
 
-  /** This is called by {@link Viewport} to initialize the {@link Viewport.plugins plugins}. */
   constructor(viewport: Viewport) {
     this.viewport = viewport;
     this.list = [];
@@ -59,18 +27,11 @@ export class PluginManager {
 
   /**
    * Inserts a named plugin or a user plugin into the viewport
-   * default plugin order: 'drag', 'pinch', 'wheel', 'follow', 'mouse-edges', 'decelerate', 'bounce',
-   * 'snap-zoom', 'clamp-zoom', 'snap', 'clamp'
-   *
    * @param {string} name of plugin
-   * @param {Plugin} plugin - instantiated Plugin class
+   * @param {Plugin} plugin
    * @param {number} index to insert userPlugin (otherwise inserts it at the end)
    */
-  public add(
-    name: string,
-    plugin: Plugin,
-    index: number = PLUGIN_ORDER.length,
-  ) {
+  public add(name: string, plugin: Plugin): void {
     const oldPlugin = this.plugins[name];
 
     if (oldPlugin) {
@@ -79,70 +40,48 @@ export class PluginManager {
 
     this.plugins[name] = plugin;
 
-    const current = PLUGIN_ORDER.indexOf(name);
-
-    if (current !== -1) {
-      PLUGIN_ORDER.splice(current, 1);
-    }
-
-    PLUGIN_ORDER.splice(index, 0, name);
-    this.sort();
-  }
-
-  public get(
-    name: "animate",
-    ignorePaused?: boolean,
-  ): Animate | undefined | null;
-  public get(name: "bounce", ignorePaused?: boolean): Bounce | undefined | null;
-  public get(name: "clamp", ignorePaused?: boolean): Clamp | undefined | null;
-  public get(
-    name: "clamp-zoom",
-    ignorePaused?: boolean,
-  ): ClampZoom | undefined | null;
-  public get(
-    name: "decelerate",
-    ignorePaused?: boolean,
-  ): Decelerate | undefined | null;
-  public get(name: "drag", ignorePaused?: boolean): Drag | undefined | null;
-  public get(name: "follow", ignorePaused?: boolean): Follow | undefined | null;
-  public get(
-    name: "mouse-edges",
-    ignorePaused?: boolean,
-  ): MouseEdges | undefined | null;
-  public get(name: "pinch", ignorePaused?: boolean): Pinch | undefined | null;
-  public get(name: "snap", ignorePaused?: boolean): Snap | undefined | null;
-  public get(
-    name: "snap-zoom",
-    ignorePaused?: boolean,
-  ): SnapZoom | undefined | null;
-  public get(name: "wheel", ignorePaused?: boolean): Wheel | undefined | null;
-  public get<T extends Plugin = Plugin>(
-    name: string,
-    ignorePaused?: boolean,
-  ): T | undefined | null;
-
-  /**
-   * Get plugin
-   *
-   * @param {string} name of plugin
-   * @param {boolean} [ignorePaused] return null if plugin is paused
-   */
-  public get<T extends Plugin = Plugin>(
-    name: string,
-    ignorePaused?: boolean,
-  ): T | undefined | null {
-    if (ignorePaused) {
-      if (this.plugins[name]?.paused) {
-        return null;
+    this.list = [];
+    for (let i = 0; i < PLUGIN_ORDER.length; i++) {
+      const plugin = this.plugins[PLUGIN_ORDER[i]];
+      if (plugin) {
+        this.list.push(plugin);
       }
     }
 
-    return this.plugins[name] as T;
+    plugin.update(this.viewport.lastViewport ? 0 : 16.667);
+  }
+
+  /**
+   * Get plugin of a certain type
+   * @param {string} name of plugin
+   * @param {boolean} [ignorePaused] return null if plugin is paused
+   */
+  public get<_T extends Plugin = Plugin>(
+    name: "drag",
+    ignorePaused?: boolean,
+  ): Drag | null;
+  public get<_T extends Plugin = Plugin>(
+    name: "wheel",
+    ignorePaused?: boolean,
+  ): Wheel | null;
+  public get<T extends Plugin = Plugin>(
+    name: string,
+    ignorePaused?: boolean,
+  ): T | null;
+  public get<T extends Plugin = Plugin>(
+    name: string,
+    ignorePaused?: boolean,
+  ): T | null {
+    if (ignorePaused) {
+      return (this.plugins[name] as T) || null;
+    }
+    return (
+      ((this.plugins[name]?.paused ? null : this.plugins[name]) as T) || null
+    );
   }
 
   /**
    * Update all active plugins
-   *
    * @internal
    * @ignore
    * @param {number} elapsed type in milliseconds since last update
@@ -155,7 +94,6 @@ export class PluginManager {
 
   /**
    * Resize all active plugins
-   *
    * @internal
    * @ignore
    */
@@ -165,73 +103,74 @@ export class PluginManager {
     }
   }
 
-  /** Clamps and resets bounce and decelerate (as needed) after manually moving viewport */
+  /** Clears all active plugins */
   public reset(): void {
     for (const plugin of this.list) {
       plugin.reset();
     }
   }
 
-  /** removes all installed plugins */
+  /** Removes plugins from viewport */
   public removeAll(): void {
     this.list.forEach((plugin) => {
       plugin.destroy();
     });
     this.plugins = {};
-    this.sort();
+    this.list = [];
   }
 
   /**
-   * Removes installed plugin
-   *
-   * @param {string} name of plugin (e.g., 'drag', 'pinch')
+   * Removes named plugin from viewport
+   * @param {string} name of plugin
    */
   public remove(name: string): void {
     if (this.plugins[name]) {
       this.plugins[name]?.destroy();
       delete this.plugins[name];
-      this.viewport.emit("plugin-remove", name);
+      this.viewport.emit(`${name}-remove`);
       this.sort();
     }
   }
 
   /**
-   * Pause plugin
-   *
-   * @param {string} name of plugin (e.g., 'drag', 'pinch')
+   * Pause named plugin
+   * @param {string} name of plugin
    */
   public pause(name: string): void {
-    this.plugins[name]?.pause();
+    if (this.plugins[name]) {
+      this.plugins[name].paused = true;
+    }
   }
 
   /**
-   * Resume plugin
-   *
-   * @param {string} name of plugin (e.g., 'drag', 'pinch')
+   * Resume named plugin
+   * @param {string} name of plugin
    */
   public resume(name: string): void {
-    this.plugins[name]?.resume();
+    if (this.plugins[name]) {
+      this.plugins[name].paused = false;
+    }
   }
 
   /**
    * Sort plugins according to PLUGIN_ORDER
-   *
    * @internal
    * @ignore
    */
-  public sort() {
+  public sort(): void {
     this.list = [];
 
-    for (const plugin of PLUGIN_ORDER) {
-      if (this.plugins[plugin]) {
-        this.list.push(this.plugins[plugin] as Plugin);
+    for (let i = 0; i < PLUGIN_ORDER.length; i++) {
+      const plugin = this.plugins[PLUGIN_ORDER[i]];
+
+      if (plugin) {
+        this.list.push(plugin);
       }
     }
   }
 
   /**
    * Handle down for all plugins
-   *
    * @internal
    * @ignore
    */
@@ -249,7 +188,6 @@ export class PluginManager {
 
   /**
    * Handle move for all plugins
-   *
    * @internal
    * @ignore
    */
@@ -267,7 +205,6 @@ export class PluginManager {
 
   /**
    * Handle up for all plugins
-   *
    * @internal
    * @ignore
    */
@@ -285,7 +222,6 @@ export class PluginManager {
 
   /**
    * Handle wheel event for all plugins
-   *
    * @internal
    * @ignore
    */

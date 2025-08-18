@@ -102,24 +102,26 @@ const SimpleWorld: React.FC = () => {
       app.stage.addChild(viewport);
       viewportRef.current = viewport;
 
-      // Configure viewport controls - simplified for better performance
+      // Configure viewport controls - only drag and wheel
       viewport
         .drag({
           mouseButtons: "left",
         })
         .wheel({
-          smooth: 3,
           percent: 0.1,
-        })
-        .pinch()
-        .decelerate({
-          friction: 0.95,
-          bounce: 0.8,
-        })
-        .clampZoom({
-          minScale: 0.25,
-          maxScale: 3,
         });
+
+      // Add simple zoom constraints
+      const MIN_SCALE = 0.25;
+      const MAX_SCALE = 3;
+
+      viewport.on("zoomed", () => {
+        if (viewport.scale.x < MIN_SCALE) {
+          viewport.scale.set(MIN_SCALE);
+        } else if (viewport.scale.x > MAX_SCALE) {
+          viewport.scale.set(MAX_SCALE);
+        }
+      });
 
       // Create more varied tile data for 10x10 grid
       const tiles: TileData[] = [];

@@ -98,18 +98,8 @@ export class InputManager {
     if (this.count() === 1) {
       this.last = event.global.clone();
 
-      // clicked event does not fire if viewport is decelerating or bouncing
-      const decelerate = this.viewport.plugins.get("decelerate", true);
-      const bounce = this.viewport.plugins.get("bounce", true);
-
-      if (
-        (!decelerate || !decelerate.isActive()) &&
-        (!bounce || !bounce.isActive())
-      ) {
-        this.clickedAvailable = true;
-      } else {
-        this.clickedAvailable = false;
-      }
+      // clicked event is available
+      this.clickedAvailable = true;
     } else {
       this.clickedAvailable = false;
     }
