@@ -147,6 +147,7 @@ export const Dock: React.FC<DockProps> = ({
             className="flex flex-col relative bg-background border-r border-border"
             style={{
               width: leftWidth,
+              pointerEvents: "auto",
             }}
           >
             {leftTop && (
@@ -178,7 +179,7 @@ export const Dock: React.FC<DockProps> = ({
         )}
 
         <div className="flex-1 flex flex-col relative">
-          <div className="flex-1 bg-background relative overflow-y-auto">
+          <div className={`flex-1 relative overflow-y-auto ${center ? 'bg-background' : ''}`} style={{ pointerEvents: center ? "auto" : "none" }}>
             {center}
           </div>
           {centerBottom && (
@@ -191,6 +192,7 @@ export const Dock: React.FC<DockProps> = ({
                 className="bg-background relative overflow-y-auto border-t border-border"
                 style={{
                   height: centerBottomHeight,
+                  pointerEvents: "auto",
                 }}
               >
                 {centerBottom}
@@ -204,6 +206,7 @@ export const Dock: React.FC<DockProps> = ({
             className="flex flex-col relative bg-background border-l border-border"
             style={{
               width: rightWidth,
+              pointerEvents: "auto",
             }}
           >
             {rightTop && (

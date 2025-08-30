@@ -20,6 +20,7 @@ export const VerticalResizeHandle: React.FC<VerticalResizeHandleProps> = ({
       data-component="ResizeHandle"
       type="button"
       tabIndex={0}
+      style={{ pointerEvents: "auto" }}
       className={cn(
         "absolute left-0 right-0 z-10",
         HANDLE_HEIGHT,

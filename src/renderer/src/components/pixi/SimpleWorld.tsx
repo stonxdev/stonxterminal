@@ -30,7 +30,7 @@ const SimpleWorld: React.FC = () => {
 
     resizeObserver.observe(pixiContainer.current);
 
-    // Set initial size
+    // Set initial size from actual container
     const rect = pixiContainer.current.getBoundingClientRect();
     setContainerSize({ width: rect.width, height: rect.height });
 

@@ -398,3 +398,4 @@ electron.app.on("window-all-closed", () => {
     electron.app.quit();
   }
 });
+//# sourceMappingURL=index.js.map
