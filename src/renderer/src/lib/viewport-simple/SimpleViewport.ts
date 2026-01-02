@@ -10,7 +10,7 @@ import { Container, type FederatedPointerEvent, Rectangle } from "pixi.js";
  * - Zoom in/out via mouse wheel (zooms toward cursor position)
  */
 
-export interface SimpleViewportOptions {
+export interface ViewportOptions {
   /** Width of the screen/canvas in pixels */
   screenWidth?: number;
 
@@ -49,7 +49,7 @@ export class SimpleViewport extends Container {
   /** The DOM element we're attached to (for wheel events) */
   private domElement: HTMLElement | null = null;
 
-  constructor(options: SimpleViewportOptions = {}) {
+  constructor(options: ViewportOptions = {}) {
     super();
 
     // Set defaults
@@ -62,11 +62,27 @@ export class SimpleViewport extends Container {
     // Make this container interactive so it can receive pointer events
     this.eventMode = "static";
 
-    // Set hit area to cover the screen
-    this.hitArea = new Rectangle(0, 0, this.screenWidth, this.screenHeight);
-
     // Set up drag listeners
     this.setupDragListeners();
+
+    // Update hit area initially
+    this.updateHitArea();
+  }
+
+  /**
+   * Update the hit area to always cover the screen.
+   * Since hitArea is in local (world) coordinates, we need to calculate
+   * what world region corresponds to the screen.
+   */
+  private updateHitArea(): void {
+    // The hit area needs to be in local coordinates.
+    // Screen (0,0) corresponds to world (-this.x/scale, -this.y/scale)
+    const worldX = -this.x / this.scale.x;
+    const worldY = -this.y / this.scale.y;
+    const worldWidth = this.screenWidth / this.scale.x;
+    const worldHeight = this.screenHeight / this.scale.y;
+
+    this.hitArea = new Rectangle(worldX, worldY, worldWidth, worldHeight);
   }
 
   /**
@@ -112,6 +128,9 @@ export class SimpleViewport extends Container {
     // This creates the "zoom toward cursor" effect
     this.x += (worldPosAfter.x - worldPosBefore.x) * this.scale.x;
     this.y += (worldPosAfter.y - worldPosBefore.y) * this.scale.y;
+
+    // Update hit area after zoom
+    this.updateHitArea();
   }
 
   /**
@@ -130,10 +149,21 @@ export class SimpleViewport extends Container {
       x: event.global.x,
       y: event.global.y,
     };
+    const hitRect = this.hitArea as Rectangle;
+    console.info(
+      `[Viewport] POINTERDOWN screenPos=(${event.global.x.toFixed(0)}, ${event.global.y.toFixed(0)}) viewportPos=(${this.x.toFixed(0)}, ${this.y.toFixed(0)}) scale=${this.scale.x.toFixed(2)} hitArea=(${hitRect.x}, ${hitRect.y}, ${hitRect.width}, ${hitRect.height})`,
+    );
   }
 
   private onDragMove(event: FederatedPointerEvent): void {
-    if (!this.isDragging || !this.lastPointerPosition) {
+    // Log ALL pointermove events to see if they're firing even when not dragging
+    if (!this.isDragging) {
+      // Uncomment below to see moves when NOT dragging (very verbose)
+      // console.info(`[Viewport] pointermove (NOT dragging) screenPos=(${event.global.x.toFixed(0)}, ${event.global.y.toFixed(0)})`);
+      return;
+    }
+
+    if (!this.lastPointerPosition) {
       return;
     }
 
@@ -141,9 +171,16 @@ export class SimpleViewport extends Container {
     const deltaX = event.global.x - this.lastPointerPosition.x;
     const deltaY = event.global.y - this.lastPointerPosition.y;
 
+    console.info(
+      `[Viewport] POINTERMOVE (dragging) screenPos=(${event.global.x.toFixed(0)}, ${event.global.y.toFixed(0)}) delta=(${deltaX.toFixed(0)}, ${deltaY.toFixed(0)})`,
+    );
+
     // Move the viewport by that amount (pan)
     this.x += deltaX;
     this.y += deltaY;
+
+    // Update hit area after pan
+    this.updateHitArea();
 
     // Update the last position for the next move
     this.lastPointerPosition = {
@@ -152,7 +189,13 @@ export class SimpleViewport extends Container {
     };
   }
 
-  private onDragEnd(): void {
+  private onDragEnd(event?: FederatedPointerEvent): void {
+    const screenPosStr = event
+      ? `(${event.global.x.toFixed(0)}, ${event.global.y.toFixed(0)})`
+      : "no-event";
+    console.info(
+      `[Viewport] POINTERUP wasDragging=${this.isDragging} screenPos=${screenPosStr} viewportPos=(${this.x.toFixed(0)}, ${this.y.toFixed(0)})`,
+    );
     this.isDragging = false;
     this.lastPointerPosition = null;
   }
@@ -163,6 +206,7 @@ export class SimpleViewport extends Container {
   public panBy(deltaX: number, deltaY: number): void {
     this.x += deltaX;
     this.y += deltaY;
+    this.updateHitArea();
   }
 
   /**
@@ -171,6 +215,7 @@ export class SimpleViewport extends Container {
   public panTo(worldX: number, worldY: number): void {
     this.x = this.screenWidth / 2 - worldX * this.scale.x;
     this.y = this.screenHeight / 2 - worldY * this.scale.y;
+    this.updateHitArea();
   }
 
   /**
@@ -192,10 +237,11 @@ export class SimpleViewport extends Container {
       // Apply new scale
       this.scale.set(clampedScale);
 
-      // Re-center on that world position
+      // Re-center on that world position (this also updates hit area)
       this.panTo(centerWorld.x, centerWorld.y);
     } else {
       this.scale.set(clampedScale);
+      this.updateHitArea();
     }
   }
 
@@ -226,7 +272,7 @@ export class SimpleViewport extends Container {
   public resize(screenWidth: number, screenHeight: number): void {
     this.screenWidth = screenWidth;
     this.screenHeight = screenHeight;
-    this.hitArea = new Rectangle(0, 0, screenWidth, screenHeight);
+    this.updateHitArea();
   }
 
   /**
