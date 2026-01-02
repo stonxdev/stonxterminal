@@ -1,5 +1,5 @@
 import { Dock } from "@renderer/components/dock/Dock";
-import PixiSquare from "./components/pixi/PixiExample";
+import SimpleWorld from "./components/pixi/SimpleWorld";
 
 export const App: React.FC = () => {
   return (
@@ -15,7 +15,7 @@ export const App: React.FC = () => {
           zIndex: 0,
         }}
       >
-        <PixiSquare />
+        <SimpleWorld />
       </div>
 
       {/* Overlay layer - Dock on top */}

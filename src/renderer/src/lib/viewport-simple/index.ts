@@ -5,5 +5,5 @@
  * full-featured viewport in ../viewport/
  */
 
-export { SimpleViewport } from "./SimpleViewport";
 export type { SimpleViewportOptions } from "./SimpleViewport";
+export { SimpleViewport } from "./SimpleViewport";

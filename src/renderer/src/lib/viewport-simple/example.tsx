@@ -21,11 +21,13 @@ const SimpleViewportExample: React.FC = () => {
       const viewport = new SimpleViewport({
         screenWidth: 800,
         screenHeight: 600,
-        enableDrag: true,
       });
 
       // Add viewport to the stage
       app.stage.addChild(viewport);
+
+      // Attach wheel zoom to the canvas
+      viewport.attachWheelZoom(app.canvas);
 
       // Now add some objects to the world
       // These will all move together when you drag the viewport
@@ -52,7 +54,9 @@ const SimpleViewportExample: React.FC = () => {
       viewport.addChild(grid);
 
       // Add some colorful squares at different positions
-      const colors = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff, 0x00ffff];
+      const colors = [
+        0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff, 0x00ffff,
+      ];
 
       for (let i = 0; i < 6; i++) {
         const square = new Graphics();
@@ -72,26 +76,14 @@ const SimpleViewportExample: React.FC = () => {
       worldBounds.stroke({ width: 3, color: 0xffffff });
       viewport.addChild(worldBounds);
 
-      // Optional: Log viewport info on each frame to see what's happening
-      app.ticker.add(() => {
-        // Uncomment to see viewport position in console:
-        // console.log(`Viewport position: (${viewport.x.toFixed(0)}, ${viewport.y.toFixed(0)})`);
-
-        // You can also check what world coordinates are visible:
-        // const topLeft = viewport.getTopLeft();
-        // const bottomRight = viewport.getBottomRight();
-        // console.log(`Visible world area: (${topLeft.x.toFixed(0)}, ${topLeft.y.toFixed(0)}) to (${bottomRight.x.toFixed(0)}, ${bottomRight.y.toFixed(0)})`);
-      });
-
       // Log initial info
       console.log("SimpleViewport Example loaded!");
-      console.log("Try dragging around to move the viewport");
+      console.log("Try dragging to pan, scrolling to zoom");
       console.log(`Initial viewport position: (${viewport.x}, ${viewport.y})`);
 
-      const topLeft = viewport.getTopLeft();
-      const bottomRight = viewport.getBottomRight();
+      const bounds = viewport.getVisibleBounds();
       console.log(
-        `Visible world area: (${topLeft.x}, ${topLeft.y}) to (${bottomRight.x}, ${bottomRight.y})`,
+        `Visible world area: (${bounds.left}, ${bounds.top}) to (${bounds.right}, ${bounds.bottom})`,
       );
     },
   });
@@ -108,7 +100,8 @@ const SimpleViewportExample: React.FC = () => {
       >
         <h3>Simple Viewport Example</h3>
         <p>
-          <strong>Instructions:</strong> Click and drag to pan around the world
+          <strong>Instructions:</strong> Click and drag to pan, scroll wheel to
+          zoom
         </p>
         <p>
           <strong>What you're seeing:</strong> A 2000x2000 world with a grid,
