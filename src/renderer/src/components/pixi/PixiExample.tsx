@@ -1,61 +1,34 @@
-// src/PixiSquare.tsx
-
-import { Application, Graphics } from "pixi.js";
+import { Graphics } from "pixi.js";
 import type React from "react";
-import { useEffect, useRef } from "react";
-import "pixi.js/unsafe-eval";
+import { usePixiApp } from "../../hooks/usePixiApp";
 
 const PixiSquare: React.FC = () => {
-  const pixiContainer = useRef<HTMLDivElement>(null);
-  const appRef = useRef<Application | null>(null);
+  const { containerRef } = usePixiApp({
+    width: 1000,
+    height: 1000,
+    backgroundColor: 0x1a1a1a,
+    antialias: true,
+    onSetup: (app) => {
+      const square = new Graphics();
+      square.rect(0, 0, 100, 100);
+      square.fill(0xff0000);
+      square.x = 400;
+      square.y = 0;
+      app.stage.addChild(square);
 
-  useEffect(() => {
-    let isEffectActive = true;
+      // Animate the square moving to the right
+      app.ticker.add(() => {
+        square.x += 1; // Move 1 pixel to the right each frame
 
-    const setupPixi: () => Promise<void> = async () => {
-      if (pixiContainer.current) {
-        const app = new Application();
-        await app.init({
-          width: 200,
-          height: 200,
-          backgroundColor: 0x1a1a1a,
-          antialias: true,
-        });
-
-        if (!isEffectActive) {
-          app.destroy(true, {
-            children: true,
-            texture: true,
-          });
-          return;
+        // Optional: wrap around when it goes off screen
+        if (square.x > 1000) {
+          square.x = -100;
         }
+      });
+    },
+  });
 
-        pixiContainer.current.appendChild(app.canvas);
-
-        const square = new Graphics();
-        square.rect(50, 50, 100, 100);
-        square.fill(0xff0000);
-        app.stage.addChild(square);
-
-        appRef.current = app;
-      }
-    };
-
-    setupPixi();
-
-    return () => {
-      isEffectActive = false;
-      if (appRef.current) {
-        appRef.current.destroy(true, {
-          children: true,
-          texture: true,
-        });
-        appRef.current = null;
-      }
-    };
-  }, []);
-
-  return <div ref={pixiContainer} />;
+  return <div ref={containerRef} />;
 };
 
 export default PixiSquare;
