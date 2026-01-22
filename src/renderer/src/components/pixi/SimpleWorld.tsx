@@ -1,7 +1,7 @@
 import { SimpleViewport } from "@renderer/lib/viewport-simple";
 import { Application, Graphics, Text } from "pixi.js";
 import type React from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import "pixi.js/unsafe-eval";
 
 /**
@@ -22,54 +22,31 @@ const SimpleWorld: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<Application | null>(null);
   const viewportRef = useRef<SimpleViewport | null>(null);
-  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+  const isInitializedRef = useRef(false);
 
-  // Track container size with ResizeObserver
+  // Setup Pixi and viewport once on mount, handle resizes separately
   useEffect(() => {
-    if (!containerRef.current) return;
-
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const { width, height } = entry.contentRect;
-        if (width > 0 && height > 0) {
-          setContainerSize({ width, height });
-        }
-      }
-    });
-
-    resizeObserver.observe(containerRef.current);
-
-    // Set initial size
-    const rect = containerRef.current.getBoundingClientRect();
-    if (rect.width > 0 && rect.height > 0) {
-      setContainerSize({ width: rect.width, height: rect.height });
-    }
-
-    return () => resizeObserver.disconnect();
-  }, []);
-
-  // Setup Pixi and viewport
-  useEffect(() => {
-    if (
-      !containerRef.current ||
-      containerSize.width === 0 ||
-      containerSize.height === 0
-    ) {
-      return;
-    }
+    if (!containerRef.current || isInitializedRef.current) return;
 
     let isActive = true;
 
     const setup = async () => {
+      const container = containerRef.current;
+      if (!container) return;
+
+      const rect = container.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+
       const app = new Application();
 
       await app.init({
-        width: containerSize.width,
-        height: containerSize.height,
+        width: rect.width,
+        height: rect.height,
         backgroundColor: 0x1a1a2e,
         antialias: true,
         resolution: window.devicePixelRatio || 1,
         autoDensity: true,
+        resizeTo: container, // Let Pixi handle canvas resizing
       });
 
       if (!isActive) {
@@ -77,21 +54,18 @@ const SimpleWorld: React.FC = () => {
         return;
       }
 
-      // Add canvas to DOM
-      if (containerRef.current) {
-        containerRef.current.innerHTML = "";
-        containerRef.current.appendChild(app.canvas);
-        app.canvas.style.width = "100%";
-        app.canvas.style.height = "100%";
-        app.canvas.style.display = "block";
-      }
+      container.appendChild(app.canvas);
+      app.canvas.style.width = "100%";
+      app.canvas.style.height = "100%";
+      app.canvas.style.display = "block";
 
       appRef.current = app;
+      isInitializedRef.current = true;
 
       // Create the SimpleViewport
       const viewport = new SimpleViewport({
-        screenWidth: containerSize.width,
-        screenHeight: containerSize.height,
+        screenWidth: rect.width,
+        screenHeight: rect.height,
         minScale: 0.25,
         maxScale: 4,
         zoomSpeed: 0.1,
@@ -108,12 +82,34 @@ const SimpleWorld: React.FC = () => {
 
       // Center the viewport on the middle of the world
       viewport.panTo(WORLD_SIZE / 2, WORLD_SIZE / 2);
+
+      // Handle resizes - update viewport screen size when app resizes
+      const resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          const { width, height } = entry.contentRect;
+          if (width > 0 && height > 0 && viewportRef.current) {
+            viewportRef.current.resize(width, height);
+          }
+        }
+      });
+      resizeObserver.observe(container);
+
+      // Store for cleanup
+      (
+        app as Application & { _resizeObserver?: ResizeObserver }
+      )._resizeObserver = resizeObserver;
     };
 
     setup();
 
     return () => {
       isActive = false;
+      if (appRef.current) {
+        const app = appRef.current as Application & {
+          _resizeObserver?: ResizeObserver;
+        };
+        app._resizeObserver?.disconnect();
+      }
       if (viewportRef.current) {
         viewportRef.current.destroy();
         viewportRef.current = null;
@@ -122,19 +118,9 @@ const SimpleWorld: React.FC = () => {
         appRef.current.destroy(true, { children: true, texture: true });
         appRef.current = null;
       }
+      isInitializedRef.current = false;
     };
-  }, [containerSize]);
-
-  // Handle resize
-  useEffect(() => {
-    if (
-      viewportRef.current &&
-      containerSize.width > 0 &&
-      containerSize.height > 0
-    ) {
-      viewportRef.current.resize(containerSize.width, containerSize.height);
-    }
-  }, [containerSize]);
+  }, []);
 
   return (
     <div
