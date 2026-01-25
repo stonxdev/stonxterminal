@@ -8,12 +8,12 @@ export const TopBar: React.FC = () => {
   };
 
   return (
-    <div className="p-2 text-white flex items-center justify-between">
+    <div className="p-2 text-[var(--foreground)] flex items-center justify-between">
       <div>Resources / Time</div>
       <button
         type="button"
         onClick={handleCommandPalette}
-        className="pointer-events-auto flex items-center gap-1 px-2 py-1 rounded-md bg-white/10 hover:bg-white/20 transition-colors text-sm"
+        className="pointer-events-auto flex items-center gap-1 px-2 py-1 rounded-md bg-[var(--muted)] hover:bg-[var(--accent)] transition-colors text-sm text-[var(--foreground)]"
         title="Open command palette (⌘K)"
       >
         <Command size={14} />
