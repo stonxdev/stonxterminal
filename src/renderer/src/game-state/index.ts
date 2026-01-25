@@ -20,7 +20,24 @@ export {
   useSelectionActions,
   useSelectionType,
 } from "./hooks/useSelection";
-
+// Simulation hooks
+export {
+  useCharacter,
+  useCharacterActions,
+  useCharacterCount,
+  useCharacters,
+  useCharactersArray,
+  useCommandActions,
+  useCurrentTick,
+  useIsCharacterSelected,
+  useIsPlaying,
+  useMoveCommand,
+  useSelectedCharacter,
+  useSimulation,
+  useSimulationSpeed,
+  useSimulationState,
+  useTimeControls,
+} from "./hooks/useSimulation";
 // World hooks
 export {
   useCurrentLevel,
@@ -34,6 +51,7 @@ export {
   useWorldDimensions,
   useWorldMetadata,
 } from "./hooks/useWorld";
+
 // Store
 export { useGameStore } from "./store";
 
@@ -49,6 +67,8 @@ export type {
   SelectedStructureInfo,
   SelectedTileInfo,
   Selection,
+  SimulationStateActions,
+  SimulationStateSlice,
   TileSelection,
   WorldGenerationConfig,
 } from "./types";

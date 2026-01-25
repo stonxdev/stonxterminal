@@ -3,8 +3,15 @@
 // =============================================================================
 
 import type {
+  Character,
+  Command,
+  EntityId,
+  SimulationSpeed,
+} from "../simulation/types";
+import type {
   BiomeType,
   Position2D,
+  Position3D,
   StructureType,
   Tile,
   World,
@@ -97,6 +104,9 @@ export interface GameState {
   interactionMode: InteractionMode;
   hoverPosition: Position2D | null;
 
+  // Simulation state
+  simulation: SimulationStateSlice;
+
   // UI state
   isInitialized: boolean;
 }
@@ -135,7 +145,7 @@ export interface GameStateActions {
 /**
  * Combined state and actions
  */
-export type GameStore = GameState & GameStateActions;
+export type GameStore = GameState & GameStateActions & SimulationStateActions;
 
 // =============================================================================
 // HELPER TYPES
@@ -157,4 +167,44 @@ export interface SelectedStructureInfo {
   structureType: StructureType;
   position: Position2D;
   zLevel: number;
+}
+
+// =============================================================================
+// SIMULATION STATE TYPES
+// =============================================================================
+
+/**
+ * Simulation state for time control and entities
+ */
+export interface SimulationStateSlice {
+  /** Whether simulation is running */
+  isPlaying: boolean;
+  /** Speed multiplier (1x, 2x, 4x) */
+  speed: SimulationSpeed;
+  /** Current simulation tick */
+  currentTick: number;
+  /** Characters indexed by ID */
+  characters: Map<EntityId, Character>;
+}
+
+/**
+ * Actions for simulation control
+ */
+export interface SimulationStateActions {
+  // Time control
+  play: () => void;
+  pause: () => void;
+  togglePlayPause: () => void;
+  setSpeed: (speed: SimulationSpeed) => void;
+
+  // Entity management
+  addCharacter: (character: Character) => void;
+  removeCharacter: (id: EntityId) => void;
+  updateCharacter: (id: EntityId, changes: Partial<Character>) => void;
+  getCharacter: (id: EntityId) => Character | undefined;
+  getCharactersAtTile: (position: Position3D) => Character[];
+
+  // Commands
+  issueCommand: (characterId: EntityId, command: Command) => void;
+  cancelCommand: (characterId: EntityId) => void;
 }

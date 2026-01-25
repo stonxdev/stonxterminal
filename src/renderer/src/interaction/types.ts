@@ -13,6 +13,8 @@ export interface InteractionContext {
   worldPosition: Position2D;
   /** Screen position (pixel coordinates) of the pointer */
   screenPosition: { x: number; y: number };
+  /** Local position within the viewport (pixel coordinates) */
+  localPosition: { x: number; y: number };
   /** Current z-level being viewed */
   zLevel: number;
   /** The tile at the interaction position (if valid) */
@@ -25,6 +27,8 @@ export interface InteractionContext {
   ctrlKey: boolean;
   /** Whether alt key is held */
   altKey: boolean;
+  /** Pointer button (0 = left, 1 = middle, 2 = right) */
+  button: number;
 }
 
 /**

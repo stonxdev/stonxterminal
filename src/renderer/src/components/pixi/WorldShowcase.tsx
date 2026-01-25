@@ -12,6 +12,7 @@ import "pixi.js/unsafe-eval";
 import { useGameStore } from "@renderer/game-state";
 import { usePixiInteraction } from "@renderer/interaction";
 import type { Position2D } from "@renderer/world/types";
+import { CharacterRenderer, PathRenderer } from "./renderers";
 
 // =============================================================================
 // CONFIGURATION
@@ -84,6 +85,10 @@ const WorldShowcase: React.FC<WorldShowcaseProps> = ({ world, zLevel }) => {
   const selectionGraphicsRef = useRef<Graphics | null>(null);
   const hoverGraphicsRef = useRef<Graphics | null>(null);
 
+  // Character and path renderers
+  const characterRendererRef = useRef<CharacterRenderer | null>(null);
+  const pathRendererRef = useRef<PathRenderer | null>(null);
+
   // Interaction container for click handling
   const [interactionContainer, setInteractionContainer] =
     useState<Container | null>(null);
@@ -99,7 +104,7 @@ const WorldShowcase: React.FC<WorldShowcaseProps> = ({ world, zLevel }) => {
   const level = world.levels.get(zLevel);
   const worldPixelSize = (level?.width ?? 64) * CELL_SIZE;
 
-  // Subscribe to selection and hover state changes
+  // Subscribe to selection, hover, and character state changes
   useEffect(() => {
     const unsubscribe = useGameStore.subscribe((state) => {
       // Update selection overlay
@@ -115,6 +120,30 @@ const WorldShowcase: React.FC<WorldShowcaseProps> = ({ world, zLevel }) => {
       // Update hover overlay
       if (hoverGraphicsRef.current) {
         updateHoverOverlay(hoverGraphicsRef.current, state.hoverPosition);
+      }
+
+      // Get selected character ID (if any)
+      const selectedCharacterId =
+        state.selection.type === "entity" &&
+        state.selection.entityType === "colonist"
+          ? state.selection.entityId
+          : null;
+
+      // Update character renderer
+      if (characterRendererRef.current) {
+        characterRendererRef.current.update(
+          state.simulation.characters,
+          selectedCharacterId,
+          zLevel,
+        );
+      }
+
+      // Update path renderer
+      if (pathRendererRef.current) {
+        const selectedCharacter = selectedCharacterId
+          ? state.simulation.characters.get(selectedCharacterId)
+          : null;
+        pathRendererRef.current.update(selectedCharacter ?? null);
       }
     });
 
@@ -155,6 +184,11 @@ const WorldShowcase: React.FC<WorldShowcaseProps> = ({ world, zLevel }) => {
       app.canvas.style.height = "100%";
       app.canvas.style.display = "block";
 
+      // Prevent default context menu on right-click
+      app.canvas.addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+      });
+
       appRef.current = app;
       isInitializedRef.current = true;
 
@@ -183,6 +217,41 @@ const WorldShowcase: React.FC<WorldShowcaseProps> = ({ world, zLevel }) => {
       const selectionGraphics = new Graphics();
       viewport.addChild(selectionGraphics);
       selectionGraphicsRef.current = selectionGraphics;
+
+      // Create character container and renderer
+      const characterContainer = new Container();
+      viewport.addChild(characterContainer);
+      const characterRenderer = new CharacterRenderer(
+        characterContainer,
+        CELL_SIZE,
+      );
+      characterRendererRef.current = characterRenderer;
+
+      // Create path renderer (drawn above characters)
+      const pathContainer = new Container();
+      viewport.addChild(pathContainer);
+      const pathRenderer = new PathRenderer(pathContainer, CELL_SIZE);
+      pathRendererRef.current = pathRenderer;
+
+      // Initial render of characters (subscription only fires on changes)
+      const initialState = useGameStore.getState();
+      console.info("[WorldShowcase] Initial render - characters in store:", {
+        count: initialState.simulation.characters.size,
+        zLevel,
+        characters: Array.from(initialState.simulation.characters.values()).map(
+          (c) => ({ name: c.name, pos: c.position }),
+        ),
+      });
+      const selectedCharacterId =
+        initialState.selection.type === "entity" &&
+        initialState.selection.entityType === "colonist"
+          ? initialState.selection.entityId
+          : null;
+      characterRenderer.update(
+        initialState.simulation.characters,
+        selectedCharacterId,
+        zLevel,
+      );
 
       // Create interaction layer (transparent, covers world area)
       const interactionLayer = new Container();
@@ -226,6 +295,15 @@ const WorldShowcase: React.FC<WorldShowcaseProps> = ({ world, zLevel }) => {
       setInteractionContainer(null);
       selectionGraphicsRef.current = null;
       hoverGraphicsRef.current = null;
+      // Destroy renderers
+      if (characterRendererRef.current) {
+        characterRendererRef.current.destroy();
+        characterRendererRef.current = null;
+      }
+      if (pathRendererRef.current) {
+        pathRendererRef.current.destroy();
+        pathRendererRef.current = null;
+      }
       if (appRef.current) {
         const app = appRef.current as Application & {
           _resizeObserver?: ResizeObserver;
@@ -242,7 +320,7 @@ const WorldShowcase: React.FC<WorldShowcaseProps> = ({ world, zLevel }) => {
       }
       isInitializedRef.current = false;
     };
-  }, [level, worldPixelSize]);
+  }, [level, worldPixelSize, zLevel]);
 
   return (
     <div

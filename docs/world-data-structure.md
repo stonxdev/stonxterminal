@@ -339,19 +339,80 @@ const world = generateWorld("My Colony", 64, 64, {
 const level = generateZLevel(0, 64, 64, seed, "desert");
 ```
 
+### Generation Algorithm
+
+The procedural generator uses a multi-pass approach with **noise-based clustering**:
+
+1. **Value Noise + FBM** - Creates smooth, continuous patterns using Fractal Brownian Motion
+2. **Cellular Automata** - Smooths features into natural clusters (4-5 rule for lakes)
+3. **Threshold-based placement** - Features spawn above/below noise thresholds
+
+```
+Pass 1: Generate water map (noise + cellular automata smoothing)
+Pass 2: Generate rock formation map (noise + smoothing)
+Pass 3: Place terrain tiles based on maps
+Pass 4: Add structures (trees, bushes, boulders) with clustering
+Pass 5: Update pathfinding cache
+```
+
+### Clustering System
+
+Features cluster naturally using noise thresholds:
+
+**Water Bodies:**
+- Noise value below `waterThreshold` → water tile
+- Cellular automata (4 iterations) creates natural lake shapes
+- Deep water in centers (7+ water neighbors), shallow at edges
+
+**Forests:**
+- `forestNoise > forestThreshold` → forest zone
+- Inside zone: high tree density (`forestDensity`)
+- Outside zone: rare scattered trees (`scatteredTreeChance`)
+
+**Bushes:**
+- Separate noise pattern with `bushThreshold`
+- Also spawns as forest understory (30% chance in forest zones)
+
+**Rock Formations:**
+- `rockNoise > rockThreshold` → rocky area
+- Boulders spawn with `boulderDensity` in these areas
+
 ### Biomes
 
-Each biome has different terrain distributions and natural features:
+Each biome is configured with clustering parameters:
 
-| Biome | Primary Terrain | Tree Density | Water Chance |
-|-------|-----------------|--------------|--------------|
-| temperate_forest | soil, gravel, rock | 15% | 5% |
-| desert | sand, rock | 1% | 1% |
-| tundra | soil, rock, gravel | 5% | 8% |
-| jungle | soil, clay | 40% | 10% |
-| mountain | rock, granite, gravel | 8% | 3% |
-| swamp | clay, soil, water | 20% | 25% |
-| plains | soil, gravel | 3% | 3% |
+| Biome | Forest Threshold | Forest Density | Water Threshold | Boulder Density |
+|-------|------------------|----------------|-----------------|-----------------|
+| temperate_forest | 0.45 | 50% | 0.35 | 25% |
+| desert | 0.95 | 10% | 0.20 | 30% |
+| tundra | 0.60 | 25% | 0.40 | 35% |
+| jungle | 0.25 | 70% | 0.42 | 15% |
+| mountain | 0.55 | 35% | 0.32 | 40% |
+| swamp | 0.40 | 40% | 0.50 | 10% |
+| plains | 0.65 | 40% | 0.32 | 20% |
+
+**Biome Config Structure:**
+```typescript
+interface BiomeConfig {
+  terrainWeights: Array<{ type: TerrainType; weight: number }>;
+  treeTypes: StructureType[];
+  // Forest clustering
+  forestThreshold: number;    // Noise threshold for forest zones
+  forestDensity: number;      // Tree density in forests
+  forestScale: number;        // Noise scale (smaller = larger forests)
+  scatteredTreeChance: number;// Lone trees outside forests
+  // Bush clustering
+  bushThreshold: number;
+  bushDensity: number;
+  // Water
+  waterThreshold: number;
+  waterScale: number;
+  // Rock formations
+  rockThreshold: number;
+  rockScale: number;
+  boulderDensity: number;
+}
+```
 
 ### Seeded Random
 
@@ -367,6 +428,26 @@ rng.nextInt(0, 10);   // → 0-9 integer
 rng.chance(0.3);      // → true 30% of time
 rng.pick(["a", "b"]); // → random element
 ```
+
+### Value Noise
+
+The `ValueNoise` class generates smooth, continuous noise patterns:
+
+```typescript
+// Internal to procedural-generator.ts
+const noise = new ValueNoise(seed);
+
+// Single noise sample (0-1 output)
+noise.get(x, y, scale);
+
+// Fractal Brownian Motion - layered noise for natural patterns
+noise.fbm(x, y, octaves, persistence, scale);
+// octaves: number of layers (more = more detail)
+// persistence: amplitude decay (0.5 typical)
+// scale: zoom level (smaller = larger features)
+```
+
+FBM combines multiple noise octaves at different frequencies, creating the natural-looking patterns used for terrain features.
 
 ## File Organization
 

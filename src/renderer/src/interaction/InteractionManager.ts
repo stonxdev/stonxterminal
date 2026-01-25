@@ -149,12 +149,14 @@ export class InteractionManager {
     return {
       worldPosition,
       screenPosition: { x: event.screenX, y: event.screenY },
+      localPosition: { x: event.localX, y: event.localY },
       zLevel: this.zLevel,
       tile,
       world: this.world,
       shiftKey: event.shiftKey,
       ctrlKey: event.ctrlKey,
       altKey: event.altKey,
+      button: event.button,
     };
   }
 
@@ -162,8 +164,8 @@ export class InteractionManager {
    * Handle pointer down event
    */
   handlePointerDown(event: PointerEventData): void {
-    // Only handle left click for now
-    if (event.button !== 0) return;
+    // Handle left and right click
+    if (event.button !== 0 && event.button !== 2) return;
 
     const ctx = this.buildContext(event);
     if (!ctx) return;
@@ -176,7 +178,8 @@ export class InteractionManager {
    * Handle pointer up event
    */
   handlePointerUp(event: PointerEventData): void {
-    if (event.button !== 0) return;
+    // Handle left and right click
+    if (event.button !== 0 && event.button !== 2) return;
 
     const ctx = this.buildContext(event);
     if (!ctx) return;
