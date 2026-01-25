@@ -521,7 +521,13 @@ export function generateZLevel(
       const isInForestZone = forestNoise > config.forestThreshold;
 
       // Get bush zone noise (slightly different pattern)
-      const bushNoise = treeNoise.fbm(x + 1000, y + 1000, 3, 0.5, config.forestScale * 1.5);
+      const bushNoise = treeNoise.fbm(
+        x + 1000,
+        y + 1000,
+        3,
+        0.5,
+        config.forestScale * 1.5,
+      );
       const isInBushZone = bushNoise > config.bushThreshold;
 
       // Trees: spawn in forest zones with high density, or scattered outside

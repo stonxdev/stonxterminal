@@ -1,24 +1,23 @@
 import { SimpleViewport } from "@renderer/lib/viewport-simple";
-import { generateWorld } from "@renderer/world/factories/procedural-generator";
 import type {
-  BiomeType,
   StructureType,
   TerrainType,
   World,
   ZLevel,
 } from "@renderer/world/types";
-import { Application, Graphics, Text } from "pixi.js";
+import { Application, Container, Graphics, Text } from "pixi.js";
 import type React from "react";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import "pixi.js/unsafe-eval";
+import { useGameStore } from "@renderer/game-state";
+import { usePixiInteraction } from "@renderer/interaction";
+import type { Position2D } from "@renderer/world/types";
 
 // =============================================================================
 // CONFIGURATION
 // =============================================================================
 
-const CELL_SIZE = 32; // Pixels per cell
-const DEFAULT_WORLD_SIZE = 64; // 64x64 tiles
-const DEFAULT_SEED = 42; // Fixed seed for deterministic generation
+export const CELL_SIZE = 32; // Pixels per cell - exported for interaction system
 
 // =============================================================================
 // COLOR MAPPINGS
@@ -69,38 +68,58 @@ const STRUCTURE_COLORS: Record<StructureType, number> = {
 // =============================================================================
 
 interface WorldShowcaseProps {
-  /** Optional world to display. If not provided, generates a demo world */
-  world?: World;
+  /** World to display */
+  world: World;
   /** Current z-level to display */
-  zLevel?: number;
-  /** World size for demo generation */
-  worldSize?: number;
-  /** Biome for demo generation */
-  biome?: BiomeType;
-  /** Random seed for demo generation */
-  seed?: number;
+  zLevel: number;
 }
 
-const WorldShowcase: React.FC<WorldShowcaseProps> = ({
-  world: providedWorld,
-  zLevel = 0,
-  worldSize = DEFAULT_WORLD_SIZE,
-  biome = "temperate_forest",
-  seed = DEFAULT_SEED,
-}) => {
+const WorldShowcase: React.FC<WorldShowcaseProps> = ({ world, zLevel }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<Application | null>(null);
   const viewportRef = useRef<SimpleViewport | null>(null);
   const isInitializedRef = useRef(false);
 
-  // Generate or use provided world
-  const world = useMemo(() => {
-    if (providedWorld) return providedWorld;
-    return generateWorld("Demo World", worldSize, worldSize, { seed, biome });
-  }, [providedWorld, worldSize, biome, seed]);
+  // Overlay graphics for selection and hover
+  const selectionGraphicsRef = useRef<Graphics | null>(null);
+  const hoverGraphicsRef = useRef<Graphics | null>(null);
+
+  // Interaction container for click handling
+  const [interactionContainer, setInteractionContainer] =
+    useState<Container | null>(null);
+
+  // Wire up interaction system
+  usePixiInteraction({
+    container: interactionContainer,
+    world,
+    zLevel,
+    cellSize: CELL_SIZE,
+  });
 
   const level = world.levels.get(zLevel);
-  const worldPixelSize = (level?.width ?? worldSize) * CELL_SIZE;
+  const worldPixelSize = (level?.width ?? 64) * CELL_SIZE;
+
+  // Subscribe to selection and hover state changes
+  useEffect(() => {
+    const unsubscribe = useGameStore.subscribe((state) => {
+      // Update selection overlay
+      if (selectionGraphicsRef.current) {
+        updateSelectionOverlay(
+          selectionGraphicsRef.current,
+          state.selection.type === "tile" ? state.selection.position : null,
+          state.selection.type === "tile" ? state.selection.zLevel : null,
+          zLevel,
+        );
+      }
+
+      // Update hover overlay
+      if (hoverGraphicsRef.current) {
+        updateHoverOverlay(hoverGraphicsRef.current, state.hoverPosition);
+      }
+    });
+
+    return unsubscribe;
+  }, [zLevel]);
 
   useEffect(() => {
     if (!containerRef.current || isInitializedRef.current) return;
@@ -155,6 +174,32 @@ const WorldShowcase: React.FC<WorldShowcaseProps> = ({
       // Render the world
       renderWorld(viewport, level);
 
+      // Create hover overlay (drawn first, below selection)
+      const hoverGraphics = new Graphics();
+      viewport.addChild(hoverGraphics);
+      hoverGraphicsRef.current = hoverGraphics;
+
+      // Create selection overlay (drawn on top of hover)
+      const selectionGraphics = new Graphics();
+      viewport.addChild(selectionGraphics);
+      selectionGraphicsRef.current = selectionGraphics;
+
+      // Create interaction layer (transparent, covers world area)
+      const interactionLayer = new Container();
+      interactionLayer.eventMode = "static";
+      interactionLayer.hitArea = {
+        contains: (x: number, y: number) => {
+          return (
+            x >= 0 &&
+            x < level.width * CELL_SIZE &&
+            y >= 0 &&
+            y < level.height * CELL_SIZE
+          );
+        },
+      };
+      viewport.addChild(interactionLayer);
+      setInteractionContainer(interactionLayer);
+
       // Center on the world
       viewport.panTo(worldPixelSize / 2, worldPixelSize / 2);
 
@@ -178,6 +223,9 @@ const WorldShowcase: React.FC<WorldShowcaseProps> = ({
 
     return () => {
       isActive = false;
+      setInteractionContainer(null);
+      selectionGraphicsRef.current = null;
+      hoverGraphicsRef.current = null;
       if (appRef.current) {
         const app = appRef.current as Application & {
           _resizeObserver?: ResizeObserver;
@@ -306,6 +354,88 @@ function renderWorld(viewport: SimpleViewport, level: ZLevel): void {
   label.x = 10;
   label.y = 10;
   viewport.addChild(label);
+}
+
+/**
+ * Update the selection overlay graphics
+ */
+function updateSelectionOverlay(
+  graphics: Graphics,
+  position: Position2D | null,
+  selectionZLevel: number | null,
+  currentZLevel: number,
+): void {
+  graphics.clear();
+
+  // Only show selection if on the same z-level
+  if (!position || selectionZLevel !== currentZLevel) {
+    return;
+  }
+
+  const px = position.x * CELL_SIZE;
+  const py = position.y * CELL_SIZE;
+  const padding = 2;
+
+  // Draw selection border (bright cyan)
+  graphics.rect(
+    px + padding,
+    py + padding,
+    CELL_SIZE - padding * 2,
+    CELL_SIZE - padding * 2,
+  );
+  graphics.stroke({ width: 3, color: 0x00ffff });
+
+  // Draw corner accents
+  const cornerSize = 8;
+
+  // Top-left corner
+  graphics.moveTo(px, py + cornerSize);
+  graphics.lineTo(px, py);
+  graphics.lineTo(px + cornerSize, py);
+  graphics.stroke({ width: 2, color: 0x00ffff });
+
+  // Top-right corner
+  graphics.moveTo(px + CELL_SIZE - cornerSize, py);
+  graphics.lineTo(px + CELL_SIZE, py);
+  graphics.lineTo(px + CELL_SIZE, py + cornerSize);
+  graphics.stroke({ width: 2, color: 0x00ffff });
+
+  // Bottom-left corner
+  graphics.moveTo(px, py + CELL_SIZE - cornerSize);
+  graphics.lineTo(px, py + CELL_SIZE);
+  graphics.lineTo(px + cornerSize, py + CELL_SIZE);
+  graphics.stroke({ width: 2, color: 0x00ffff });
+
+  // Bottom-right corner
+  graphics.moveTo(px + CELL_SIZE - cornerSize, py + CELL_SIZE);
+  graphics.lineTo(px + CELL_SIZE, py + CELL_SIZE);
+  graphics.lineTo(px + CELL_SIZE, py + CELL_SIZE - cornerSize);
+  graphics.stroke({ width: 2, color: 0x00ffff });
+}
+
+/**
+ * Update the hover overlay graphics
+ */
+function updateHoverOverlay(
+  graphics: Graphics,
+  position: Position2D | null,
+): void {
+  graphics.clear();
+
+  if (!position) {
+    return;
+  }
+
+  const px = position.x * CELL_SIZE;
+  const py = position.y * CELL_SIZE;
+
+  // Draw semi-transparent hover highlight
+  graphics.rect(px, py, CELL_SIZE, CELL_SIZE);
+  graphics.fill({ color: 0xffffff, alpha: 0.15 });
+
+  // Draw subtle border
+  graphics.rect(px, py, CELL_SIZE, CELL_SIZE);
+  graphics.stroke({ width: 1, color: 0xffffff, alpha: 0.4 });
 }
 
 export default WorldShowcase;
