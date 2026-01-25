@@ -1,12 +1,12 @@
 import { Dock } from "@renderer/components/dock/Dock";
 import { LeftPanel, RightPanel, TopBar } from "@renderer/components/hud";
-import SimpleWorld from "../components/pixi/SimpleWorld";
+import WorldShowcase from "../components/pixi/WorldShowcase";
 
 export const GameScreen: React.FC = () => {
   return (
     <div className="relative w-screen h-screen">
       <div className="absolute inset-0">
-        <SimpleWorld />
+        <WorldShowcase />
       </div>
       <div className="absolute inset-0 pointer-events-none">
         <Dock
