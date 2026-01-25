@@ -13,13 +13,187 @@ import {
   SeededRandom,
 } from "./world-factory";
 
+// =============================================================================
+// NOISE GENERATION
+// =============================================================================
+
+/**
+ * Simple value noise implementation for terrain generation.
+ * Creates smooth, continuous noise patterns from a seed.
+ */
+class ValueNoise {
+  private permutation: number[];
+
+  constructor(seed: number) {
+    const rng = new SeededRandom(seed);
+    // Create permutation table
+    this.permutation = [];
+    for (let i = 0; i < 256; i++) {
+      this.permutation[i] = i;
+    }
+    // Shuffle using Fisher-Yates
+    for (let i = 255; i > 0; i--) {
+      const j = rng.nextInt(0, i + 1);
+      [this.permutation[i], this.permutation[j]] = [
+        this.permutation[j],
+        this.permutation[i],
+      ];
+    }
+    // Duplicate for overflow
+    this.permutation = [...this.permutation, ...this.permutation];
+  }
+
+  /** Smooth interpolation (smoothstep) */
+  private fade(t: number): number {
+    return t * t * t * (t * (t * 6 - 15) + 10);
+  }
+
+  /** Linear interpolation */
+  private lerp(a: number, b: number, t: number): number {
+    return a + t * (b - a);
+  }
+
+  /** Get pseudo-random value for grid point */
+  private hash(x: number, y: number): number {
+    return this.permutation[(this.permutation[x & 255] + y) & 255] / 255;
+  }
+
+  /**
+   * Get noise value at position (0-1 range output)
+   * @param x - X coordinate
+   * @param y - Y coordinate
+   * @param scale - How zoomed in the noise is (smaller = more zoomed in)
+   */
+  get(x: number, y: number, scale: number = 1): number {
+    x *= scale;
+    y *= scale;
+
+    const x0 = Math.floor(x);
+    const y0 = Math.floor(y);
+    const x1 = x0 + 1;
+    const y1 = y0 + 1;
+
+    const sx = this.fade(x - x0);
+    const sy = this.fade(y - y0);
+
+    const n00 = this.hash(x0, y0);
+    const n10 = this.hash(x1, y0);
+    const n01 = this.hash(x0, y1);
+    const n11 = this.hash(x1, y1);
+
+    const nx0 = this.lerp(n00, n10, sx);
+    const nx1 = this.lerp(n01, n11, sx);
+
+    return this.lerp(nx0, nx1, sy);
+  }
+
+  /**
+   * Fractal Brownian Motion - layered noise for more natural patterns
+   * @param x - X coordinate
+   * @param y - Y coordinate
+   * @param octaves - Number of noise layers (more = more detail)
+   * @param persistence - How much each octave contributes (0.5 typical)
+   * @param scale - Base scale
+   */
+  fbm(
+    x: number,
+    y: number,
+    octaves: number = 4,
+    persistence: number = 0.5,
+    scale: number = 0.1,
+  ): number {
+    let total = 0;
+    let amplitude = 1;
+    let maxValue = 0;
+    let frequency = scale;
+
+    for (let i = 0; i < octaves; i++) {
+      total += this.get(x, y, frequency) * amplitude;
+      maxValue += amplitude;
+      amplitude *= persistence;
+      frequency *= 2;
+    }
+
+    return total / maxValue;
+  }
+}
+
+// =============================================================================
+// CELLULAR AUTOMATA
+// =============================================================================
+
+/**
+ * Apply cellular automata smoothing to create natural clustering.
+ * Uses the 4-5 rule: a cell becomes "on" if 5+ neighbors are "on",
+ * stays "on" if 4+ neighbors are "on".
+ */
+function applyCellularAutomata(
+  grid: boolean[],
+  width: number,
+  height: number,
+  iterations: number = 3,
+): boolean[] {
+  let current = [...grid];
+  let next = new Array(width * height).fill(false);
+
+  for (let iter = 0; iter < iterations; iter++) {
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const index = y * width + x;
+        const neighbors = countNeighbors(current, x, y, width, height);
+        const isAlive = current[index];
+
+        // Birth: dead cell with 5+ neighbors becomes alive
+        // Survival: alive cell with 4+ neighbors stays alive
+        if (isAlive) {
+          next[index] = neighbors >= 4;
+        } else {
+          next[index] = neighbors >= 5;
+        }
+      }
+    }
+    [current, next] = [next, current];
+  }
+
+  return current;
+}
+
+/** Count alive neighbors (8-directional) */
+function countNeighbors(
+  grid: boolean[],
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+): number {
+  let count = 0;
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      if (dx === 0 && dy === 0) continue;
+      const nx = x + dx;
+      const ny = y + dy;
+      if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+        if (grid[ny * width + nx]) count++;
+      }
+    }
+  }
+  return count;
+}
+
+// =============================================================================
+// BIOME CONFIGURATION
+// =============================================================================
+
 /** Biome-specific generation configuration */
 interface BiomeConfig {
   terrainWeights: Array<{ type: TerrainType; weight: number }>;
   treeTypes: StructureType[];
   treeDensity: number;
-  waterChance: number;
-  rockFormationChance: number;
+  treeClusterScale: number; // Noise scale for tree clustering
+  waterThreshold: number; // Noise threshold for water (0-1)
+  waterScale: number; // Noise scale for water bodies
+  rockThreshold: number; // Noise threshold for rock formations
+  rockScale: number; // Noise scale for rock clustering
 }
 
 const BIOME_CONFIGS: Record<BiomeType, BiomeConfig> = {
@@ -30,9 +204,12 @@ const BIOME_CONFIGS: Record<BiomeType, BiomeConfig> = {
       { type: "rock", weight: 0.2 },
     ],
     treeTypes: ["tree_oak", "tree_pine"],
-    treeDensity: 0.15,
-    waterChance: 0.05,
-    rockFormationChance: 0.03,
+    treeDensity: 0.25,
+    treeClusterScale: 0.15,
+    waterThreshold: 0.35,
+    waterScale: 0.08,
+    rockThreshold: 0.75,
+    rockScale: 0.12,
   },
   desert: {
     terrainWeights: [
@@ -41,9 +218,12 @@ const BIOME_CONFIGS: Record<BiomeType, BiomeConfig> = {
       { type: "gravel", weight: 0.05 },
     ],
     treeTypes: [],
-    treeDensity: 0.01,
-    waterChance: 0.01,
-    rockFormationChance: 0.05,
+    treeDensity: 0.02,
+    treeClusterScale: 0.1,
+    waterThreshold: 0.15, // Very rare oases
+    waterScale: 0.05,
+    rockThreshold: 0.7,
+    rockScale: 0.1,
   },
   tundra: {
     terrainWeights: [
@@ -52,9 +232,12 @@ const BIOME_CONFIGS: Record<BiomeType, BiomeConfig> = {
       { type: "gravel", weight: 0.3 },
     ],
     treeTypes: ["tree_pine"],
-    treeDensity: 0.05,
-    waterChance: 0.08,
-    rockFormationChance: 0.1,
+    treeDensity: 0.1,
+    treeClusterScale: 0.12,
+    waterThreshold: 0.4, // Frozen lakes
+    waterScale: 0.06,
+    rockThreshold: 0.6,
+    rockScale: 0.15,
   },
   jungle: {
     terrainWeights: [
@@ -63,9 +246,12 @@ const BIOME_CONFIGS: Record<BiomeType, BiomeConfig> = {
       { type: "gravel", weight: 0.1 },
     ],
     treeTypes: ["tree_oak"],
-    treeDensity: 0.4,
-    waterChance: 0.1,
-    rockFormationChance: 0.02,
+    treeDensity: 0.5,
+    treeClusterScale: 0.2,
+    waterThreshold: 0.45, // Rivers and swampy areas
+    waterScale: 0.07,
+    rockThreshold: 0.85,
+    rockScale: 0.1,
   },
   mountain: {
     terrainWeights: [
@@ -74,20 +260,26 @@ const BIOME_CONFIGS: Record<BiomeType, BiomeConfig> = {
       { type: "gravel", weight: 0.2 },
     ],
     treeTypes: ["tree_pine"],
-    treeDensity: 0.08,
-    waterChance: 0.03,
-    rockFormationChance: 0.2,
+    treeDensity: 0.15,
+    treeClusterScale: 0.1,
+    waterThreshold: 0.3, // Mountain lakes
+    waterScale: 0.04,
+    rockThreshold: 0.5,
+    rockScale: 0.2,
   },
   swamp: {
     terrainWeights: [
       { type: "clay", weight: 0.5 },
       { type: "soil", weight: 0.3 },
-      { type: "water_shallow", weight: 0.2 },
+      { type: "gravel", weight: 0.2 },
     ],
     treeTypes: ["tree_oak"],
-    treeDensity: 0.2,
-    waterChance: 0.25,
-    rockFormationChance: 0.01,
+    treeDensity: 0.3,
+    treeClusterScale: 0.15,
+    waterThreshold: 0.55, // Lots of water
+    waterScale: 0.1,
+    rockThreshold: 0.9,
+    rockScale: 0.08,
   },
   plains: {
     terrainWeights: [
@@ -96,11 +288,18 @@ const BIOME_CONFIGS: Record<BiomeType, BiomeConfig> = {
       { type: "rock", weight: 0.05 },
     ],
     treeTypes: ["tree_oak"],
-    treeDensity: 0.03,
-    waterChance: 0.03,
-    rockFormationChance: 0.02,
+    treeDensity: 0.08,
+    treeClusterScale: 0.08,
+    waterThreshold: 0.3, // Ponds and streams
+    waterScale: 0.05,
+    rockThreshold: 0.85,
+    rockScale: 0.1,
   },
 };
+
+// =============================================================================
+// TERRAIN GENERATION
+// =============================================================================
 
 /** Pick terrain based on weighted probabilities */
 function pickWeightedTerrain(
@@ -162,7 +361,7 @@ function updateTilePathfinding(tile: Tile): void {
   tile.pathfinding.movementCost = movementCost;
 }
 
-/** Generate a z-level with procedural terrain */
+/** Generate a z-level with procedural terrain using noise and cellular automata */
 export function generateZLevel(
   z: number,
   width: number,
@@ -172,29 +371,94 @@ export function generateZLevel(
 ): ZLevel {
   const rng = new SeededRandom(seed + z * 1000);
   const config = BIOME_CONFIGS[biome];
+
+  // Create noise generators with different seeds for variety
+  const waterNoise = new ValueNoise(seed + 1);
+  const rockNoise = new ValueNoise(seed + 2);
+  const treeNoise = new ValueNoise(seed + 3);
+  const terrainNoise = new ValueNoise(seed + 4);
+
   const tiles: Tile[] = new Array(width * height);
 
-  // First pass: generate terrain
+  // ==========================================================================
+  // Pass 1: Generate water map using noise + cellular automata
+  // ==========================================================================
+  const waterMap: boolean[] = new Array(width * height);
+
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const index = y * width + x;
-      const terrainType = pickWeightedTerrain(rng, config.terrainWeights);
+      // Use FBM for more natural water body shapes
+      const noiseValue = waterNoise.fbm(x, y, 4, 0.5, config.waterScale);
+      waterMap[index] = noiseValue < config.waterThreshold;
+    }
+  }
 
-      // Add water patches
-      const isWater = rng.chance(config.waterChance);
-      const finalTerrainType = isWater ? "water_shallow" : terrainType;
+  // Apply cellular automata to create more natural lake shapes
+  const smoothedWaterMap = applyCellularAutomata(waterMap, width, height, 4);
+
+  // ==========================================================================
+  // Pass 2: Generate rock formation map
+  // ==========================================================================
+  const rockMap: boolean[] = new Array(width * height);
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const index = y * width + x;
+      const noiseValue = rockNoise.fbm(x, y, 3, 0.6, config.rockScale);
+      rockMap[index] = noiseValue > config.rockThreshold;
+    }
+  }
+
+  // Smooth rock formations
+  const smoothedRockMap = applyCellularAutomata(rockMap, width, height, 2);
+
+  // ==========================================================================
+  // Pass 3: Generate base terrain tiles
+  // ==========================================================================
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const index = y * width + x;
+      const isWater = smoothedWaterMap[index];
+
+      let terrainType: TerrainType;
+
+      if (isWater) {
+        // Check depth based on distance from edge
+        const waterDepth = countNeighbors(
+          smoothedWaterMap,
+          x,
+          y,
+          width,
+          height,
+        );
+        terrainType = waterDepth >= 7 ? "water_deep" : "water_shallow";
+      } else {
+        // Use noise to add variation to terrain selection
+        const terrainVariation = terrainNoise.get(x, y, 0.2);
+        // Bias the random selection based on noise
+        rng.next(); // Advance RNG for consistency
+        terrainType = pickWeightedTerrain(rng, config.terrainWeights);
+
+        // Override with rock in rocky areas
+        if (smoothedRockMap[index] && terrainVariation > 0.3 && !isWater) {
+          terrainType = rng.chance(0.5) ? "rock" : "granite";
+        }
+      }
 
       tiles[index] = createTile({
         terrain: {
-          type: finalTerrainType,
-          moisture: rng.next() * 0.5 + (isWater ? 0.5 : 0.25),
-          temperature: 15 + rng.next() * 10,
+          type: terrainType,
+          moisture: isWater ? 1.0 : waterNoise.get(x, y, 0.1) * 0.5 + 0.25,
+          temperature: 15 + terrainNoise.get(x, y, 0.05) * 10,
         },
       });
     }
   }
 
-  // Second pass: add structures (trees, boulders)
+  // ==========================================================================
+  // Pass 4: Add structures (trees, boulders) with clustering
+  // ==========================================================================
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const index = y * width + x;
@@ -208,16 +472,28 @@ export function generateZLevel(
         continue;
       }
 
-      // Add trees
-      if (config.treeTypes.length > 0 && rng.chance(config.treeDensity)) {
-        tile.structure = createStructureData(rng.pick(config.treeTypes), {
-          health: 150 + rng.nextInt(0, 100),
-        });
-        continue;
+      // Get tree density from noise (creates forest clusters)
+      const treeDensityNoise = treeNoise.fbm(
+        x,
+        y,
+        3,
+        0.5,
+        config.treeClusterScale,
+      );
+
+      // Trees are more likely where noise is high
+      if (config.treeTypes.length > 0) {
+        const effectiveTreeChance = config.treeDensity * (treeDensityNoise * 2);
+        if (rng.chance(effectiveTreeChance)) {
+          tile.structure = createStructureData(rng.pick(config.treeTypes), {
+            health: 150 + rng.nextInt(0, 100),
+          });
+          continue;
+        }
       }
 
-      // Add rock formations
-      if (rng.chance(config.rockFormationChance)) {
+      // Add boulders in rocky areas
+      if (smoothedRockMap[index] && rng.chance(0.15)) {
         tile.structure = createStructureData("boulder", {
           health: 300 + rng.nextInt(0, 200),
         });
@@ -225,7 +501,9 @@ export function generateZLevel(
     }
   }
 
-  // Update pathfinding cache
+  // ==========================================================================
+  // Pass 5: Update pathfinding cache
+  // ==========================================================================
   for (let i = 0; i < tiles.length; i++) {
     updateTilePathfinding(tiles[i]);
   }
