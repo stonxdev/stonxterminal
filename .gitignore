@@ -132,6 +132,7 @@ dist
 # Electron build output
 dist/
 dist-electron/
+dist-web/
 build/
 out/
 
