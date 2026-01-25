@@ -207,6 +207,11 @@ app.whenReady().then(() => {
   // IPC test
   ipcMain.on("ping", () => console.log("pong"));
 
+  // --- App Data Path Handler ---
+  ipcMain.handle("app:getDataPath", () => {
+    return join(app.getPath("userData"), "colony-data");
+  });
+
   // --- Register IPC Handlers for File System Operations ---
   ipcMain.handle("fs:joinPath", (_event, ...paths) => {
     return join(...paths);

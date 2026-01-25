@@ -1,41 +1,24 @@
 import { Dock } from "@renderer/components/dock/Dock";
+import { LeftPanel, RightPanel, TopBar } from "@renderer/components/hud";
 import SimpleWorld from "./components/pixi/SimpleWorld";
+import { ColonyProvider } from "./context/ColonyContext";
 
 export const App: React.FC = () => {
   return (
-    <div style={{ width: "100vw", height: "100vh", position: "relative" }}>
-      {/* Background layer - SimpleWorld fills entire screen */}
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "100%",
-          zIndex: 0,
-        }}
-      >
-        <SimpleWorld />
+    <ColonyProvider>
+      <div className="relative w-screen h-screen">
+        <div className="absolute inset-0">
+          <SimpleWorld />
+        </div>
+        <div className="absolute inset-0 pointer-events-none">
+          <Dock
+            top={<TopBar />}
+            leftTop={<LeftPanel />}
+            center={null}
+            rightTop={<RightPanel />}
+          />
+        </div>
       </div>
-
-      {/* Overlay layer - Dock on top */}
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "100%",
-          zIndex: 1,
-          pointerEvents: "none",
-        }}
-      >
-        <Dock
-          leftTop={<div style={{ padding: "8px", color: "white" }}>Left</div>}
-          center={null}
-          rightTop={<div style={{ padding: "8px", color: "white" }}>Right</div>}
-        />
-      </div>
-    </div>
+    </ColonyProvider>
   );
 };

@@ -13,6 +13,7 @@ import { useResize } from "./useResize";
 const DockContext = createContext<boolean>(false);
 
 export interface DockProps {
+  top?: React.ReactNode;
   center: React.ReactNode;
   leftTop?: React.ReactNode;
   leftBottom?: React.ReactNode;
@@ -27,6 +28,7 @@ export interface DockProps {
 }
 
 export const Dock: React.FC<DockProps> = ({
+  top,
   center,
   leftTop,
   leftBottom,
@@ -140,105 +142,115 @@ export const Dock: React.FC<DockProps> = ({
     <DockContext.Provider value={true}>
       <div
         ref={containerRef}
-        className={`flex h-full w-full min-h-0 min-w-0 ${isNested ? "h-auto w-auto" : "h-screen w-screen"}`}
+        className={`flex flex-col h-full w-full min-h-0 min-w-0 ${isNested ? "h-auto w-auto" : "h-screen w-screen"}`}
       >
-        {hasLeft && (
+        {top && (
           <div
-            className="flex flex-col relative bg-background border-r border-border"
-            style={{
-              width: leftWidth,
-              pointerEvents: "auto",
-            }}
+            className="w-full bg-background border-b border-border"
+            style={{ pointerEvents: "auto" }}
           >
-            {leftTop && (
-              <div className="flex-1 bg-background relative overflow-y-auto">
-                {leftTop}
-              </div>
-            )}
-            {leftBottom && leftTop && (
-              <VerticalResizeHandle
-                onMouseDown={handleLeftBottomResize}
-                align="top"
-              />
-            )}
-            {leftBottom && (
-              <div
-                className="bg-background relative overflow-y-auto"
-                style={{
-                  height: leftBottomHeight,
-                }}
-              >
-                {leftBottom}
-              </div>
-            )}
-            <HorizontalResizeHandle
-              onMouseDown={handleLeftResize}
-              align="right"
-            />
+            {top}
           </div>
         )}
-
-        <div className="flex-1 flex flex-col relative">
-          <div
-            className={`flex-1 relative overflow-y-auto ${center ? "bg-background" : ""}`}
-            style={{ pointerEvents: center ? "auto" : "none" }}
-          >
-            {center}
-          </div>
-          {centerBottom && (
-            <>
-              <VerticalResizeHandle
-                onMouseDown={handleCenterBottomResize}
-                align="top"
+        <div className="flex flex-1 min-h-0">
+          {hasLeft && (
+            <div
+              className="flex flex-col relative bg-background border-r border-border"
+              style={{
+                width: leftWidth,
+                pointerEvents: "auto",
+              }}
+            >
+              {leftTop && (
+                <div className="flex-1 bg-background relative overflow-y-auto">
+                  {leftTop}
+                </div>
+              )}
+              {leftBottom && leftTop && (
+                <VerticalResizeHandle
+                  onMouseDown={handleLeftBottomResize}
+                  align="top"
+                />
+              )}
+              {leftBottom && (
+                <div
+                  className="bg-background relative overflow-y-auto"
+                  style={{
+                    height: leftBottomHeight,
+                  }}
+                >
+                  {leftBottom}
+                </div>
+              )}
+              <HorizontalResizeHandle
+                onMouseDown={handleLeftResize}
+                align="right"
               />
-              <div
-                className="bg-background relative overflow-y-auto border-t border-border"
-                style={{
-                  height: centerBottomHeight,
-                  pointerEvents: "auto",
-                }}
-              >
-                {centerBottom}
-              </div>
-            </>
+            </div>
+          )}
+
+          <div className="flex-1 flex flex-col relative">
+            <div
+              className={`flex-1 relative overflow-y-auto ${center ? "bg-background" : ""}`}
+              style={{ pointerEvents: center ? "auto" : "none" }}
+            >
+              {center}
+            </div>
+            {centerBottom && (
+              <>
+                <VerticalResizeHandle
+                  onMouseDown={handleCenterBottomResize}
+                  align="top"
+                />
+                <div
+                  className="bg-background relative overflow-y-auto border-t border-border"
+                  style={{
+                    height: centerBottomHeight,
+                    pointerEvents: "auto",
+                  }}
+                >
+                  {centerBottom}
+                </div>
+              </>
+            )}
+          </div>
+
+          {hasRight && (
+            <div
+              className="flex flex-col relative bg-background border-l border-border"
+              style={{
+                width: rightWidth,
+                pointerEvents: "auto",
+              }}
+            >
+              {rightTop && (
+                <div className="flex-1 bg-background relative overflow-y-auto">
+                  {rightTop}
+                </div>
+              )}
+              {rightBottom && rightTop && (
+                <VerticalResizeHandle
+                  onMouseDown={handleRightBottomResize}
+                  align="top"
+                />
+              )}
+              {rightBottom && (
+                <div
+                  className="bg-background relative overflow-y-auto"
+                  style={{
+                    height: rightBottomHeight,
+                  }}
+                >
+                  {rightBottom}
+                </div>
+              )}
+              <HorizontalResizeHandle
+                onMouseDown={handleRightResize}
+                align="left"
+              />
+            </div>
           )}
         </div>
-
-        {hasRight && (
-          <div
-            className="flex flex-col relative bg-background border-l border-border"
-            style={{
-              width: rightWidth,
-              pointerEvents: "auto",
-            }}
-          >
-            {rightTop && (
-              <div className="flex-1 bg-background relative overflow-y-auto">
-                {rightTop}
-              </div>
-            )}
-            {rightBottom && rightTop && (
-              <VerticalResizeHandle
-                onMouseDown={handleRightBottomResize}
-                align="top"
-              />
-            )}
-            {rightBottom && (
-              <div
-                className="bg-background relative overflow-y-auto"
-                style={{
-                  height: rightBottomHeight,
-                }}
-              >
-                {rightBottom}
-              </div>
-            )}
-            <HorizontalResizeHandle
-              onMouseDown={handleRightResize}
-              align="left"
-            />
-          </div>
-        )}
       </div>
     </DockContext.Provider>
   );

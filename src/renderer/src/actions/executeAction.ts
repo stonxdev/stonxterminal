@@ -1,0 +1,57 @@
+import type { ColonyContextData } from "../context/types";
+import type { Action, CommandAction, HandlerAction } from "./types";
+
+/**
+ * Standalone action executor that can be used outside of React components.
+ * This is the core logic extracted for use in KeybindingManager.
+ *
+ * @param action - The action to execute
+ * @param context - The Colony context (optional, required for command actions)
+ * @returns Promise that resolves when action completes
+ */
+export async function executeAction(
+  action: Action,
+  context?: ColonyContextData | null,
+): Promise<void> {
+  if (action.disabled) {
+    return;
+  }
+
+  switch (action.type) {
+    case "handler": {
+      const handlerAction = action as HandlerAction;
+      try {
+        await handlerAction.onExecute();
+      } catch (error) {
+        console.error(`Error executing handler action "${action.id}":`, error);
+      }
+      break;
+    }
+    case "command": {
+      const commandAction = action as CommandAction;
+
+      // Check if context is available for command execution
+      if (!context) {
+        throw new Error(
+          `Cannot execute command "${commandAction.command}" - ColonyContext not available.`,
+        );
+      }
+
+      try {
+        await context.commands.execute(
+          commandAction.command,
+          commandAction.commandArgs,
+        );
+      } catch (error) {
+        console.error(`Error executing command action "${action.id}":`, error);
+      }
+      break;
+    }
+    default: {
+      // TypeScript exhaustiveness check
+      const _exhaustiveCheck: never = action;
+      console.error(`Unknown action type:`, _exhaustiveCheck);
+      break;
+    }
+  }
+}

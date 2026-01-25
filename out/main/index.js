@@ -167,6 +167,9 @@ electron.app.whenReady().then(() => {
     utils.optimizer.watchWindowShortcuts(window);
   });
   electron.ipcMain.on("ping", () => console.log("pong"));
+  electron.ipcMain.handle("app:getDataPath", () => {
+    return node_path.join(electron.app.getPath("userData"), "colony-data");
+  });
   electron.ipcMain.handle("fs:joinPath", (_event, ...paths) => {
     return node_path.join(...paths);
   });

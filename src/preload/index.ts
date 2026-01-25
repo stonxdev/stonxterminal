@@ -81,6 +81,9 @@ const ipcApi = {
   }): Promise<any> => {
     return ipcRenderer.invoke("ai:proxyRequest", options);
   },
+
+  // Get the app data path for storing game saves and settings
+  getAppDataPath: (): Promise<string> => ipcRenderer.invoke("app:getDataPath"),
 };
 
 export type IpcApi = typeof ipcApi;

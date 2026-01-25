@@ -41,7 +41,9 @@ const ipcApi = {
   // AI API proxy to avoid CORS issues
   proxyAiRequest: (options) => {
     return electron.ipcRenderer.invoke("ai:proxyRequest", options);
-  }
+  },
+  // Get the app data path for storing game saves and settings
+  getAppDataPath: () => electron.ipcRenderer.invoke("app:getDataPath")
 };
 if (process.contextIsolated) {
   try {
