@@ -188,12 +188,21 @@ function countNeighbors(
 interface BiomeConfig {
   terrainWeights: Array<{ type: TerrainType; weight: number }>;
   treeTypes: StructureType[];
-  treeDensity: number;
-  treeClusterScale: number; // Noise scale for tree clustering
+  // Forest clustering
+  forestThreshold: number; // Noise value above which forest zones exist (0-1)
+  forestDensity: number; // Tree density within forest zones
+  forestScale: number; // Noise scale for forest clustering
+  scatteredTreeChance: number; // Chance of lone trees outside forests
+  // Bush clustering (understory)
+  bushThreshold: number; // Noise threshold for bush zones
+  bushDensity: number; // Bush density within zones
+  // Water
   waterThreshold: number; // Noise threshold for water (0-1)
   waterScale: number; // Noise scale for water bodies
+  // Rock formations
   rockThreshold: number; // Noise threshold for rock formations
   rockScale: number; // Noise scale for rock clustering
+  boulderDensity: number; // Boulder density in rocky areas
 }
 
 const BIOME_CONFIGS: Record<BiomeType, BiomeConfig> = {
@@ -204,12 +213,17 @@ const BIOME_CONFIGS: Record<BiomeType, BiomeConfig> = {
       { type: "rock", weight: 0.2 },
     ],
     treeTypes: ["tree_oak", "tree_pine"],
-    treeDensity: 0.25,
-    treeClusterScale: 0.15,
+    forestThreshold: 0.45,
+    forestDensity: 0.5,
+    forestScale: 0.08,
+    scatteredTreeChance: 0.02,
+    bushThreshold: 0.4,
+    bushDensity: 0.15,
     waterThreshold: 0.35,
-    waterScale: 0.08,
-    rockThreshold: 0.75,
-    rockScale: 0.12,
+    waterScale: 0.06,
+    rockThreshold: 0.72,
+    rockScale: 0.1,
+    boulderDensity: 0.25,
   },
   desert: {
     terrainWeights: [
@@ -218,12 +232,17 @@ const BIOME_CONFIGS: Record<BiomeType, BiomeConfig> = {
       { type: "gravel", weight: 0.05 },
     ],
     treeTypes: [],
-    treeDensity: 0.02,
-    treeClusterScale: 0.1,
-    waterThreshold: 0.15, // Very rare oases
-    waterScale: 0.05,
-    rockThreshold: 0.7,
-    rockScale: 0.1,
+    forestThreshold: 0.95, // Almost no trees
+    forestDensity: 0.1,
+    forestScale: 0.05,
+    scatteredTreeChance: 0.005,
+    bushThreshold: 0.85,
+    bushDensity: 0.05,
+    waterThreshold: 0.2, // Rare oases
+    waterScale: 0.04,
+    rockThreshold: 0.6,
+    rockScale: 0.12,
+    boulderDensity: 0.3,
   },
   tundra: {
     terrainWeights: [
@@ -232,12 +251,17 @@ const BIOME_CONFIGS: Record<BiomeType, BiomeConfig> = {
       { type: "gravel", weight: 0.3 },
     ],
     treeTypes: ["tree_pine"],
-    treeDensity: 0.1,
-    treeClusterScale: 0.12,
-    waterThreshold: 0.4, // Frozen lakes
-    waterScale: 0.06,
-    rockThreshold: 0.6,
-    rockScale: 0.15,
+    forestThreshold: 0.6,
+    forestDensity: 0.25,
+    forestScale: 0.1,
+    scatteredTreeChance: 0.01,
+    bushThreshold: 0.5,
+    bushDensity: 0.08,
+    waterThreshold: 0.4,
+    waterScale: 0.05,
+    rockThreshold: 0.55,
+    rockScale: 0.12,
+    boulderDensity: 0.35,
   },
   jungle: {
     terrainWeights: [
@@ -246,12 +270,17 @@ const BIOME_CONFIGS: Record<BiomeType, BiomeConfig> = {
       { type: "gravel", weight: 0.1 },
     ],
     treeTypes: ["tree_oak"],
-    treeDensity: 0.5,
-    treeClusterScale: 0.2,
-    waterThreshold: 0.45, // Rivers and swampy areas
+    forestThreshold: 0.25, // Dense jungle
+    forestDensity: 0.7,
+    forestScale: 0.15,
+    scatteredTreeChance: 0.1,
+    bushThreshold: 0.2,
+    bushDensity: 0.3,
+    waterThreshold: 0.42,
     waterScale: 0.07,
     rockThreshold: 0.85,
-    rockScale: 0.1,
+    rockScale: 0.08,
+    boulderDensity: 0.15,
   },
   mountain: {
     terrainWeights: [
@@ -260,12 +289,17 @@ const BIOME_CONFIGS: Record<BiomeType, BiomeConfig> = {
       { type: "gravel", weight: 0.2 },
     ],
     treeTypes: ["tree_pine"],
-    treeDensity: 0.15,
-    treeClusterScale: 0.1,
-    waterThreshold: 0.3, // Mountain lakes
+    forestThreshold: 0.55,
+    forestDensity: 0.35,
+    forestScale: 0.08,
+    scatteredTreeChance: 0.02,
+    bushThreshold: 0.6,
+    bushDensity: 0.1,
+    waterThreshold: 0.32,
     waterScale: 0.04,
-    rockThreshold: 0.5,
-    rockScale: 0.2,
+    rockThreshold: 0.4,
+    rockScale: 0.15,
+    boulderDensity: 0.4,
   },
   swamp: {
     terrainWeights: [
@@ -274,12 +308,17 @@ const BIOME_CONFIGS: Record<BiomeType, BiomeConfig> = {
       { type: "gravel", weight: 0.2 },
     ],
     treeTypes: ["tree_oak"],
-    treeDensity: 0.3,
-    treeClusterScale: 0.15,
-    waterThreshold: 0.55, // Lots of water
+    forestThreshold: 0.4,
+    forestDensity: 0.4,
+    forestScale: 0.12,
+    scatteredTreeChance: 0.05,
+    bushThreshold: 0.35,
+    bushDensity: 0.2,
+    waterThreshold: 0.5,
     waterScale: 0.1,
     rockThreshold: 0.9,
-    rockScale: 0.08,
+    rockScale: 0.06,
+    boulderDensity: 0.1,
   },
   plains: {
     terrainWeights: [
@@ -288,12 +327,17 @@ const BIOME_CONFIGS: Record<BiomeType, BiomeConfig> = {
       { type: "rock", weight: 0.05 },
     ],
     treeTypes: ["tree_oak"],
-    treeDensity: 0.08,
-    treeClusterScale: 0.08,
-    waterThreshold: 0.3, // Ponds and streams
+    forestThreshold: 0.65, // Sparse copses
+    forestDensity: 0.4,
+    forestScale: 0.06,
+    scatteredTreeChance: 0.01,
+    bushThreshold: 0.55,
+    bushDensity: 0.12,
+    waterThreshold: 0.32,
     waterScale: 0.05,
-    rockThreshold: 0.85,
-    rockScale: 0.1,
+    rockThreshold: 0.8,
+    rockScale: 0.08,
+    boulderDensity: 0.2,
   },
 };
 
@@ -457,7 +501,7 @@ export function generateZLevel(
   }
 
   // ==========================================================================
-  // Pass 4: Add structures (trees, boulders) with clustering
+  // Pass 4: Add structures (trees, bushes, boulders) with clustering
   // ==========================================================================
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -472,19 +516,27 @@ export function generateZLevel(
         continue;
       }
 
-      // Get tree density from noise (creates forest clusters)
-      const treeDensityNoise = treeNoise.fbm(
-        x,
-        y,
-        3,
-        0.5,
-        config.treeClusterScale,
-      );
+      // Get forest zone noise - determines where forests can exist
+      const forestNoise = treeNoise.fbm(x, y, 4, 0.5, config.forestScale);
+      const isInForestZone = forestNoise > config.forestThreshold;
 
-      // Trees are more likely where noise is high
+      // Get bush zone noise (slightly different pattern)
+      const bushNoise = treeNoise.fbm(x + 1000, y + 1000, 3, 0.5, config.forestScale * 1.5);
+      const isInBushZone = bushNoise > config.bushThreshold;
+
+      // Trees: spawn in forest zones with high density, or scattered outside
       if (config.treeTypes.length > 0) {
-        const effectiveTreeChance = config.treeDensity * (treeDensityNoise * 2);
-        if (rng.chance(effectiveTreeChance)) {
+        let shouldPlaceTree = false;
+
+        if (isInForestZone) {
+          // Inside forest zone: high density
+          shouldPlaceTree = rng.chance(config.forestDensity);
+        } else {
+          // Outside forest zone: rare scattered trees
+          shouldPlaceTree = rng.chance(config.scatteredTreeChance);
+        }
+
+        if (shouldPlaceTree) {
           tile.structure = createStructureData(rng.pick(config.treeTypes), {
             health: 150 + rng.nextInt(0, 100),
           });
@@ -492,8 +544,18 @@ export function generateZLevel(
         }
       }
 
-      // Add boulders in rocky areas
-      if (smoothedRockMap[index] && rng.chance(0.15)) {
+      // Bushes: spawn in bush zones or as forest understory
+      if (isInBushZone || (isInForestZone && rng.chance(0.3))) {
+        if (rng.chance(config.bushDensity)) {
+          tile.structure = createStructureData("bush", {
+            health: 30 + rng.nextInt(0, 20),
+          });
+          continue;
+        }
+      }
+
+      // Boulders: spawn in rocky areas with clustering
+      if (smoothedRockMap[index] && rng.chance(config.boulderDensity)) {
         tile.structure = createStructureData("boulder", {
           health: 300 + rng.nextInt(0, 200),
         });
