@@ -1,7 +1,7 @@
 import { Dock } from "@renderer/components/dock/Dock";
 import { LeftPanel, RightPanel, TopBar } from "@renderer/components/hud";
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import WorldShowcase from "../components/pixi/WorldShowcase";
+import World from "../components/pixi/World";
 import {
   useCharacterActions,
   useCurrentZLevel,
@@ -125,7 +125,7 @@ export const GameScreen: React.FC = () => {
     <div className="relative w-screen h-screen">
       <div className="absolute inset-0">
         {world && currentLevel && (
-          <WorldShowcase world={world} zLevel={currentZLevel} />
+          <World world={world} zLevel={currentZLevel} />
         )}
       </div>
       <div className="absolute inset-0 pointer-events-none">

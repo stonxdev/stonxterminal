@@ -2,7 +2,7 @@ import { SimpleViewport } from "@renderer/lib/viewport-simple";
 import type {
   StructureType,
   TerrainType,
-  World,
+  World as WorldData,
   ZLevel,
 } from "@renderer/world/types";
 import { Application, Container, Graphics, Text } from "pixi.js";
@@ -68,14 +68,14 @@ const STRUCTURE_COLORS: Record<StructureType, number> = {
 // COMPONENT
 // =============================================================================
 
-interface WorldShowcaseProps {
+interface WorldProps {
   /** World to display */
-  world: World;
+  world: WorldData;
   /** Current z-level to display */
   zLevel: number;
 }
 
-const WorldShowcase: React.FC<WorldShowcaseProps> = ({ world, zLevel }) => {
+const World: React.FC<WorldProps> = ({ world, zLevel }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<Application | null>(null);
   const viewportRef = useRef<SimpleViewport | null>(null);
@@ -235,7 +235,7 @@ const WorldShowcase: React.FC<WorldShowcaseProps> = ({ world, zLevel }) => {
 
       // Initial render of characters (subscription only fires on changes)
       const initialState = useGameStore.getState();
-      console.info("[WorldShowcase] Initial render - characters in store:", {
+      console.info("[World] Initial render - characters in store:", {
         count: initialState.simulation.characters.size,
         zLevel,
         characters: Array.from(initialState.simulation.characters.values()).map(
@@ -516,4 +516,4 @@ function updateHoverOverlay(
   graphics.stroke({ width: 1, color: 0xffffff, alpha: 0.4 });
 }
 
-export default WorldShowcase;
+export default World;
