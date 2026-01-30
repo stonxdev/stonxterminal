@@ -331,6 +331,7 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
         position: "relative",
         overflow: "hidden",
         cursor: "grab",
+        touchAction: "none", // Handle all touch gestures manually
       }}
     />
   );

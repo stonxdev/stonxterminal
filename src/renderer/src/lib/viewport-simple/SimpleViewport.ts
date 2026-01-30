@@ -45,6 +45,13 @@ export class SimpleViewport extends Container {
   private wheelHandler: ((e: WheelEvent) => void) | null = null;
   private domElement: HTMLElement | null = null;
 
+  /** Touch pinch state */
+  private touchStartHandler: ((e: TouchEvent) => void) | null = null;
+  private touchMoveHandler: ((e: TouchEvent) => void) | null = null;
+  private touchEndHandler: ((e: TouchEvent) => void) | null = null;
+  private lastPinchDistance: number | null = null;
+  private lastPinchCenter: { x: number; y: number } | null = null;
+
   constructor(options: ViewportOptions = {}) {
     super();
 
@@ -73,12 +80,105 @@ export class SimpleViewport extends Container {
   }
 
   /**
-   * Attach wheel zoom to a DOM element (usually the canvas)
+   * Attach wheel zoom and touch pinch to a DOM element (usually the canvas)
    */
   public attachWheelZoom(element: HTMLElement): void {
     this.domElement = element;
     this.wheelHandler = this.onWheel.bind(this);
     element.addEventListener("wheel", this.wheelHandler, { passive: false });
+
+    // Attach touch handlers for pinch-to-zoom on mobile/tablet
+    this.touchStartHandler = this.onTouchStart.bind(this);
+    this.touchMoveHandler = this.onTouchMove.bind(this);
+    this.touchEndHandler = this.onTouchEnd.bind(this);
+    element.addEventListener("touchstart", this.touchStartHandler, {
+      passive: false,
+    });
+    element.addEventListener("touchmove", this.touchMoveHandler, {
+      passive: false,
+    });
+    element.addEventListener("touchend", this.touchEndHandler);
+    element.addEventListener("touchcancel", this.touchEndHandler);
+  }
+
+  private getTouchDistance(touches: TouchList): number {
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  private getTouchCenter(
+    touches: TouchList,
+    rect: DOMRect,
+  ): { x: number; y: number } {
+    return {
+      x: (touches[0].clientX + touches[1].clientX) / 2 - rect.left,
+      y: (touches[0].clientY + touches[1].clientY) / 2 - rect.top,
+    };
+  }
+
+  private onTouchStart(event: TouchEvent): void {
+    if (event.touches.length === 2) {
+      event.preventDefault();
+      this.lastPinchDistance = this.getTouchDistance(event.touches);
+      const rect = this.domElement?.getBoundingClientRect();
+      if (rect) {
+        this.lastPinchCenter = this.getTouchCenter(event.touches, rect);
+      }
+    }
+  }
+
+  private onTouchMove(event: TouchEvent): void {
+    if (
+      event.touches.length === 2 &&
+      this.lastPinchDistance !== null &&
+      this.lastPinchCenter !== null
+    ) {
+      event.preventDefault();
+
+      const rect = this.domElement?.getBoundingClientRect();
+      if (!rect) return;
+
+      const currentDistance = this.getTouchDistance(event.touches);
+      const currentCenter = this.getTouchCenter(event.touches, rect);
+
+      // Remember world position under pinch center before zoom
+      const worldPosBefore = this.screenToWorld(
+        this.lastPinchCenter.x,
+        this.lastPinchCenter.y,
+      );
+
+      // Calculate zoom factor based on pinch distance change
+      const zoomFactor = currentDistance / this.lastPinchDistance;
+
+      // Calculate and apply new scale
+      const newScale = Math.max(
+        this.minScale,
+        Math.min(this.maxScale, this.scale.x * zoomFactor),
+      );
+      this.scale.set(newScale);
+
+      // Adjust position so world point under pinch center stays in place
+      const worldPosAfter = this.screenToWorld(
+        currentCenter.x,
+        currentCenter.y,
+      );
+      this.x += (worldPosAfter.x - worldPosBefore.x) * this.scale.x;
+      this.y += (worldPosAfter.y - worldPosBefore.y) * this.scale.y;
+
+      this.updateHitArea();
+
+      // Update for next frame
+      this.lastPinchDistance = currentDistance;
+      this.lastPinchCenter = currentCenter;
+    }
+  }
+
+  private onTouchEnd(event: TouchEvent): void {
+    if (event.touches.length < 2) {
+      this.lastPinchDistance = null;
+      this.lastPinchCenter = null;
+    }
   }
 
   private onWheel(event: WheelEvent): void {
@@ -249,9 +349,30 @@ export class SimpleViewport extends Container {
   }
 
   public override destroy(): void {
-    if (this.domElement && this.wheelHandler) {
-      this.domElement.removeEventListener("wheel", this.wheelHandler);
-      this.wheelHandler = null;
+    if (this.domElement) {
+      if (this.wheelHandler) {
+        this.domElement.removeEventListener("wheel", this.wheelHandler);
+        this.wheelHandler = null;
+      }
+      if (this.touchStartHandler) {
+        this.domElement.removeEventListener(
+          "touchstart",
+          this.touchStartHandler,
+        );
+        this.touchStartHandler = null;
+      }
+      if (this.touchMoveHandler) {
+        this.domElement.removeEventListener("touchmove", this.touchMoveHandler);
+        this.touchMoveHandler = null;
+      }
+      if (this.touchEndHandler) {
+        this.domElement.removeEventListener("touchend", this.touchEndHandler);
+        this.domElement.removeEventListener(
+          "touchcancel",
+          this.touchEndHandler,
+        );
+        this.touchEndHandler = null;
+      }
       this.domElement = null;
     }
     this.removeAllListeners();

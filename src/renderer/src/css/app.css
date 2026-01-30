@@ -3,10 +3,19 @@
     color-scheme: dark;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Prevent iOS bounce/overscroll */
+    overscroll-behavior: none;
   }
 
   body {
     font-family: "Source Code Pro", monospace;
     background-color: var(--color-surface-0);
+    /* Prevent browser zoom gestures on the app */
+    touch-action: pan-x pan-y;
+    /* Prevent iOS bounce/overscroll */
+    overscroll-behavior: none;
+    /* Prevent text selection during touch */
+    -webkit-user-select: none;
+    user-select: none;
   }
 }
