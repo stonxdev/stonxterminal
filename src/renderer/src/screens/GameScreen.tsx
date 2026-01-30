@@ -122,7 +122,10 @@ export const GameScreen: React.FC = () => {
   }, [world, currentZLevel]);
 
   return (
-    <div className="relative w-screen h-screen">
+    <div
+      className="relative w-screen h-screen overflow-hidden"
+      style={{ touchAction: "none" }}
+    >
       <div className="absolute inset-0">
         {world && currentLevel && (
           <World world={world} zLevel={currentZLevel} />
