@@ -131,7 +131,7 @@ export const GameScreen: React.FC = () => {
           <World world={world} zLevel={currentZLevel} />
         )}
       </div>
-      <div className="absolute inset-0 pointer-events-none">
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <Dock
           top={<TopBar />}
           leftTop={<LeftPanel />}
