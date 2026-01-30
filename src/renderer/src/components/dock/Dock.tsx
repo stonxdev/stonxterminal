@@ -197,21 +197,19 @@ export const Dock: React.FC<DockProps> = ({
               {center}
             </div>
             {centerBottom && (
-              <>
+              <div
+                className="bg-background relative overflow-y-auto border-t border-border"
+                style={{
+                  height: centerBottomHeight,
+                  pointerEvents: "auto",
+                }}
+              >
                 <VerticalResizeHandle
                   onMouseDown={handleCenterBottomResize}
                   align="top"
                 />
-                <div
-                  className="bg-background relative overflow-y-auto border-t border-border"
-                  style={{
-                    height: centerBottomHeight,
-                    pointerEvents: "auto",
-                  }}
-                >
-                  {centerBottom}
-                </div>
-              </>
+                {centerBottom}
+              </div>
             )}
           </div>
 

@@ -78,7 +78,11 @@ export const GameScreen: React.FC = () => {
     if (!world || hasSpawnedCharacters.current) return;
 
     const spawnPositions = findPassableTiles(3, currentZLevel);
-    console.info("[GameScreen] Found passable tiles:", spawnPositions.length, spawnPositions);
+    console.info(
+      "[GameScreen] Found passable tiles:",
+      spawnPositions.length,
+      spawnPositions,
+    );
 
     if (spawnPositions.length === 0) {
       console.warn("[GameScreen] No passable tiles found!");
@@ -96,11 +100,19 @@ export const GameScreen: React.FC = () => {
         position: { x: pos.x, y: pos.y, z: currentZLevel },
         color: COLONIST_COLORS[index] ?? 0x888888,
       });
-      console.info("[GameScreen] Adding character:", character.name, character.position, "color:", character.color.toString(16));
+      console.info(
+        "[GameScreen] Adding character:",
+        character.name,
+        character.position,
+        "color:",
+        character.color.toString(16),
+      );
       addCharacter(character);
     });
 
-    console.info(`[GameScreen] Spawned ${spawnPositions.length} demo colonists`);
+    console.info(
+      `[GameScreen] Spawned ${spawnPositions.length} demo colonists`,
+    );
   }, [world, currentZLevel, findPassableTiles, addCharacter]);
 
   // Get the current level
