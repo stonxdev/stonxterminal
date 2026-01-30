@@ -50,6 +50,7 @@ export class SimpleViewport extends Container {
   private touchMoveHandler: ((e: TouchEvent) => void) | null = null;
   private touchEndHandler: ((e: TouchEvent) => void) | null = null;
   private lastPinchDistance: number | null = null;
+  private isPinching = false; // Track pinch state to disable drag during pinch
 
   constructor(options: ViewportOptions = {}) {
     super();
@@ -120,6 +121,8 @@ export class SimpleViewport extends Container {
     if (event.touches.length === 2) {
       event.preventDefault();
       event.stopPropagation(); // Prevent bubbling to document-level handlers
+      this.isPinching = true;
+      this.isDragging = false; // Cancel any active drag when pinch starts
       this.lastPinchDistance = this.getTouchDistance(event.touches);
     }
   }
@@ -172,6 +175,7 @@ export class SimpleViewport extends Container {
   private onTouchEnd(event: TouchEvent): void {
     if (event.touches.length < 2) {
       this.lastPinchDistance = null;
+      this.isPinching = false;
     }
   }
 
@@ -227,12 +231,16 @@ export class SimpleViewport extends Container {
   }
 
   private onDragStart(event: FederatedPointerEvent): void {
+    // Don't start drag if we're in a pinch gesture
+    if (this.isPinching) return;
     this.isDragging = true;
     this.lastPointerPosition = { x: event.global.x, y: event.global.y };
   }
 
   private onDragMove(event: FederatedPointerEvent): void {
-    if (!this.isDragging || !this.lastPointerPosition) return;
+    // Skip drag handling during pinch to prevent jitter
+    if (this.isPinching || !this.isDragging || !this.lastPointerPosition)
+      return;
 
     const deltaX = event.global.x - this.lastPointerPosition.x;
     const deltaY = event.global.y - this.lastPointerPosition.y;
