@@ -6,6 +6,7 @@
   "author": "Andre Pena",
   "displayName": "Colony",
   "homepage": "https://github.com/andrepena/nebline",
+  "type": "module",
   "scripts": {
     "format": "biome format --write .",
     "lint": "biome check .",
