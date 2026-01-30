@@ -50,7 +50,6 @@ export class SimpleViewport extends Container {
   private touchMoveHandler: ((e: TouchEvent) => void) | null = null;
   private touchEndHandler: ((e: TouchEvent) => void) | null = null;
   private lastPinchDistance: number | null = null;
-  private lastPinchCenter: { x: number; y: number } | null = null;
 
   constructor(options: ViewportOptions = {}) {
     super();
@@ -120,6 +119,7 @@ export class SimpleViewport extends Container {
   private onTouchStart(event: TouchEvent): void {
     if (event.touches.length === 2) {
       event.preventDefault();
+      event.stopPropagation(); // Prevent bubbling to document-level handlers
       this.lastPinchDistance = this.getTouchDistance(event.touches);
       const rect = this.domElement?.getBoundingClientRect();
       if (rect) {
@@ -131,10 +131,10 @@ export class SimpleViewport extends Container {
   private onTouchMove(event: TouchEvent): void {
     if (
       event.touches.length === 2 &&
-      this.lastPinchDistance !== null &&
-      this.lastPinchCenter !== null
+      this.lastPinchDistance !== null
     ) {
       event.preventDefault();
+      event.stopPropagation(); // Prevent bubbling to document-level handlers
 
       const rect = this.domElement?.getBoundingClientRect();
       if (!rect) return;
@@ -142,10 +142,11 @@ export class SimpleViewport extends Container {
       const currentDistance = this.getTouchDistance(event.touches);
       const currentCenter = this.getTouchCenter(event.touches, rect);
 
-      // Remember world position under pinch center before zoom
+      // Remember world position under CURRENT pinch center BEFORE zoom
+      // (using current center for both before/after ensures smooth zoom)
       const worldPosBefore = this.screenToWorld(
-        this.lastPinchCenter.x,
-        this.lastPinchCenter.y,
+        currentCenter.x,
+        currentCenter.y,
       );
 
       // Calculate zoom factor based on pinch distance change
@@ -158,11 +159,13 @@ export class SimpleViewport extends Container {
       );
       this.scale.set(newScale);
 
-      // Adjust position so world point under pinch center stays in place
+      // Get world position at SAME screen point AFTER zoom
       const worldPosAfter = this.screenToWorld(
         currentCenter.x,
         currentCenter.y,
       );
+
+      // Adjust so the world point stays under the pinch center
       this.x += (worldPosAfter.x - worldPosBefore.x) * this.scale.x;
       this.y += (worldPosAfter.y - worldPosBefore.y) * this.scale.y;
 
