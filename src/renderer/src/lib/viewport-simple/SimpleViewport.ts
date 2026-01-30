@@ -121,18 +121,11 @@ export class SimpleViewport extends Container {
       event.preventDefault();
       event.stopPropagation(); // Prevent bubbling to document-level handlers
       this.lastPinchDistance = this.getTouchDistance(event.touches);
-      const rect = this.domElement?.getBoundingClientRect();
-      if (rect) {
-        this.lastPinchCenter = this.getTouchCenter(event.touches, rect);
-      }
     }
   }
 
   private onTouchMove(event: TouchEvent): void {
-    if (
-      event.touches.length === 2 &&
-      this.lastPinchDistance !== null
-    ) {
+    if (event.touches.length === 2 && this.lastPinchDistance !== null) {
       event.preventDefault();
       event.stopPropagation(); // Prevent bubbling to document-level handlers
 
@@ -173,14 +166,12 @@ export class SimpleViewport extends Container {
 
       // Update for next frame
       this.lastPinchDistance = currentDistance;
-      this.lastPinchCenter = currentCenter;
     }
   }
 
   private onTouchEnd(event: TouchEvent): void {
     if (event.touches.length < 2) {
       this.lastPinchDistance = null;
-      this.lastPinchCenter = null;
     }
   }
 
