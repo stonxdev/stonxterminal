@@ -1,7 +1,8 @@
 import { Dock } from "@renderer/components/dock/Dock";
-import { LeftPanel, RightPanel, TopBar } from "@renderer/components/hud";
+import { TopBar } from "@renderer/components/hud";
 import type { TabItem } from "@renderer/components/tabs";
 import { Tabs } from "@renderer/components/tabs";
+import { useIsSlotEmpty, WidgetSlot } from "@renderer/components/widgets";
 import { Map as MapIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import World from "../components/pixi/World";
@@ -136,12 +137,30 @@ export const GameScreen: React.FC = () => {
     ];
   }, [world, currentLevel, currentZLevel]);
 
+  // Check which slots are empty to conditionally render them
+  const isLeftTopEmpty = useIsSlotEmpty("left-top");
+  const isLeftBottomEmpty = useIsSlotEmpty("left-bottom");
+  const isCenterBottomEmpty = useIsSlotEmpty("center-bottom");
+  const isRightTopEmpty = useIsSlotEmpty("right-top");
+  const isRightBottomEmpty = useIsSlotEmpty("right-bottom");
+
   return (
     <Dock
       top={<TopBar />}
-      leftTop={<LeftPanel />}
+      leftTop={isLeftTopEmpty ? undefined : <WidgetSlot slotId="left-top" />}
+      leftBottom={
+        isLeftBottomEmpty ? undefined : <WidgetSlot slotId="left-bottom" />
+      }
       center={<Tabs variant="primary" tabs={centerTabs} />}
-      rightTop={<RightPanel />}
+      centerBottom={
+        isCenterBottomEmpty ? undefined : <WidgetSlot slotId="center-bottom" />
+      }
+      rightTop={
+        isRightTopEmpty ? undefined : <WidgetSlot slotId="right-top" />
+      }
+      rightBottom={
+        isRightBottomEmpty ? undefined : <WidgetSlot slotId="right-bottom" />
+      }
     />
   );
 };
