@@ -16,7 +16,7 @@ export const HomeScreen: React.FC = () => {
         Or the narrator might have lied to you...
       </p>
       <button
-        type="button"
+      type="button"
         onClick={handleStartGame}
         className="px-8 py-4 text-lg font-semibold text-[var(--button-foreground)] bg-[var(--button-background)] rounded-lg hover:bg-[var(--button-background-hover)] transition-colors cursor-pointer"
       >
