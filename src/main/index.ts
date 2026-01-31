@@ -195,7 +195,7 @@ function createWindow(): void {
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
   // Set app user model id for windows
-  electronApp.setAppUserModelId("com.colony.app");
+  electronApp.setAppUserModelId("com.everyoneisfine.app");
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.
@@ -209,7 +209,7 @@ app.whenReady().then(() => {
 
   // --- App Data Path Handler ---
   ipcMain.handle("app:getDataPath", () => {
-    return join(app.getPath("userData"), "colony-data");
+    return join(app.getPath("userData"), "everyoneisfine-data");
   });
 
   // --- Register IPC Handlers for File System Operations ---

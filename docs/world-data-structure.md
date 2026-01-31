@@ -1,6 +1,6 @@
 # World Data Structure
 
-This document explains how the world data structure works in Colony, a game inspired by Dwarf Fortress and RimWorld.
+This document explains how the world data structure works in Everyone is fine, a game inspired by Dwarf Fortress and RimWorld.
 
 ## Overview
 
