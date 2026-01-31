@@ -1,21 +1,24 @@
-"use strict";
-const node_child_process = require("node:child_process");
-const fs = require("node:fs/promises");
-const node_path = require("node:path");
-const utils = require("@electron-toolkit/utils");
-const electron = require("electron");
-const path = require("path");
-const icon = path.join(__dirname, "../../resources/icon.png");
-electron.app.name = "Colony";
+import { exec, spawn } from "node:child_process";
+import fs from "node:fs/promises";
+import { join as join$1, dirname } from "node:path";
+import { electronApp, optimizer, is } from "@electron-toolkit/utils";
+import { app, ipcMain, BrowserWindow, dialog, shell, net, Menu } from "electron";
+import { join } from "path";
+import __cjs_mod__ from "node:module";
+const __filename = import.meta.filename;
+const __dirname = import.meta.dirname;
+const require2 = __cjs_mod__.createRequire(import.meta.url);
+const icon = join(__dirname, "../../resources/icon.png");
+app.name = "Colony";
 function createWindow() {
-  const mainWindow = new electron.BrowserWindow({
+  const mainWindow = new BrowserWindow({
     width: 900,
     height: 670,
     show: false,
     // autoHideMenuBar: true, // Remove this to show the menu
     ...{ icon },
     webPreferences: {
-      preload: node_path.join(__dirname, "../preload/index.js"),
+      preload: join$1(__dirname, "../preload/index.js"),
       sandbox: false,
       contextIsolation: true,
       // Recommended for security
@@ -31,7 +34,7 @@ function createWindow() {
     mainWindow.maximize();
   });
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    electron.shell.openExternal(details.url);
+    shell.openExternal(details.url);
     return { action: "deny" };
   });
   const menuTemplate = [
@@ -42,7 +45,7 @@ function createWindow() {
           label: "Open Folder...",
           accelerator: "CmdOrCtrl+O",
           click: async () => {
-            const result = await electron.dialog.showOpenDialog(mainWindow, {
+            const result = await dialog.showOpenDialog(mainWindow, {
               properties: ["openDirectory"]
             });
             if (!result.canceled && result.filePaths.length > 0) {
@@ -66,9 +69,9 @@ function createWindow() {
               `window.api._getCurrentProject && window.api._getCurrentProject()`
             );
             if (currentProject?.journalPath) {
-              electron.shell.showItemInFolder(currentProject.journalPath);
+              shell.showItemInFolder(currentProject.journalPath);
             } else {
-              electron.dialog.showMessageBox(mainWindow, {
+              dialog.showMessageBox(mainWindow, {
                 type: "info",
                 message: "No journal folder is currently open.",
                 buttons: ["OK"]
@@ -85,13 +88,13 @@ function createWindow() {
             if (currentProject?.projectPath) {
               if (process.platform === "darwin") {
                 const terminalCommand = `open -a Terminal "${currentProject.projectPath}"`;
-                node_child_process.exec(terminalCommand, (error) => {
+                exec(terminalCommand, (error) => {
                   if (error) {
                     console.error("Failed to open Terminal:", error);
                   }
                 });
               } else if (process.platform === "win32") {
-                node_child_process.spawn(
+                spawn(
                   "cmd.exe",
                   ["/K", `cd /d "${currentProject.projectPath}"`],
                   {
@@ -100,7 +103,7 @@ function createWindow() {
                   }
                 );
               } else {
-                node_child_process.spawn(
+                spawn(
                   "xterm",
                   ["-e", `cd "${currentProject.projectPath}" && bash`],
                   {
@@ -110,7 +113,7 @@ function createWindow() {
                 );
               }
             } else {
-              electron.dialog.showMessageBox(mainWindow, {
+              dialog.showMessageBox(mainWindow, {
                 type: "info",
                 message: "No journal folder is currently open.",
                 buttons: ["OK"]
@@ -153,105 +156,105 @@ function createWindow() {
       ]
     }
   ];
-  const menu = electron.Menu.buildFromTemplate(menuTemplate);
-  electron.Menu.setApplicationMenu(menu);
-  if (utils.is.dev && process.env.ELECTRON_RENDERER_URL) {
+  const menu = Menu.buildFromTemplate(menuTemplate);
+  Menu.setApplicationMenu(menu);
+  if (is.dev && process.env.ELECTRON_RENDERER_URL) {
     mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL);
   } else {
-    mainWindow.loadFile(node_path.join(__dirname, "../renderer/index.html"));
+    mainWindow.loadFile(join$1(__dirname, "../renderer/index.html"));
   }
 }
-electron.app.whenReady().then(() => {
-  utils.electronApp.setAppUserModelId("com.colony.app");
-  electron.app.on("browser-window-created", (_, window) => {
-    utils.optimizer.watchWindowShortcuts(window);
+app.whenReady().then(() => {
+  electronApp.setAppUserModelId("com.colony.app");
+  app.on("browser-window-created", (_, window) => {
+    optimizer.watchWindowShortcuts(window);
   });
-  electron.ipcMain.on("ping", () => console.log("pong"));
-  electron.ipcMain.handle("app:getDataPath", () => {
-    return node_path.join(electron.app.getPath("userData"), "colony-data");
+  ipcMain.on("ping", () => console.log("pong"));
+  ipcMain.handle("app:getDataPath", () => {
+    return join$1(app.getPath("userData"), "colony-data");
   });
-  electron.ipcMain.handle("fs:joinPath", (_event, ...paths) => {
-    return node_path.join(...paths);
+  ipcMain.handle("fs:joinPath", (_event, ...paths) => {
+    return join$1(...paths);
   });
-  electron.ipcMain.handle("zoom:increase", (event) => {
+  ipcMain.handle("zoom:increase", (event) => {
     const webContents = event.sender;
     const currentLevel = webContents.getZoomLevel();
     webContents.setZoomLevel(currentLevel + 0.5);
     return webContents.getZoomLevel();
   });
-  electron.ipcMain.handle("zoom:decrease", (event) => {
+  ipcMain.handle("zoom:decrease", (event) => {
     const webContents = event.sender;
     const currentLevel = webContents.getZoomLevel();
     webContents.setZoomLevel(currentLevel - 0.5);
     return webContents.getZoomLevel();
   });
-  electron.ipcMain.handle("zoom:reset", (event) => {
+  ipcMain.handle("zoom:reset", (event) => {
     const webContents = event.sender;
     webContents.setZoomLevel(0);
     return 0;
   });
-  electron.ipcMain.handle("zoom:getLevel", (event) => {
+  ipcMain.handle("zoom:getLevel", (event) => {
     return event.sender.getZoomLevel();
   });
-  electron.ipcMain.handle("zoom:setLevel", (event, level) => {
+  ipcMain.handle("zoom:setLevel", (event, level) => {
     event.sender.setZoomLevel(level);
     return event.sender.getZoomLevel();
   });
-  electron.ipcMain.handle("fs:checkPathExists", async (_event, path2) => {
+  ipcMain.handle("fs:checkPathExists", async (_event, path) => {
     try {
-      await fs.access(path2);
+      await fs.access(path);
       return true;
     } catch {
       return false;
     }
   });
-  electron.ipcMain.handle("fs:ensureDirExists", async (_event, path2) => {
+  ipcMain.handle("fs:ensureDirExists", async (_event, path) => {
     try {
-      await fs.mkdir(path2, { recursive: true });
+      await fs.mkdir(path, { recursive: true });
     } catch (error) {
       if (typeof error === "object" && error !== null && "code" in error && error.code !== "EEXIST") {
-        console.error(`Failed to ensure directory exists: ${path2}`, error);
+        console.error(`Failed to ensure directory exists: ${path}`, error);
         throw error;
       }
     }
   });
-  electron.ipcMain.handle(
+  ipcMain.handle(
     "fs:ensureFileExists",
-    async (_event, path2, defaultContent = "") => {
+    async (_event, path, defaultContent = "") => {
       try {
-        await fs.access(path2);
+        await fs.access(path);
       } catch {
         try {
-          await fs.mkdir(node_path.dirname(path2), { recursive: true });
-          await fs.writeFile(path2, defaultContent, "utf-8");
+          await fs.mkdir(dirname(path), { recursive: true });
+          await fs.writeFile(path, defaultContent, "utf-8");
         } catch (writeError) {
-          console.error(`Failed to create file: ${path2}`, writeError);
+          console.error(`Failed to create file: ${path}`, writeError);
           throw writeError;
         }
       }
     }
   );
-  electron.ipcMain.handle("fs:readFileContent", async (_event, path2) => {
+  ipcMain.handle("fs:readFileContent", async (_event, path) => {
     try {
-      const content = await fs.readFile(path2, "utf-8");
+      const content = await fs.readFile(path, "utf-8");
       return content;
     } catch (error) {
       if (typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT") {
         return null;
       }
-      console.error(`Failed to read file: ${path2}`, error);
+      console.error(`Failed to read file: ${path}`, error);
       throw error;
     }
   });
-  electron.ipcMain.handle("fs:writeFileContent", async (_event, path2, content) => {
+  ipcMain.handle("fs:writeFileContent", async (_event, path, content) => {
     try {
-      await fs.writeFile(path2, content, "utf-8");
+      await fs.writeFile(path, content, "utf-8");
     } catch (error) {
-      console.error(`Failed to write file: ${path2}`, error);
+      console.error(`Failed to write file: ${path}`, error);
       throw error;
     }
   });
-  electron.ipcMain.handle(
+  ipcMain.handle(
     "fs:readDir",
     async (_event, dirPath) => {
       try {
@@ -269,13 +272,13 @@ electron.app.whenReady().then(() => {
       }
     }
   );
-  electron.ipcMain.handle("dialog:openDirectory", async (event) => {
-    const window = electron.BrowserWindow.fromWebContents(event.sender);
+  ipcMain.handle("dialog:openDirectory", async (event) => {
+    const window = BrowserWindow.fromWebContents(event.sender);
     if (!window) {
       console.error("Could not find browser window for dialog");
       return void 0;
     }
-    const result = await electron.dialog.showOpenDialog(window, {
+    const result = await dialog.showOpenDialog(window, {
       properties: ["openDirectory"]
     });
     if (!result.canceled && result.filePaths.length > 0) {
@@ -285,11 +288,11 @@ electron.app.whenReady().then(() => {
     }
     return result;
   });
-  electron.ipcMain.handle(
+  ipcMain.handle(
     "shell:showItemInFolder",
     async (_event, folderPath) => {
       try {
-        await electron.shell.showItemInFolder(folderPath);
+        await shell.showItemInFolder(folderPath);
         return true;
       } catch (error) {
         console.error("Failed to open folder in OS explorer:", error);
@@ -297,11 +300,11 @@ electron.app.whenReady().then(() => {
       }
     }
   );
-  electron.ipcMain.handle("shell:openTerminal", async (_event, folderPath) => {
+  ipcMain.handle("shell:openTerminal", async (_event, folderPath) => {
     try {
       if (process.platform === "darwin") {
         const terminalCommand = `open -a Terminal "${folderPath}"`;
-        node_child_process.exec(terminalCommand, (error) => {
+        exec(terminalCommand, (error) => {
           if (error) {
             console.error("Failed to open Terminal:", error);
             return false;
@@ -311,13 +314,13 @@ electron.app.whenReady().then(() => {
         });
         return true;
       } else if (process.platform === "win32") {
-        node_child_process.spawn("cmd.exe", ["/K", `cd /d "${folderPath}"`], {
+        spawn("cmd.exe", ["/K", `cd /d "${folderPath}"`], {
           detached: true,
           stdio: "ignore"
         });
         return true;
       } else {
-        node_child_process.spawn("xterm", ["-e", `cd "${folderPath}" && bash`], {
+        spawn("xterm", ["-e", `cd "${folderPath}" && bash`], {
           detached: true,
           stdio: "ignore"
         });
@@ -328,19 +331,19 @@ electron.app.whenReady().then(() => {
       return false;
     }
   });
-  electron.ipcMain.handle("dialog:showMessageBox", async (event, options) => {
-    const window = electron.BrowserWindow.fromWebContents(event.sender);
+  ipcMain.handle("dialog:showMessageBox", async (event, options) => {
+    const window = BrowserWindow.fromWebContents(event.sender);
     if (!window) {
       console.error("Could not find browser window for dialog");
       return { response: 0 };
     }
-    return await electron.dialog.showMessageBox(window, options);
+    return await dialog.showMessageBox(window, options);
   });
-  electron.ipcMain.handle("ai:proxyRequest", async (_event, options) => {
+  ipcMain.handle("ai:proxyRequest", async (_event, options) => {
     try {
       const { url, method, headers, body } = options;
       console.log(`Making proxy request to: ${url}`);
-      const request = electron.net.request({
+      const request = net.request({
         method: method || "POST",
         url
       });
@@ -392,12 +395,12 @@ electron.app.whenReady().then(() => {
     }
   });
   createWindow();
-  electron.app.on("activate", () => {
-    if (electron.BrowserWindow.getAllWindows().length === 0) createWindow();
+  app.on("activate", () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
-electron.app.on("window-all-closed", () => {
+app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
-    electron.app.quit();
+    app.quit();
   }
 });
