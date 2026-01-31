@@ -17,6 +17,7 @@ export const VerticalResizeHandle: React.FC<VerticalResizeHandleProps> = ({
   align,
 }) => {
   const [isHovering, setIsHovering] = useState(false);
+  const showGrip = forceMobileHandles || isHovering || isDragging;
 
   return (
     <button
@@ -25,8 +26,8 @@ export const VerticalResizeHandle: React.FC<VerticalResizeHandleProps> = ({
       tabIndex={0}
       style={{ pointerEvents: "auto", touchAction: "none" }}
       className={cn(
-        "absolute left-0 right-0 z-10",
-        forceMobileHandles ? "h-3" : "h-1.5 max-md:h-3",
+        "absolute left-0 right-0 z-10 flex items-center justify-center",
+        forceMobileHandles ? "h-4" : "h-1.5 max-md:h-4",
         "cursor-row-resize",
         align === "top" ? "top-0" : "bottom-0",
         "transition-all duration-200",
@@ -41,6 +42,14 @@ export const VerticalResizeHandle: React.FC<VerticalResizeHandleProps> = ({
       onMouseLeave={() => setIsHovering(false)}
       onMouseDown={onResizeStart}
       onTouchStart={onResizeStart}
-    />
+    >
+      {showGrip && (
+        <div className="flex flex-row gap-0.5">
+          <div className="w-1 h-1 rounded-full bg-foreground/40" />
+          <div className="w-1 h-1 rounded-full bg-foreground/40" />
+          <div className="w-1 h-1 rounded-full bg-foreground/40" />
+        </div>
+      )}
+    </button>
   );
 };
