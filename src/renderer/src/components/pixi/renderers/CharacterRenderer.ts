@@ -1,9 +1,9 @@
 // =============================================================================
 // CHARACTER RENDERER
 // =============================================================================
-// Renders characters as colored circles with direction indicators
+// Renders characters as sprites with direction indicators
 
-import { Container, Graphics } from "pixi.js";
+import { Assets, Container, Graphics, Sprite, type Texture } from "pixi.js";
 import {
   type Direction,
   getCharacterCenterPosition,
@@ -15,8 +15,8 @@ import type { Character, EntityId } from "../../../simulation/types";
 // CONSTANTS
 // =============================================================================
 
-/** Character circle radius in pixels */
-const CHARACTER_RADIUS = 12;
+/** Character sprite half-size for positioning calculations */
+const CHARACTER_HALF_SIZE = 16;
 
 /** Direction indicator length */
 const DIRECTION_INDICATOR_LENGTH = 8;
@@ -30,17 +30,23 @@ const SELECTION_PADDING = 4;
 
 interface CharacterGraphics {
   container: Container;
-  body: Graphics;
+  body: Sprite;
   directionIndicator: Graphics;
   selectionRing: Graphics;
 }
+
+/** Character sprite size (32x32 pixels, fits one cell) */
+const CHARACTER_SPRITE_SIZE = 32;
+
+/** Character sprite path */
+const CHARACTER_SPRITE_PATH = "/sprites/characters/male-1.png";
 
 // =============================================================================
 // CHARACTER RENDERER CLASS
 // =============================================================================
 
 /**
- * Renders characters as colored circles with direction indicators.
+ * Renders characters as sprites with direction indicators.
  * Manages a pool of graphics objects for efficient rendering.
  */
 export class CharacterRenderer {
@@ -48,9 +54,36 @@ export class CharacterRenderer {
   private cellSize: number;
   private graphics: Map<EntityId, CharacterGraphics> = new Map();
 
+  /** Cached character texture (loaded via preloadAssets) */
+  private static characterTexture: Texture | null = null;
+
   constructor(parentContainer: Container, cellSize: number) {
     this.parentContainer = parentContainer;
     this.cellSize = cellSize;
+  }
+
+  /**
+   * Preload character sprite assets. Call this before creating any CharacterRenderer instances.
+   */
+  static async preloadAssets(): Promise<void> {
+    if (CharacterRenderer.characterTexture) {
+      console.info("[CharacterRenderer] Assets already loaded");
+      return;
+    }
+    console.info("[CharacterRenderer] Preloading character assets...");
+    try {
+      const texture = await Assets.load<Texture>(CHARACTER_SPRITE_PATH);
+      CharacterRenderer.characterTexture = texture;
+      console.info("[CharacterRenderer] Character texture loaded:", {
+        width: texture.width,
+        height: texture.height,
+      });
+    } catch (error) {
+      console.error(
+        "[CharacterRenderer] Failed to load character texture:",
+        error,
+      );
+    }
   }
 
   /**
@@ -120,16 +153,31 @@ export class CharacterRenderer {
   /**
    * Create graphics for a character.
    */
-  private createCharacterGraphics(character: Character): CharacterGraphics {
+  private createCharacterGraphics(_character: Character): CharacterGraphics {
     const container = new Container();
 
     // Selection ring (drawn first, behind body)
     const selectionRing = new Graphics();
     container.addChild(selectionRing);
 
-    // Character body
-    const body = new Graphics();
-    this.drawCharacterBody(body, character.color);
+    // Character sprite - use preloaded texture if available, otherwise load async
+    let body: Sprite;
+    if (CharacterRenderer.characterTexture) {
+      body = new Sprite(CharacterRenderer.characterTexture);
+      console.info("[CharacterRenderer] Using preloaded texture:", {
+        width: CharacterRenderer.characterTexture.width,
+        height: CharacterRenderer.characterTexture.height,
+      });
+    } else {
+      // Fallback: load async (texture will appear once loaded)
+      body = Sprite.from(CHARACTER_SPRITE_PATH);
+      console.info("[CharacterRenderer] Texture not preloaded, loading async");
+    }
+    // Center the sprite anchor so it's positioned at the character center
+    body.anchor.set(0.5, 0.5);
+    // Ensure sprite fits exactly in one cell (32x32)
+    body.width = CHARACTER_SPRITE_SIZE;
+    body.height = CHARACTER_SPRITE_SIZE;
     container.addChild(body);
 
     // Direction indicator
@@ -142,16 +190,6 @@ export class CharacterRenderer {
       directionIndicator,
       selectionRing,
     };
-  }
-
-  /**
-   * Draw the character body circle.
-   */
-  private drawCharacterBody(graphics: Graphics, color: number): void {
-    graphics.clear();
-    graphics.circle(0, 0, CHARACTER_RADIUS);
-    graphics.fill(color);
-    graphics.stroke({ width: 2, color: 0x000000, alpha: 0.5 });
   }
 
   /**
@@ -188,10 +226,10 @@ export class CharacterRenderer {
     }
 
     // Draw triangle pointing in direction
-    const tipX = dx * (CHARACTER_RADIUS + DIRECTION_INDICATOR_LENGTH);
-    const tipY = dy * (CHARACTER_RADIUS + DIRECTION_INDICATOR_LENGTH);
-    const baseX = dx * CHARACTER_RADIUS;
-    const baseY = dy * CHARACTER_RADIUS;
+    const tipX = dx * (CHARACTER_HALF_SIZE + DIRECTION_INDICATOR_LENGTH);
+    const tipY = dy * (CHARACTER_HALF_SIZE + DIRECTION_INDICATOR_LENGTH);
+    const baseX = dx * CHARACTER_HALF_SIZE;
+    const baseY = dy * CHARACTER_HALF_SIZE;
 
     // Perpendicular offset for triangle base
     const perpX = -dy * 4;
@@ -214,7 +252,7 @@ export class CharacterRenderer {
       return;
     }
 
-    const radius = CHARACTER_RADIUS + SELECTION_PADDING;
+    const radius = CHARACTER_HALF_SIZE + SELECTION_PADDING;
 
     graphics.circle(0, 0, radius);
     graphics.stroke({ width: 3, color: 0x00ffff });
@@ -310,7 +348,7 @@ export class CharacterRenderer {
       const dy = y - center.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
 
-      if (distance <= CHARACTER_RADIUS + 4) {
+      if (distance <= CHARACTER_HALF_SIZE + 4) {
         return character;
       }
     }

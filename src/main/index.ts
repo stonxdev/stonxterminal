@@ -25,7 +25,7 @@ function createWindow(): void {
     // autoHideMenuBar: true, // Remove this to show the menu
     ...{ icon },
     webPreferences: {
-      preload: join(__dirname, "../preload/index.js"),
+      preload: join(__dirname, "../preload/index.mjs"),
       sandbox: false,
       contextIsolation: true, // Recommended for security
       webSecurity: false, // Allow unsafe-eval for Pixi.js in development

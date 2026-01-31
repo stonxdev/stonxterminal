@@ -226,7 +226,8 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
       viewport.addChild(selectionGraphics);
       selectionGraphicsRef.current = selectionGraphics;
 
-      // Create character container and renderer
+      // Preload character assets and create renderer
+      await CharacterRenderer.preloadAssets();
       const characterContainer = new Container();
       viewport.addChild(characterContainer);
       const characterRenderer = new CharacterRenderer(
