@@ -180,6 +180,7 @@ export class SimpleViewport extends Container {
   }
 
   private onWheel(event: WheelEvent): void {
+    // Always zoom on wheel (like Dwarf Fortress / RimWorld)
     event.preventDefault();
 
     const rect = this.domElement?.getBoundingClientRect();
@@ -195,15 +196,12 @@ export class SimpleViewport extends Container {
     const isPinchGesture = event.ctrlKey;
 
     // Calculate zoom factor based on deltaY magnitude for smooth zooming
-    // Pinch gestures have small deltaY values, mouse wheel has larger ones
     let zoomFactor: number;
     if (isPinchGesture) {
-      // For pinch: use deltaY directly with a small multiplier for smooth zoom
-      // deltaY is typically small (1-10) for pinch gestures
+      // For trackpad pinch: use deltaY directly with a small multiplier for smooth zoom
       zoomFactor = 1 - event.deltaY * 0.01;
     } else {
       // For mouse wheel: normalize deltaY and use direction-based zoom
-      // deltaY is typically ~100 for each wheel notch
       const direction = event.deltaY < 0 ? 1 : -1;
       zoomFactor = 1 + direction * this.zoomSpeed;
     }

@@ -102,7 +102,6 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
   });
 
   const level = world.levels.get(zLevel);
-  const worldPixelSize = (level?.width ?? 64) * CELL_SIZE;
 
   // Subscribe to selection, hover, and character state changes
   useEffect(() => {
@@ -150,6 +149,10 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
     return unsubscribe;
   }, [zLevel]);
 
+  // World pixel size for centering
+  const worldPixelWidth = (level?.width ?? 64) * CELL_SIZE;
+  const worldPixelHeight = (level?.height ?? 64) * CELL_SIZE;
+
   useEffect(() => {
     if (!containerRef.current || isInitializedRef.current) return;
 
@@ -192,7 +195,7 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
       appRef.current = app;
       isInitializedRef.current = true;
 
-      // Create viewport
+      // Create viewport (wheel zooms, drag pans - like Dwarf Fortress/RimWorld)
       const viewport = new SimpleViewport({
         screenWidth: rect.width,
         screenHeight: rect.height,
@@ -203,10 +206,17 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
 
       app.stage.addChild(viewport);
       viewportRef.current = viewport;
+
+      // Attach wheel zoom and touch pinch handlers
       viewport.attachWheelZoom(app.canvas);
 
       // Render the world
+      console.info("[World] Rendering world tiles...");
       renderWorld(viewport, level);
+      console.info(
+        "[World] World rendered, viewport children:",
+        viewport.children.length,
+      );
 
       // Create hover overlay (drawn first, below selection)
       const hoverGraphics = new Graphics();
@@ -270,7 +280,7 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
       setInteractionContainer(interactionLayer);
 
       // Center on the world
-      viewport.panTo(worldPixelSize / 2, worldPixelSize / 2);
+      viewport.panTo(worldPixelWidth / 2, worldPixelHeight / 2);
 
       // Handle resizes
       const resizeObserver = new ResizeObserver((entries) => {
@@ -320,7 +330,7 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
       }
       isInitializedRef.current = false;
     };
-  }, [level, worldPixelSize, zLevel]);
+  }, [level, worldPixelWidth, worldPixelHeight, zLevel]);
 
   return (
     <div

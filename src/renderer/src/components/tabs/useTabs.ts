@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { TabItem } from "./types";
 
 interface UseTabsOptions {
@@ -27,6 +27,13 @@ export function useTabs({
   const [internalActiveTabId, setInternalActiveTabId] = useState<
     string | undefined
   >(defaultActiveTabId ?? tabs[0]?.id);
+
+  // Auto-select first tab when tabs change from empty to populated
+  useEffect(() => {
+    if (!isControlled && internalActiveTabId === undefined && tabs.length > 0) {
+      setInternalActiveTabId(tabs[0].id);
+    }
+  }, [isControlled, internalActiveTabId, tabs]);
 
   const activeTabId = isControlled
     ? controlledActiveTabId

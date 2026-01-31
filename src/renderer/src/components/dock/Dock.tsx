@@ -191,9 +191,9 @@ export const Dock: React.FC<DockProps> = ({
             </div>
           )}
 
-          <div className="flex-1 flex flex-col relative">
+          <div className="flex-1 flex flex-col relative min-w-0 min-h-0">
             <div
-              className={`flex-1 relative overflow-y-auto ${center ? "bg-background" : ""}`}
+              className={`flex-1 relative min-h-0 overflow-hidden ${center ? "bg-background" : ""}`}
               style={{ pointerEvents: center ? "auto" : "none" }}
             >
               {center}
