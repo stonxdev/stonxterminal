@@ -89,7 +89,7 @@ export function Tabs({
         id={`tabpanel-${activeTabId}`}
         role="tabpanel"
         aria-labelledby={activeTabId}
-        className="flex-1 min-h-0 min-w-0 overflow-hidden"
+        className="flex-1 min-h-0 min-w-0 overflow-y-auto"
       >
         {activeTab?.content}
       </div>
