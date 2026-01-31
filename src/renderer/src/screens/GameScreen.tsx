@@ -1,5 +1,8 @@
 import { Dock } from "@renderer/components/dock/Dock";
 import { LeftPanel, RightPanel, TopBar } from "@renderer/components/hud";
+import type { TabItem } from "@renderer/components/tabs";
+import { Tabs } from "@renderer/components/tabs";
+import { Map as MapIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import World from "../components/pixi/World";
 import {
@@ -121,24 +124,24 @@ export const GameScreen: React.FC = () => {
     return world.levels.get(currentZLevel) ?? null;
   }, [world, currentZLevel]);
 
+  const centerTabs: TabItem[] = useMemo(() => {
+    if (!world || !currentLevel) return [];
+    return [
+      {
+        id: "world",
+        label: "World",
+        icon: MapIcon,
+        content: <World world={world} zLevel={currentZLevel} />,
+      },
+    ];
+  }, [world, currentLevel, currentZLevel]);
+
   return (
-    <div
-      className="relative w-screen h-screen overflow-hidden"
-      style={{ touchAction: "none" }}
-    >
-      <div className="absolute inset-0">
-        {world && currentLevel && (
-          <World world={world} zLevel={currentZLevel} />
-        )}
-      </div>
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <Dock
-          top={<TopBar />}
-          leftTop={<LeftPanel />}
-          center={null}
-          rightTop={<RightPanel />}
-        />
-      </div>
-    </div>
+    <Dock
+      top={<TopBar />}
+      leftTop={<LeftPanel />}
+      center={<Tabs variant="primary" tabs={centerTabs} />}
+      rightTop={<RightPanel />}
+    />
   );
 };
