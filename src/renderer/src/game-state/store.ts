@@ -76,11 +76,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
   // ===========================================================================
 
   setWorld: (world: World, config?: WorldGenerationConfig) => {
+    // Clear existing entities when setting a new world
+    entityStore.clear();
+
     set({
       world,
       worldConfig: config ?? null,
       currentZLevel: world.surfaceZ,
       isInitialized: true,
+      simulation: {
+        ...get().simulation,
+        characters: new Map(),
+      },
     });
   },
 

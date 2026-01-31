@@ -2,9 +2,8 @@
 // SELECT MODE HANDLER
 // =============================================================================
 
+import { commandRegistry } from "../../commands/CommandRegistry";
 import { useGameStore } from "../../game-state/store";
-import { entityStore } from "../../simulation/entity-store";
-import { createMoveCommand } from "../../simulation/types";
 import type { InteractionContext, InteractionModeHandler } from "../types";
 
 /** Maximum distance (in pixels) to still count as a click vs drag */
@@ -106,7 +105,7 @@ export class SelectModeHandler implements InteractionModeHandler {
   }
 
   /**
-   * Handle right-click to issue move command
+   * Handle right-click to issue move command via command dispatch
    */
   private handleRightClick(ctx: InteractionContext): void {
     const state = useGameStore.getState();
@@ -118,25 +117,14 @@ export class SelectModeHandler implements InteractionModeHandler {
     }
 
     const characterId = selection.entityId;
-    const character = entityStore.get(characterId);
-
-    if (!character) return;
-
-    // Check if destination is passable
-    if (!ctx.tile?.pathfinding?.isPassable) {
-      console.warn("Cannot move to impassable tile");
-      return;
-    }
-
-    // Create and issue move command
     const destination = {
       x: ctx.worldPosition.x,
       y: ctx.worldPosition.y,
       z: ctx.zLevel,
     };
 
-    const command = createMoveCommand(destination);
-    state.issueCommand(characterId, command);
+    // Dispatch command instead of direct mutation
+    commandRegistry.execute("character.moveTo", { characterId, destination });
   }
 
   onHover(ctx: InteractionContext): void {

@@ -1,4 +1,4 @@
-import { SimpleViewport } from "@renderer/lib/viewport-simple";
+import { SimpleViewport, viewportStore } from "@renderer/lib/viewport-simple";
 import type {
   StructureType,
   TerrainType,
@@ -277,6 +277,9 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
       app.stage.addChild(viewport);
       viewportRef.current = viewport;
 
+      // Register viewport with store for command access
+      viewportStore.setViewport(viewport);
+
       // Attach wheel zoom and touch pinch handlers
       viewport.attachWheelZoom(app.canvas);
 
@@ -423,6 +426,7 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
         app._resizeObserver?.disconnect();
       }
       if (viewportRef.current) {
+        viewportStore.setViewport(null);
         viewportRef.current.destroy();
         viewportRef.current = null;
       }

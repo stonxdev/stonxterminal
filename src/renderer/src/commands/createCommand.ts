@@ -6,8 +6,8 @@ import type { CommandDefinition } from "./types";
  * @param definition - The command definition
  * @returns A command definition
  */
-export function createCommand(
-  definition: CommandDefinition,
-): CommandDefinition {
+export function createCommand<TArgs = unknown>(
+  definition: CommandDefinition<TArgs>,
+): CommandDefinition<TArgs> {
   return definition;
 }

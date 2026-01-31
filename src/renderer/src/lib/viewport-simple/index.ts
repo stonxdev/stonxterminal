@@ -7,3 +7,4 @@
 
 export type { ViewportOptions } from "./SimpleViewport";
 export { SimpleViewport } from "./SimpleViewport";
+export { viewportStore } from "./viewportStore";

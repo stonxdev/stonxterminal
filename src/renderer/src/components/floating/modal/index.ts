@@ -2,6 +2,8 @@ export type { ModalProps } from "./Modal";
 export { Modal } from "./Modal";
 export type { ModalFrameProps } from "./ModalFrame";
 export { ModalFrame } from "./ModalFrame";
+export type { ModalFrameStructuredProps } from "./ModalFrameStructured";
+export { ModalFrameStructured } from "./ModalFrameStructured";
 export type {
   BaseModalFrameProps,
   ModalAlignment,

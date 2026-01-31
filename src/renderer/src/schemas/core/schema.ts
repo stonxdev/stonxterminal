@@ -2,6 +2,8 @@
 // SCHEMA SYSTEM (ADAPTED FROM NUBASE)
 // =============================================================================
 
+import { z } from "zod";
+
 /**
  * Metadata attached to schema fields for UI rendering
  */
@@ -23,6 +25,16 @@ export interface SchemaMetadata<Output = unknown> {
   unit?: string;
   /** Whether the field is editable (for inspector) */
   editable?: boolean;
+
+  // Validation functions (use unknown for parameter to allow covariant usage in ObjectShape)
+  /** Sync validation on form submit */
+  validateOnSubmit?: (value: unknown) => string | undefined;
+  /** Async validation on form submit */
+  validateOnSubmitAsync?: (value: unknown) => Promise<string | undefined>;
+  /** Sync validation on blur */
+  validateOnBlur?: (value: unknown) => string | undefined;
+  /** Async validation on blur */
+  validateOnBlurAsync?: (value: unknown) => Promise<string | undefined>;
 }
 
 /**
@@ -71,6 +83,11 @@ export abstract class BaseSchema<Output = unknown> {
   optional(): OptionalSchema<this> {
     return new OptionalSchema(this);
   }
+
+  /**
+   * Converts this schema to a Zod schema for runtime validation.
+   */
+  abstract toZod(): z.ZodSchema<Output>;
 }
 
 // =============================================================================
@@ -83,6 +100,10 @@ export class BooleanSchema extends BaseSchema<boolean> {
   override get defaultValue(): boolean {
     return this._meta?.defaultValue ?? false;
   }
+
+  toZod(): z.ZodBoolean {
+    return z.boolean();
+  }
 }
 
 export class StringSchema extends BaseSchema<string> {
@@ -91,6 +112,10 @@ export class StringSchema extends BaseSchema<string> {
   override get defaultValue(): string {
     return this._meta?.defaultValue ?? "";
   }
+
+  toZod(): z.ZodString {
+    return z.string();
+  }
 }
 
 export class NumberSchema extends BaseSchema<number> {
@@ -98,6 +123,10 @@ export class NumberSchema extends BaseSchema<number> {
 
   override get defaultValue(): number {
     return this._meta?.defaultValue ?? 0;
+  }
+
+  toZod(): z.ZodNumber {
+    return z.number();
   }
 }
 
@@ -126,6 +155,10 @@ export class OptionalSchema<
 
   override get defaultValue(): TWrapped["_outputType"] | undefined {
     return this._meta?.defaultValue ?? undefined;
+  }
+
+  toZod(): z.ZodOptional<z.ZodNullable<z.ZodSchema<TWrapped["_outputType"]>>> {
+    return this._wrapped.toZod().nullable().optional();
   }
 }
 
@@ -247,6 +280,16 @@ export class ObjectSchema<TShape extends ObjectShape> extends BaseSchema<
   getFieldKeys(): (keyof TShape)[] {
     return Object.keys(this._shape) as (keyof TShape)[];
   }
+
+  toZod(): z.ZodSchema<ObjectOutput<TShape>> {
+    const zodShape: Record<string, z.ZodTypeAny> = {};
+    for (const key in this._shape) {
+      if (Object.hasOwn(this._shape, key) && this._shape[key]) {
+        zodShape[key] = this._shape[key].toZod();
+      }
+    }
+    return z.object(zodShape) as z.ZodSchema<ObjectOutput<TShape>>;
+  }
 }
 
 // =============================================================================
@@ -270,6 +313,10 @@ export class ArraySchema<
 
   getElementSchema(): TElementSchema {
     return this._element;
+  }
+
+  toZod(): z.ZodArray<z.ZodSchema<TElementSchema["_outputType"]>> {
+    return z.array(this._element.toZod());
   }
 }
 

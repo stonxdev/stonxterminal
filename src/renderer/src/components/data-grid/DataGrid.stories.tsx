@@ -1,5 +1,13 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import { MoreHorizontal } from "lucide-react";
 import { useMemo, useState } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../dropdown-menu";
 import { DataGrid } from "./DataGrid";
 import textEditor from "./editors/textEditor";
 import type { Column, SortColumn } from "./types";
@@ -376,6 +384,90 @@ export const EmptyState: Story = {
 
     return (
       <div style={{ height: "300px", width: "100%" }}>
+        <DataGrid columns={columns} rows={rows} />
+      </div>
+    );
+  },
+};
+
+// Actions dropdown component for the WithActions story using Radix UI
+function ActionsDropdown({
+  personId,
+  personName,
+  onSelect,
+}: {
+  personId: number;
+  personName: string;
+  onSelect: (id: number) => void;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground"
+        >
+          <MoreHorizontal size={16} />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem
+          onClick={() => {
+            onSelect(personId);
+            alert(`Selected: ${personName}`);
+          }}
+        >
+          Select
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => alert(`Edit: ${personName}`)}>
+          Edit
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          variant="destructive"
+          onClick={() => alert(`Delete: ${personName}`)}
+        >
+          Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+// With actions dropdown
+export const WithActions: Story = {
+  render: () => {
+    const [rows, _setRows] = useState(() => generatePeople(20));
+    const [selectedId, setSelectedId] = useState<number | null>(null);
+
+    const columns: Column<Person>[] = useMemo(
+      () => [
+        { key: "id", name: "ID", width: 60 },
+        { key: "name", name: "Name", width: 150 },
+        { key: "email", name: "Email", width: 200 },
+        { key: "age", name: "Age", width: 80 },
+        { key: "city", name: "City", width: 120 },
+        {
+          key: "actions",
+          name: "",
+          width: 50,
+          renderCell: ({ row }) => (
+            <ActionsDropdown
+              personId={row.id}
+              personName={row.name}
+              onSelect={setSelectedId}
+            />
+          ),
+        },
+      ],
+      [],
+    );
+
+    return (
+      <div style={{ height: "500px", width: "100%" }}>
+        <p style={{ marginBottom: "10px" }}>
+          Selected ID: {selectedId ?? "None"}
+        </p>
         <DataGrid columns={columns} rows={rows} />
       </div>
     );
