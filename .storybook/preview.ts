@@ -1,3 +1,4 @@
+import { withThemeByDataAttribute } from "@storybook/addon-themes";
 import type { Preview } from "@storybook/react-vite";
 import "../src/renderer/src/css/index.css";
 
@@ -9,7 +10,16 @@ const preview: Preview = {
         date: /Date$/i,
       },
     },
-
+    backgrounds: {
+      disable: true,
+    },
+    themes: {
+      default: "dark",
+      list: [
+        { name: "Dark", dataAttribute: "dark", color: "#1a1a1a" },
+        { name: "Light", dataAttribute: "light", color: "#ffffff" },
+      ],
+    },
     a11y: {
       // 'todo' - show a11y violations in the test UI only
       // 'error' - fail CI on a11y violations
@@ -17,6 +27,16 @@ const preview: Preview = {
       test: "todo",
     },
   },
+  decorators: [
+    withThemeByDataAttribute({
+      themes: {
+        dark: "dark",
+        light: "light",
+      },
+      defaultTheme: "dark",
+      attributeName: "data-theme",
+    }),
+  ],
 };
 
 export default preview;

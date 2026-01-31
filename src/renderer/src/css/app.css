@@ -1,6 +1,5 @@
 @layer base {
   html {
-    color-scheme: dark;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     /* Prevent iOS bounce/overscroll */
@@ -10,9 +9,20 @@
     height: 100%;
   }
 
+  /* Color scheme based on theme */
+  :root,
+  [data-theme="dark"] {
+    color-scheme: dark;
+  }
+
+  [data-theme="light"] {
+    color-scheme: light;
+  }
+
   body {
     font-family: "Source Code Pro", monospace;
-    background-color: var(--color-surface-0);
+    background-color: var(--background);
+    color: var(--foreground);
     /* Prevent iOS bounce/overscroll */
     overscroll-behavior: none;
     /* Prevent text selection during touch */

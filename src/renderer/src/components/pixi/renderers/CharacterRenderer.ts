@@ -73,6 +73,8 @@ export class CharacterRenderer {
     console.info("[CharacterRenderer] Preloading character assets...");
     try {
       const texture = await Assets.load<Texture>(CHARACTER_SPRITE_PATH);
+      // Use nearest-neighbor scaling for crisp pixel art
+      texture.source.scaleMode = "nearest";
       CharacterRenderer.characterTexture = texture;
       console.info("[CharacterRenderer] Character texture loaded:", {
         width: texture.width,

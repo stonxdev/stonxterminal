@@ -14,8 +14,8 @@ import "pixi.js/unsafe-eval";
  * The grid helps visualize that panning and zooming are working correctly.
  */
 
-const GRID_SIZE = 20; // Number of cells in each direction
-const CELL_SIZE = 64; // Pixels per cell
+const GRID_SIZE = 60; // Number of cells in each direction
+const CELL_SIZE = 32; // Pixels per cell (matches tile bitmap size)
 const WORLD_SIZE = GRID_SIZE * CELL_SIZE; // Total world size
 
 const SimpleWorld: React.FC = () => {

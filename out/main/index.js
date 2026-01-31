@@ -18,7 +18,7 @@ function createWindow() {
     // autoHideMenuBar: true, // Remove this to show the menu
     ...{ icon },
     webPreferences: {
-      preload: join$1(__dirname, "../preload/index.js"),
+      preload: join$1(__dirname, "../preload/index.mjs"),
       sandbox: false,
       contextIsolation: true,
       // Recommended for security
