@@ -10,6 +10,8 @@ interface VerticalResizeHandleProps {
 
 const forceMobileHandles =
   localStorage.getItem("__forceMobileHandles") === "true";
+const isTouchDevice =
+  typeof window !== "undefined" && "ontouchstart" in window;
 
 export const VerticalResizeHandle: React.FC<VerticalResizeHandleProps> = ({
   onResizeStart,
@@ -17,7 +19,8 @@ export const VerticalResizeHandle: React.FC<VerticalResizeHandleProps> = ({
   align,
 }) => {
   const [isHovering, setIsHovering] = useState(false);
-  const showGrip = forceMobileHandles || isHovering || isDragging;
+  const useMobileStyle = forceMobileHandles || isTouchDevice;
+  const showGrip = useMobileStyle || isHovering || isDragging;
 
   return (
     <button
@@ -27,13 +30,13 @@ export const VerticalResizeHandle: React.FC<VerticalResizeHandleProps> = ({
       style={{ pointerEvents: "auto", touchAction: "none" }}
       className={cn(
         "absolute left-0 right-0 z-10 flex items-center justify-center",
-        forceMobileHandles ? "h-4" : "h-1.5 max-md:h-4",
+        useMobileStyle ? "h-4" : "h-1.5",
         "cursor-row-resize",
         align === "top" ? "top-0" : "bottom-0",
         "transition-all duration-200",
         isDragging
           ? "bg-blue-500/50"
-          : isHovering || forceMobileHandles
+          : isHovering || useMobileStyle
             ? "bg-border"
             : "bg-border/10",
         "hover:bg-border",

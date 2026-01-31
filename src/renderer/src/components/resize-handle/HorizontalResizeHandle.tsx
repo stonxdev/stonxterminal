@@ -10,6 +10,8 @@ interface HorizontalResizeHandleProps {
 
 const forceMobileHandles =
   localStorage.getItem("__forceMobileHandles") === "true";
+const isTouchDevice =
+  typeof window !== "undefined" && "ontouchstart" in window;
 
 export const HorizontalResizeHandle: React.FC<HorizontalResizeHandleProps> = ({
   onResizeStart,
@@ -17,7 +19,8 @@ export const HorizontalResizeHandle: React.FC<HorizontalResizeHandleProps> = ({
   align,
 }) => {
   const [isHovering, setIsHovering] = useState(false);
-  const showGrip = forceMobileHandles || isHovering || isDragging;
+  const useMobileStyle = forceMobileHandles || isTouchDevice;
+  const showGrip = useMobileStyle || isHovering || isDragging;
 
   return (
     <button
@@ -27,13 +30,13 @@ export const HorizontalResizeHandle: React.FC<HorizontalResizeHandleProps> = ({
       style={{ pointerEvents: "auto", touchAction: "none" }}
       className={cn(
         "absolute top-0 bottom-0 z-10 flex items-center justify-center",
-        forceMobileHandles ? "w-4" : "w-1.5 max-md:w-4",
+        useMobileStyle ? "w-4" : "w-1.5",
         "cursor-col-resize",
         align === "left" ? "left-0" : "right-0",
         "transition-all duration-200",
         isDragging
           ? "bg-blue-500/50"
-          : isHovering || forceMobileHandles
+          : isHovering || useMobileStyle
             ? "bg-border"
             : "bg-transparent",
         "hover:bg-border",
