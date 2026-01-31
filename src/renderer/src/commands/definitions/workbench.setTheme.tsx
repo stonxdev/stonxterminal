@@ -33,7 +33,7 @@ export const workbenchSetTheme = createCommand({
         label: theme?.name || themeId,
         subtitle: `Switch to ${themeId} theme`,
         onExecute: () => {
-          context.modal.closeModal();
+          context.modal.closeAllModals();
           context.theming.setActiveThemeId(themeId);
         },
         onFocus: () => {
