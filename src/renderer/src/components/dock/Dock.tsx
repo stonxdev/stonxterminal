@@ -102,32 +102,32 @@ export const Dock: React.FC<DockProps> = ({
     return { min: 50, max: Number.POSITIVE_INFINITY };
   }, []);
 
-  const handleLeftResize = useResize(
+  const leftResize = useResize(
     setLeftWidth,
     () => leftWidth,
     getLeftConstraints,
   );
-  const handleRightResize = useResize(
+  const rightResize = useResize(
     setRightWidth,
     () => rightWidth,
     getRightConstraints,
     true,
   );
-  const handleCenterBottomResize = useResize(
+  const centerBottomResize = useResize(
     setCenterBottomHeight,
     () => centerBottomHeight,
     getCenterBottomConstraints,
     true,
     true,
   );
-  const handleLeftBottomResize = useResize(
+  const leftBottomResize = useResize(
     setLeftBottomHeight,
     () => leftBottomHeight,
     getLeftBottomConstraints,
     true,
     true,
   );
-  const handleRightBottomResize = useResize(
+  const rightBottomResize = useResize(
     setRightBottomHeight,
     () => rightBottomHeight,
     getRightBottomConstraints,
@@ -168,7 +168,8 @@ export const Dock: React.FC<DockProps> = ({
               )}
               {leftBottom && leftTop && (
                 <VerticalResizeHandle
-                  onMouseDown={handleLeftBottomResize}
+                  onResizeStart={leftBottomResize.onResizeStart}
+                  isDragging={leftBottomResize.isDragging}
                   align="top"
                 />
               )}
@@ -183,7 +184,8 @@ export const Dock: React.FC<DockProps> = ({
                 </div>
               )}
               <HorizontalResizeHandle
-                onMouseDown={handleLeftResize}
+                onResizeStart={leftResize.onResizeStart}
+                isDragging={leftResize.isDragging}
                 align="right"
               />
             </div>
@@ -205,7 +207,8 @@ export const Dock: React.FC<DockProps> = ({
                 }}
               >
                 <VerticalResizeHandle
-                  onMouseDown={handleCenterBottomResize}
+                  onResizeStart={centerBottomResize.onResizeStart}
+                  isDragging={centerBottomResize.isDragging}
                   align="top"
                 />
                 {centerBottom}
@@ -228,7 +231,8 @@ export const Dock: React.FC<DockProps> = ({
               )}
               {rightBottom && rightTop && (
                 <VerticalResizeHandle
-                  onMouseDown={handleRightBottomResize}
+                  onResizeStart={rightBottomResize.onResizeStart}
+                  isDragging={rightBottomResize.isDragging}
                   align="top"
                 />
               )}
@@ -243,7 +247,8 @@ export const Dock: React.FC<DockProps> = ({
                 </div>
               )}
               <HorizontalResizeHandle
-                onMouseDown={handleRightResize}
+                onResizeStart={rightResize.onResizeStart}
+                isDragging={rightResize.isDragging}
                 align="left"
               />
             </div>

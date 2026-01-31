@@ -3,14 +3,14 @@ import type React from "react";
 import { useState } from "react";
 
 interface HorizontalResizeHandleProps {
-  onMouseDown: (e: React.MouseEvent) => void;
+  onResizeStart: (e: React.MouseEvent | React.TouchEvent) => void;
+  isDragging: boolean;
   align: "left" | "right";
 }
 
-const HANDLE_WIDTH = "w-1.5";
-
 export const HorizontalResizeHandle: React.FC<HorizontalResizeHandleProps> = ({
-  onMouseDown,
+  onResizeStart,
+  isDragging,
   align,
 }) => {
   const [isHovering, setIsHovering] = useState(false);
@@ -20,19 +20,24 @@ export const HorizontalResizeHandle: React.FC<HorizontalResizeHandleProps> = ({
       data-component="ResizeHandle"
       type="button"
       tabIndex={0}
-      style={{ pointerEvents: "auto" }}
+      style={{ pointerEvents: "auto", touchAction: "none" }}
       className={cn(
         "absolute top-0 bottom-0 z-10",
-        HANDLE_WIDTH,
+        "w-1.5 max-md:w-3",
         "cursor-col-resize",
         align === "left" ? "left-0" : "right-0",
         "transition-all duration-200",
-        isHovering ? "bg-border" : "bg-transparent",
+        isDragging
+          ? "bg-blue-500/50"
+          : isHovering
+            ? "bg-border"
+            : "bg-transparent",
         "hover:bg-border",
       )}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
-      onMouseDown={onMouseDown}
+      onMouseDown={onResizeStart}
+      onTouchStart={onResizeStart}
     />
   );
 };

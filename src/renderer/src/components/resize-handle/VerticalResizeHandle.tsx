@@ -3,14 +3,14 @@ import type React from "react";
 import { useState } from "react";
 
 interface VerticalResizeHandleProps {
-  onMouseDown: (e: React.MouseEvent) => void;
+  onResizeStart: (e: React.MouseEvent | React.TouchEvent) => void;
+  isDragging: boolean;
   align: "top" | "bottom";
 }
 
-const HANDLE_HEIGHT = "h-1.5";
-
 export const VerticalResizeHandle: React.FC<VerticalResizeHandleProps> = ({
-  onMouseDown,
+  onResizeStart,
+  isDragging,
   align,
 }) => {
   const [isHovering, setIsHovering] = useState(false);
@@ -20,19 +20,24 @@ export const VerticalResizeHandle: React.FC<VerticalResizeHandleProps> = ({
       data-component="ResizeHandle"
       type="button"
       tabIndex={0}
-      style={{ pointerEvents: "auto" }}
+      style={{ pointerEvents: "auto", touchAction: "none" }}
       className={cn(
         "absolute left-0 right-0 z-10",
-        HANDLE_HEIGHT,
+        "h-1.5 max-md:h-3",
         "cursor-row-resize",
         align === "top" ? "top-0" : "bottom-0",
         "transition-all duration-200",
-        isHovering ? "bg-border" : "bg-border/10",
+        isDragging
+          ? "bg-blue-500/50"
+          : isHovering
+            ? "bg-border"
+            : "bg-border/10",
         "hover:bg-border",
       )}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
-      onMouseDown={onMouseDown}
+      onMouseDown={onResizeStart}
+      onTouchStart={onResizeStart}
     />
   );
 };
