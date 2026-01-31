@@ -155,9 +155,7 @@ export const GameScreen: React.FC = () => {
       centerBottom={
         isCenterBottomEmpty ? undefined : <WidgetSlot slotId="center-bottom" />
       }
-      rightTop={
-        isRightTopEmpty ? undefined : <WidgetSlot slotId="right-top" />
-      }
+      rightTop={isRightTopEmpty ? undefined : <WidgetSlot slotId="right-top" />}
       rightBottom={
         isRightBottomEmpty ? undefined : <WidgetSlot slotId="right-bottom" />
       }
