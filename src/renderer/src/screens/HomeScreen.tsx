@@ -13,7 +13,7 @@ export const HomeScreen: React.FC = () => {
         Everyone is fine
       </h1>
       <p className="text-xl text-[var(--foreground-muted)] mb-12">
-        Or the narrator might have lied...
+        Or the narrator might have lied to you...
       </p>
       <button
         type="button"
