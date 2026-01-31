@@ -1,3 +1,3 @@
-## Colony
+## Everyone is fine
 
-Colony is a colony simulator game
+The narrator may have lied

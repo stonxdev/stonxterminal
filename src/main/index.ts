@@ -13,7 +13,7 @@ import {
 } from "electron"; // Added Menu, dialog, net
 import icon from "../../resources/icon.png?asset";
 
-app.name = "Colony";
+app.name = "Everyone is fine";
 
 function createWindow(): void {
   // Create the browser window.

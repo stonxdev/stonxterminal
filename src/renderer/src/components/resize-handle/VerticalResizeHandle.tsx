@@ -10,8 +10,7 @@ interface VerticalResizeHandleProps {
 
 const forceMobileHandles =
   localStorage.getItem("__forceMobileHandles") === "true";
-const isTouchDevice =
-  typeof window !== "undefined" && "ontouchstart" in window;
+const isTouchDevice = typeof window !== "undefined" && "ontouchstart" in window;
 
 export const VerticalResizeHandle: React.FC<VerticalResizeHandleProps> = ({
   onResizeStart,

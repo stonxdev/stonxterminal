@@ -10,8 +10,7 @@ interface HorizontalResizeHandleProps {
 
 const forceMobileHandles =
   localStorage.getItem("__forceMobileHandles") === "true";
-const isTouchDevice =
-  typeof window !== "undefined" && "ontouchstart" in window;
+const isTouchDevice = typeof window !== "undefined" && "ontouchstart" in window;
 
 export const HorizontalResizeHandle: React.FC<HorizontalResizeHandleProps> = ({
   onResizeStart,

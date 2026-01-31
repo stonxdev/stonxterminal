@@ -10,10 +10,10 @@ export const HomeScreen: React.FC = () => {
   return (
     <div className="flex flex-col items-center justify-center w-screen h-screen bg-[var(--background)]">
       <h1 className="text-6xl font-bold text-[var(--foreground)] mb-4">
-        Colony
+        Everyone is fine
       </h1>
       <p className="text-xl text-[var(--foreground-muted)] mb-12">
-        A colony simulation game
+        The narrator may have lied
       </p>
       <button
         type="button"

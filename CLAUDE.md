@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Colony is a colony simulation game
+The narrator may have lied
 
 ## Essential Commands
 

@@ -1,7 +1,7 @@
 {
   "name": "Everyone is fine",
   "short_name": "Everyone is fine",
-  "description": "A colony simulation game",
+  "description": "The narrator may have lied",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#000000",
