@@ -1,7 +1,9 @@
 import { RouterProvider } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { ColonyProvider } from "./context/ColonyContext";
+import { useIsMobilePhone } from "./hooks/useIsMobilePhone";
 import { router } from "./router";
+import { MobileNotSupportedScreen } from "./screens/MobileNotSupportedScreen";
 
 /**
  * Prevent browser-level pinch-to-zoom gestures.
@@ -41,6 +43,11 @@ function usePreventBrowserZoom() {
 
 export const App: React.FC = () => {
   usePreventBrowserZoom();
+  const isMobilePhone = useIsMobilePhone();
+
+  if (isMobilePhone) {
+    return <MobileNotSupportedScreen />;
+  }
 
   return (
     <ColonyProvider>
