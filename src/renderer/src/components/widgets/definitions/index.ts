@@ -1,5 +1,6 @@
-export { charactersWidget } from "./characters";
-export { tileInspectorWidget } from "./tile-inspector";
+export { charactersWidget } from "./CharactersWidget";
+export { layersWidget } from "./LayersWidget";
+export { tileInspectorWidget } from "./TileInspectorWidget";
 
 // Future widgets:
 // export { entityListWidget } from "./entity-list";

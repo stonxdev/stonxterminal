@@ -1,11 +1,9 @@
 import { RouterProvider } from "@tanstack/react-router";
 import { useEffect } from "react";
-import {
-  registerBuiltInWidgets,
-  useWidgetLayoutStore,
-} from "./components/widgets";
+import { registerBuiltInWidgets } from "./components/widgets";
 import { ColonyProvider } from "./context/ColonyContext";
 import { useIsMobilePhone } from "./hooks/useIsMobilePhone";
+import { registerBuiltInLayers, useLayerStore } from "./layers";
 import { router } from "./router";
 import { MobileNotSupportedScreen } from "./screens/MobileNotSupportedScreen";
 
@@ -49,10 +47,11 @@ export const App: React.FC = () => {
   usePreventBrowserZoom();
   const isMobilePhone = useIsMobilePhone();
 
-  // Initialize widget system
+  // Initialize widget and layer systems
   useEffect(() => {
     registerBuiltInWidgets();
-    useWidgetLayoutStore.getState().initializeFromDefaults();
+    registerBuiltInLayers();
+    useLayerStore.getState().initialize();
   }, []);
 
   if (isMobilePhone) {

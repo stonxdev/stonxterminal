@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { DEFAULT_WIDGET_LAYOUT } from "./register-widgets";
 import type { WidgetId, WidgetLayoutConfig, WidgetSlotId } from "./types";
 
@@ -10,13 +9,9 @@ import type { WidgetId, WidgetLayoutConfig, WidgetSlotId } from "./types";
 interface WidgetLayoutState {
   /** Current slot assignments */
   layout: WidgetLayoutConfig;
-  /** Whether the store has been initialized */
-  isInitialized: boolean;
 }
 
 interface WidgetLayoutActions {
-  /** Initialize layout from registry defaults */
-  initializeFromDefaults: () => void;
   /** Add a widget to a slot */
   addWidgetToSlot: (widgetId: WidgetId, slotId: WidgetSlotId) => void;
   /** Remove a widget from its current slot */
@@ -32,98 +27,54 @@ interface WidgetLayoutActions {
 type WidgetLayoutStore = WidgetLayoutState & WidgetLayoutActions;
 
 // =============================================================================
-// INITIAL STATE
-// =============================================================================
-
-const INITIAL_LAYOUT: WidgetLayoutConfig = {
-  slots: {
-    "left-top": [],
-    "left-bottom": [],
-    "center-bottom": [],
-    "right-top": [],
-    "right-bottom": [],
-  },
-};
-
-// =============================================================================
 // STORE
 // =============================================================================
 
-export const useWidgetLayoutStore = create<WidgetLayoutStore>()(
-  persist(
-    (set, get) => ({
-      layout: INITIAL_LAYOUT,
-      isInitialized: false,
+export const useWidgetLayoutStore = create<WidgetLayoutStore>()((set, get) => ({
+  layout: DEFAULT_WIDGET_LAYOUT,
 
-      initializeFromDefaults: () => {
-        const { isInitialized, layout } = get();
+  addWidgetToSlot: (widgetId, slotId) => {
+    set((state) => {
+      // Remove from any existing slot first
+      const newSlots = { ...state.layout.slots };
+      for (const slot of Object.keys(newSlots) as WidgetSlotId[]) {
+        newSlots[slot] = newSlots[slot].filter((id) => id !== widgetId);
+      }
+      // Add to new slot
+      newSlots[slotId] = [...newSlots[slotId], widgetId];
+      return { layout: { slots: newSlots } };
+    });
+  },
 
-        if (isInitialized) return;
+  removeWidgetFromSlot: (widgetId) => {
+    set((state) => {
+      const newSlots = { ...state.layout.slots };
+      for (const slot of Object.keys(newSlots) as WidgetSlotId[]) {
+        newSlots[slot] = newSlots[slot].filter((id) => id !== widgetId);
+      }
+      return { layout: { slots: newSlots } };
+    });
+  },
 
-        // Check if we have persisted data (any slot has widgets)
-        const hasPersistedData = Object.values(layout.slots).some(
-          (widgets) => widgets.length > 0,
-        );
+  moveWidgetToSlot: (widgetId, newSlotId) => {
+    get().addWidgetToSlot(widgetId, newSlotId);
+  },
 
-        if (hasPersistedData) {
-          set({ isInitialized: true });
-          return;
-        }
-
-        // Use the centralized default layout configuration
-        set({ layout: DEFAULT_WIDGET_LAYOUT, isInitialized: true });
+  reorderWidgetsInSlot: (slotId, widgetIds) => {
+    set((state) => ({
+      layout: {
+        slots: {
+          ...state.layout.slots,
+          [slotId]: widgetIds,
+        },
       },
+    }));
+  },
 
-      addWidgetToSlot: (widgetId, slotId) => {
-        set((state) => {
-          // Remove from any existing slot first
-          const newSlots = { ...state.layout.slots };
-          for (const slot of Object.keys(newSlots) as WidgetSlotId[]) {
-            newSlots[slot] = newSlots[slot].filter((id) => id !== widgetId);
-          }
-          // Add to new slot
-          newSlots[slotId] = [...newSlots[slotId], widgetId];
-          return { layout: { slots: newSlots } };
-        });
-      },
-
-      removeWidgetFromSlot: (widgetId) => {
-        set((state) => {
-          const newSlots = { ...state.layout.slots };
-          for (const slot of Object.keys(newSlots) as WidgetSlotId[]) {
-            newSlots[slot] = newSlots[slot].filter((id) => id !== widgetId);
-          }
-          return { layout: { slots: newSlots } };
-        });
-      },
-
-      moveWidgetToSlot: (widgetId, newSlotId) => {
-        get().addWidgetToSlot(widgetId, newSlotId);
-      },
-
-      reorderWidgetsInSlot: (slotId, widgetIds) => {
-        set((state) => ({
-          layout: {
-            slots: {
-              ...state.layout.slots,
-              [slotId]: widgetIds,
-            },
-          },
-        }));
-      },
-
-      resetToDefaults: () => {
-        set({ layout: INITIAL_LAYOUT, isInitialized: false });
-        get().initializeFromDefaults();
-      },
-    }),
-    {
-      name: "widget-layout-v2",
-      // Only persist the layout, not the isInitialized flag
-      partialize: (state) => ({ layout: state.layout }),
-    },
-  ),
-);
+  resetToDefaults: () => {
+    set({ layout: DEFAULT_WIDGET_LAYOUT });
+  },
+}));
 
 // =============================================================================
 // SELECTOR HOOKS

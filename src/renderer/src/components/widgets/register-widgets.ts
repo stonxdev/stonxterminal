@@ -1,4 +1,8 @@
-import { charactersWidget, tileInspectorWidget } from "./definitions";
+import {
+  charactersWidget,
+  layersWidget,
+  tileInspectorWidget,
+} from "./definitions";
 import type { WidgetLayoutConfig } from "./types";
 import { widgetRegistry } from "./widget-registry";
 
@@ -11,7 +15,7 @@ export const DEFAULT_WIDGET_LAYOUT: WidgetLayoutConfig = {
     "left-bottom": [],
     "center-bottom": [],
     "right-top": ["tile-inspector"],
-    "right-bottom": ["characters"],
+    "right-bottom": ["layers", "characters"],
   },
 };
 
@@ -21,9 +25,6 @@ export const DEFAULT_WIDGET_LAYOUT: WidgetLayoutConfig = {
  */
 export function registerBuiltInWidgets(): void {
   widgetRegistry.register(charactersWidget);
+  widgetRegistry.register(layersWidget);
   widgetRegistry.register(tileInspectorWidget);
-
-  // Register future widgets here:
-  // widgetRegistry.register(entityListWidget);
-  // widgetRegistry.register(consoleWidget);
 }

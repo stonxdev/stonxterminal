@@ -45,11 +45,13 @@
 }
 
 .rdg > :nth-last-child(1 of .rdg-top-summary-row) > .rdg-cell {
-  border-block-end: var(--rdg-summary-border-width) solid var(--rdg-summary-border-color);
+  border-block-end: var(--rdg-summary-border-width) solid
+    var(--rdg-summary-border-color);
 }
 
 .rdg > :nth-child(1 of .rdg-bottom-summary-row) > .rdg-cell {
-  border-block-start: var(--rdg-summary-border-width) solid var(--rdg-summary-border-color);
+  border-block-start: var(--rdg-summary-border-width) solid
+    var(--rdg-summary-border-color);
 }
 
 .rdg-viewport-dragging {

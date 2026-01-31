@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Or the narrator might have lied
+Or so the narrator said...
 
 ## Essential Commands
 
