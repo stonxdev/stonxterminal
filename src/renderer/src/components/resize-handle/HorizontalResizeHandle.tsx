@@ -8,6 +8,9 @@ interface HorizontalResizeHandleProps {
   align: "left" | "right";
 }
 
+const forceMobileHandles =
+  localStorage.getItem("__forceMobileHandles") === "true";
+
 export const HorizontalResizeHandle: React.FC<HorizontalResizeHandleProps> = ({
   onResizeStart,
   isDragging,
@@ -23,13 +26,13 @@ export const HorizontalResizeHandle: React.FC<HorizontalResizeHandleProps> = ({
       style={{ pointerEvents: "auto", touchAction: "none" }}
       className={cn(
         "absolute top-0 bottom-0 z-10",
-        "w-1.5 max-md:w-3",
+        forceMobileHandles ? "w-3" : "w-1.5 max-md:w-3",
         "cursor-col-resize",
         align === "left" ? "left-0" : "right-0",
         "transition-all duration-200",
         isDragging
           ? "bg-blue-500/50"
-          : isHovering
+          : isHovering || forceMobileHandles
             ? "bg-border"
             : "bg-transparent",
         "hover:bg-border",

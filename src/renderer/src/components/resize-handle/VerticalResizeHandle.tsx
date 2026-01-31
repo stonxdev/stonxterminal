@@ -8,6 +8,9 @@ interface VerticalResizeHandleProps {
   align: "top" | "bottom";
 }
 
+const forceMobileHandles =
+  localStorage.getItem("__forceMobileHandles") === "true";
+
 export const VerticalResizeHandle: React.FC<VerticalResizeHandleProps> = ({
   onResizeStart,
   isDragging,
@@ -23,13 +26,13 @@ export const VerticalResizeHandle: React.FC<VerticalResizeHandleProps> = ({
       style={{ pointerEvents: "auto", touchAction: "none" }}
       className={cn(
         "absolute left-0 right-0 z-10",
-        "h-1.5 max-md:h-3",
+        forceMobileHandles ? "h-3" : "h-1.5 max-md:h-3",
         "cursor-row-resize",
         align === "top" ? "top-0" : "bottom-0",
         "transition-all duration-200",
         isDragging
           ? "bg-blue-500/50"
-          : isHovering
+          : isHovering || forceMobileHandles
             ? "bg-border"
             : "bg-border/10",
         "hover:bg-border",
