@@ -183,8 +183,6 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
       }
 
       container.appendChild(app.canvas);
-      app.canvas.style.width = "100%";
-      app.canvas.style.height = "100%";
       app.canvas.style.display = "block";
 
       // Prevent default context menu on right-click
