@@ -1,6 +1,6 @@
 {
   "name": "colony",
-  "version": "0.10.13",
+  "version": "0.10.14",
   "description": "A journaling app with AI-assisted psychological insights",
   "main": "./out/main/index.js",
   "author": "Andre Pena",
@@ -18,7 +18,7 @@
     "start:web": "vite preview --config vite.config.web.ts --port 3000",
     "dev": "electron-vite dev",
     "dev:web": "vite --config vite.config.web.ts --open",
-    "build:web": "npm run typecheck:web && vite build --config vite.config.web.ts",
+    "build:web": "vite build --config vite.config.web.ts",
     "preview:web": "vite preview --config vite.config.web.ts",
     "build": "npm run typecheck && electron-vite build",
     "postinstall": "electron-builder install-app-deps",

@@ -53,7 +53,16 @@ export default defineConfig({
   build: {
     outDir: resolve(__dirname, "dist-web"),
     emptyOutDir: true,
-    sourcemap: true,
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "monaco-editor": ["monaco-editor", "@monaco-editor/loader"],
+          pixi: ["pixi.js"],
+          "react-vendor": ["react", "react-dom"],
+        },
+      },
+    },
   },
 
   server: {
