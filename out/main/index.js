@@ -9,7 +9,7 @@ const __filename = import.meta.filename;
 const __dirname = import.meta.dirname;
 const require2 = __cjs_mod__.createRequire(import.meta.url);
 const icon = join(__dirname, "../../resources/icon.png");
-app.name = "Colony";
+app.name = "Everyone is fine";
 function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 900,
@@ -165,13 +165,13 @@ function createWindow() {
   }
 }
 app.whenReady().then(() => {
-  electronApp.setAppUserModelId("com.colony.app");
+  electronApp.setAppUserModelId("com.everyoneisfine.app");
   app.on("browser-window-created", (_, window) => {
     optimizer.watchWindowShortcuts(window);
   });
   ipcMain.on("ping", () => console.log("pong"));
   ipcMain.handle("app:getDataPath", () => {
-    return join$1(app.getPath("userData"), "colony-data");
+    return join$1(app.getPath("userData"), "everyoneisfine-data");
   });
   ipcMain.handle("fs:joinPath", (_event, ...paths) => {
     return join$1(...paths);

@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 import { defineConfig, externalizeDepsPlugin } from "electron-vite";
 import { viteStaticCopy } from "vite-plugin-static-copy";
+import pkg from "./package.json";
 
 export default defineConfig({
   main: {
@@ -10,6 +11,9 @@ export default defineConfig({
     plugins: [externalizeDepsPlugin()],
   },
   renderer: {
+    define: {
+      __APP_VERSION__: JSON.stringify(pkg.version),
+    },
     resolve: {
       alias: {
         "@renderer": resolve("src/renderer/src"),

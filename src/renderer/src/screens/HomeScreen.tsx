@@ -13,7 +13,7 @@ export const HomeScreen: React.FC = () => {
         Everyone is fine
       </h1>
       <p className="text-xl text-[var(--foreground-muted)] mb-12">
-        The narrator may have lied
+        Or the narrator might have lied...
       </p>
       <button
         type="button"
@@ -22,6 +22,9 @@ export const HomeScreen: React.FC = () => {
       >
         Start Game
       </button>
+      <p className="absolute bottom-4 text-sm text-[var(--foreground-muted)]">
+        v{__APP_VERSION__}
+      </p>
     </div>
   );
 };
