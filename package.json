@@ -5,7 +5,7 @@
   "main": "./out/main/index.js",
   "author": "Andre Pena",
   "displayName": "Everyone is fine",
-  "homepage": "https://github.com/andrepena/nebline",
+  "homepage": "https://everyoneisfine.com",
   "type": "module",
   "scripts": {
     "format": "biome format --write .",
