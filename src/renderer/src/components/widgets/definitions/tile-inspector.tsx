@@ -54,6 +54,5 @@ export const tileInspectorWidget: WidgetDefinition = {
   label: "Tile",
   icon: Grid2X2,
   component: TileInspectorWidget,
-  defaultSlot: "right-top",
   closable: false,
 };

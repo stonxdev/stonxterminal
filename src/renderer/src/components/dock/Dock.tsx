@@ -166,13 +166,6 @@ export const Dock: React.FC<DockProps> = ({
                   {leftTop}
                 </div>
               )}
-              {leftBottom && leftTop && (
-                <VerticalResizeHandle
-                  onResizeStart={leftBottomResize.onResizeStart}
-                  isDragging={leftBottomResize.isDragging}
-                  align="top"
-                />
-              )}
               {leftBottom && (
                 <div
                   className="bg-background relative overflow-y-auto"
@@ -180,6 +173,13 @@ export const Dock: React.FC<DockProps> = ({
                     height: leftBottomHeight,
                   }}
                 >
+                  {leftTop && (
+                    <VerticalResizeHandle
+                      onResizeStart={leftBottomResize.onResizeStart}
+                      isDragging={leftBottomResize.isDragging}
+                      align="top"
+                    />
+                  )}
                   {leftBottom}
                 </div>
               )}
@@ -229,13 +229,6 @@ export const Dock: React.FC<DockProps> = ({
                   {rightTop}
                 </div>
               )}
-              {rightBottom && rightTop && (
-                <VerticalResizeHandle
-                  onResizeStart={rightBottomResize.onResizeStart}
-                  isDragging={rightBottomResize.isDragging}
-                  align="top"
-                />
-              )}
               {rightBottom && (
                 <div
                   className="bg-background relative overflow-y-auto"
@@ -243,6 +236,13 @@ export const Dock: React.FC<DockProps> = ({
                     height: rightBottomHeight,
                   }}
                 >
+                  {rightTop && (
+                    <VerticalResizeHandle
+                      onResizeStart={rightBottomResize.onResizeStart}
+                      isDragging={rightBottomResize.isDragging}
+                      align="top"
+                    />
+                  )}
                   {rightBottom}
                 </div>
               )}

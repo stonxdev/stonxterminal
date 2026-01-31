@@ -1,3 +1,4 @@
+export { charactersWidget } from "./characters";
 export { tileInspectorWidget } from "./tile-inspector";
 
 // Future widgets:

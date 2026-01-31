@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { DEFAULT_WIDGET_LAYOUT } from "./register-widgets";
 import type { WidgetId, WidgetLayoutConfig, WidgetSlotId } from "./types";
-import { widgetRegistry } from "./widget-registry";
 
 // =============================================================================
 // TYPES
@@ -58,7 +58,6 @@ export const useWidgetLayoutStore = create<WidgetLayoutStore>()(
       initializeFromDefaults: () => {
         const { isInitialized, layout } = get();
 
-        // If already initialized and has persisted data, don't overwrite
         if (isInitialized) return;
 
         // Check if we have persisted data (any slot has widgets)
@@ -67,29 +66,12 @@ export const useWidgetLayoutStore = create<WidgetLayoutStore>()(
         );
 
         if (hasPersistedData) {
-          // Just mark as initialized, keep persisted layout
           set({ isInitialized: true });
           return;
         }
 
-        // Build default layout from widget definitions
-        const allWidgets = widgetRegistry.getAll();
-        const newLayout: WidgetLayoutConfig = {
-          slots: {
-            "left-top": [],
-            "left-bottom": [],
-            "center-bottom": [],
-            "right-top": [],
-            "right-bottom": [],
-          },
-        };
-
-        // Assign widgets to their default slots
-        for (const widget of allWidgets) {
-          newLayout.slots[widget.defaultSlot].push(widget.id);
-        }
-
-        set({ layout: newLayout, isInitialized: true });
+        // Use the centralized default layout configuration
+        set({ layout: DEFAULT_WIDGET_LAYOUT, isInitialized: true });
       },
 
       addWidgetToSlot: (widgetId, slotId) => {
@@ -136,7 +118,7 @@ export const useWidgetLayoutStore = create<WidgetLayoutStore>()(
       },
     }),
     {
-      name: "widget-layout-storage",
+      name: "widget-layout-v2",
       // Only persist the layout, not the isInitialized flag
       partialize: (state) => ({ layout: state.layout }),
     },

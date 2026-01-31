@@ -1,4 +1,4 @@
-import type { WidgetDefinition, WidgetId, WidgetSlotId } from "./types";
+import type { WidgetDefinition, WidgetId } from "./types";
 
 /**
  * Registry for managing widget definitions.
@@ -38,13 +38,6 @@ class WidgetRegistryImpl {
    */
   getAll(): WidgetDefinition[] {
     return Array.from(this.widgets.values());
-  }
-
-  /**
-   * Get widgets for a specific default slot.
-   */
-  getByDefaultSlot(slotId: WidgetSlotId): WidgetDefinition[] {
-    return this.getAll().filter((w) => w.defaultSlot === slotId);
   }
 
   /**

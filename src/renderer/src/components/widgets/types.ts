@@ -40,8 +40,6 @@ export interface WidgetDefinition {
   icon?: LucideIcon;
   /** The React component to render */
   component: ComponentType<WidgetComponentProps>;
-  /** Default slot assignment (can be overridden by user) */
-  defaultSlot: WidgetSlotId;
   /** Whether this widget can be closed (removed from slot) */
   closable?: boolean;
 }

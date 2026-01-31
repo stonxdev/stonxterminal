@@ -67,19 +67,13 @@ export class CharacterRenderer {
    */
   static async preloadAssets(): Promise<void> {
     if (CharacterRenderer.characterTexture) {
-      console.info("[CharacterRenderer] Assets already loaded");
       return;
     }
-    console.info("[CharacterRenderer] Preloading character assets...");
     try {
       const texture = await Assets.load<Texture>(CHARACTER_SPRITE_PATH);
       // Use nearest-neighbor scaling for crisp pixel art
       texture.source.scaleMode = "nearest";
       CharacterRenderer.characterTexture = texture;
-      console.info("[CharacterRenderer] Character texture loaded:", {
-        width: texture.width,
-        height: texture.height,
-      });
     } catch (error) {
       console.error(
         "[CharacterRenderer] Failed to load character texture:",
@@ -100,12 +94,6 @@ export class CharacterRenderer {
     selectedId: EntityId | null,
     zLevel?: number,
   ): void {
-    console.info("[CharacterRenderer] update called", {
-      characterCount: characters.size,
-      zLevel,
-      selectedId,
-    });
-
     // Track which characters we've seen
     const seenIds = new Set<EntityId>();
 
@@ -113,11 +101,6 @@ export class CharacterRenderer {
     for (const [id, character] of characters) {
       // Filter by z-level if provided
       if (zLevel !== undefined && character.position.z !== zLevel) {
-        console.info("[CharacterRenderer] Skipping character (wrong z-level)", {
-          id,
-          characterZ: character.position.z,
-          viewingZ: zLevel,
-        });
         continue;
       }
 
@@ -127,12 +110,6 @@ export class CharacterRenderer {
 
       if (!charGraphics) {
         // Create new graphics for this character
-        console.info("[CharacterRenderer] Creating graphics for character", {
-          id,
-          name: character.name,
-          position: character.position,
-          color: character.color.toString(16),
-        });
         charGraphics = this.createCharacterGraphics(character);
         this.graphics.set(id, charGraphics);
         this.parentContainer.addChild(charGraphics.container);
@@ -166,14 +143,9 @@ export class CharacterRenderer {
     let body: Sprite;
     if (CharacterRenderer.characterTexture) {
       body = new Sprite(CharacterRenderer.characterTexture);
-      console.info("[CharacterRenderer] Using preloaded texture:", {
-        width: CharacterRenderer.characterTexture.width,
-        height: CharacterRenderer.characterTexture.height,
-      });
     } else {
       // Fallback: load async (texture will appear once loaded)
       body = Sprite.from(CHARACTER_SPRITE_PATH);
-      console.info("[CharacterRenderer] Texture not preloaded, loading async");
     }
     // Center the sprite anchor so it's positioned at the character center
     body.anchor.set(0.5, 0.5);
@@ -298,13 +270,6 @@ export class CharacterRenderer {
   ): void {
     // Update position
     const center = getCharacterCenterPosition(character, this.cellSize);
-    console.info("[CharacterRenderer] Updating position", {
-      name: character.name,
-      tilePos: character.position,
-      visualOffset: character.visualOffset,
-      centerPixels: center,
-      cellSize: this.cellSize,
-    });
     charGraphics.container.x = center.x;
     charGraphics.container.y = center.y;
 
