@@ -1,6 +1,6 @@
 {
-  "name": "Nebline",
-  "short_name": "Nebline",
+  "name": "Everyone is fine",
+  "short_name": "Everyone is fine",
   "description": "A colony simulation game",
   "start_url": "./",
   "display": "standalone",

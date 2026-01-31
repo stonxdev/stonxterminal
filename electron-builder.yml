@@ -1,5 +1,5 @@
 appId: com.colony.app
-productName: Nebline
+productName: Everyone is fine
 directories:
   buildResources: build
 files:
@@ -13,7 +13,7 @@ files:
 asarUnpack:
   - resources/**
 win:
-  executableName: nebline
+  executableName: everyone-is-fine
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
