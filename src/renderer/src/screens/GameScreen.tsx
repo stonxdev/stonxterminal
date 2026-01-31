@@ -19,8 +19,8 @@ import type { BiomeType } from "../world/types";
 // Default world generation configuration
 const DEFAULT_WORLD_CONFIG = {
   name: "New Colony",
-  width: 64,
-  height: 64,
+  width: 100,
+  height: 100,
   seed: 42,
   biome: "temperate_forest" as BiomeType,
 };
