@@ -26,10 +26,6 @@ export default defineConfig({
             src: "src/fonts/Source_Code_Pro/**/*",
             dest: "assets/fonts/Source_Code_Pro",
           },
-          {
-            src: "assets/sprites/**/*",
-            dest: "sprites",
-          },
         ],
       }),
     ],
