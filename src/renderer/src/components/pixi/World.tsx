@@ -5,7 +5,15 @@ import type {
   World as WorldData,
   ZLevel,
 } from "@renderer/world/types";
-import { Application, Container, Graphics, Text } from "pixi.js";
+import {
+  Application,
+  Assets,
+  Container,
+  Graphics,
+  Sprite,
+  Text,
+  type Texture,
+} from "pixi.js";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import "pixi.js/unsafe-eval";
@@ -22,25 +30,105 @@ import { CharacterRenderer, HeatMapRenderer, PathRenderer } from "./renderers";
 export const CELL_SIZE = 32; // Pixels per cell - exported for interaction system
 
 // =============================================================================
-// COLOR MAPPINGS
+// TERRAIN SPRITES
 // =============================================================================
 
-/** Colors for terrain types */
-const TERRAIN_COLORS: Record<TerrainType, number> = {
-  soil: 0x8b6914,
-  sand: 0xc2b280,
-  clay: 0xa0522d,
-  gravel: 0x808080,
-  rock: 0x696969,
-  granite: 0x4a4a4a,
-  limestone: 0xd3d3d3,
-  marble: 0xf5f5f5,
-  obsidian: 0x1a1a1a,
-  water_shallow: 0x4a90d9,
-  water_deep: 0x1e3a5f,
-  lava: 0xff4500,
-  void: 0x000000,
+/** Sprite paths for terrain types */
+const TERRAIN_SPRITE_PATHS: Record<TerrainType, string> = {
+  soil: "/sprites/terrain/soil/soil.png",
+  sand: "/sprites/terrain/sand/sand.png",
+  clay: "/sprites/terrain/clay/clay.png",
+  gravel: "/sprites/terrain/gravel/gravel.png",
+  rock: "/sprites/terrain/rock/rock.png",
+  granite: "/sprites/terrain/granite/granite.png",
+  limestone: "/sprites/terrain/limestone/limestone.png",
+  marble: "/sprites/terrain/marble/marble.png",
+  obsidian: "/sprites/terrain/obsidian/obsidian.png",
+  water_shallow: "/sprites/terrain/water_shallow/water_shallow.png",
+  water_deep: "/sprites/terrain/water_deep/water_deep.png",
+  lava: "/sprites/terrain/lava/lava.png",
+  void: "/sprites/terrain/void/void.png",
 };
+
+/** Cached terrain textures */
+const terrainTextures: Map<TerrainType, Texture> = new Map();
+
+/** Preload all terrain textures */
+async function preloadTerrainTextures(): Promise<void> {
+  if (terrainTextures.size > 0) return; // Already loaded
+
+  const terrainTypes = Object.keys(TERRAIN_SPRITE_PATHS) as TerrainType[];
+
+  for (const terrainType of terrainTypes) {
+    try {
+      const texture = await Assets.load<Texture>(
+        TERRAIN_SPRITE_PATHS[terrainType],
+      );
+      texture.source.scaleMode = "nearest"; // Pixel-perfect scaling
+      terrainTextures.set(terrainType, texture);
+    } catch (error) {
+      console.error(
+        `[World] Failed to load terrain texture for ${terrainType}:`,
+        error,
+      );
+    }
+  }
+
+  console.info(
+    `[World] Loaded ${terrainTextures.size}/${terrainTypes.length} terrain textures`,
+  );
+}
+
+// =============================================================================
+// STRUCTURE SPRITES
+// =============================================================================
+
+/** Structure types that have sprite textures */
+type SpriteStructureType = "tree_oak" | "tree_pine" | "bush" | "boulder";
+
+/** Sprite paths for structure types that use sprites */
+const STRUCTURE_SPRITE_PATHS: Record<SpriteStructureType, string> = {
+  tree_oak: "/sprites/structures/tree_oak/tree_oak.png",
+  tree_pine: "/sprites/structures/tree_pine/tree_pine.png",
+  bush: "/sprites/structures/bush/bush.png",
+  boulder: "/sprites/structures/boulder/boulder.png",
+};
+
+/** Cached structure textures */
+const structureTextures: Map<SpriteStructureType, Texture> = new Map();
+
+/** Check if a structure type has a sprite */
+function hasStructureSprite(type: StructureType): type is SpriteStructureType {
+  return type in STRUCTURE_SPRITE_PATHS;
+}
+
+/** Preload all structure textures */
+async function preloadStructureTextures(): Promise<void> {
+  if (structureTextures.size > 0) return; // Already loaded
+
+  const structureTypes = Object.keys(
+    STRUCTURE_SPRITE_PATHS,
+  ) as SpriteStructureType[];
+
+  for (const structureType of structureTypes) {
+    try {
+      const texture = await Assets.load<Texture>(
+        STRUCTURE_SPRITE_PATHS[structureType],
+      );
+      texture.source.scaleMode = "nearest"; // Pixel-perfect scaling
+      structureTextures.set(structureType, texture);
+    } catch (error) {
+      console.error(
+        `[World] Failed to load structure texture for ${structureType}:`,
+        error,
+      );
+    }
+  }
+
+  console.info(
+    `[World] Loaded ${structureTextures.size}/${structureTypes.length} structure textures`,
+  );
+}
 
 /** Colors for structure types */
 const STRUCTURE_COLORS: Record<StructureType, number> = {
@@ -87,7 +175,7 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
   const hoverGraphicsRef = useRef<Graphics | null>(null);
 
   // Feature layer graphics refs for visibility toggling (O(1) performance)
-  const treesGraphicsRef = useRef<Graphics | null>(null);
+  const treesContainerRef = useRef<Container | null>(null);
   const structuresGraphicsRef = useRef<Graphics | null>(null);
   const itemsGraphicsRef = useRef<Graphics | null>(null);
 
@@ -171,8 +259,8 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
       }
 
       // Toggle feature layer visibility (O(1) - just setting .visible property)
-      if (treesGraphicsRef.current) {
-        treesGraphicsRef.current.visible =
+      if (treesContainerRef.current) {
+        treesContainerRef.current.visible =
           state.visibility.get("trees") ?? true;
       }
       if (structuresGraphicsRef.current) {
@@ -286,20 +374,24 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
       // Get initial layer visibility
       const initialLayerVisibility = useLayerStore.getState().visibility;
 
+      // Preload textures before rendering
+      await preloadTerrainTextures();
+      await preloadStructureTextures();
+
       // Render the world (terrain and features as separate layers)
       console.info("[World] Rendering world tiles...");
-      const { treesGraphics, structuresGraphics, itemsGraphics } = renderWorld(
+      const { treesContainer, structuresGraphics, itemsGraphics } = renderWorld(
         viewport,
         level,
       );
 
       // Store refs for visibility toggling
-      treesGraphicsRef.current = treesGraphics;
+      treesContainerRef.current = treesContainer;
       structuresGraphicsRef.current = structuresGraphics;
       itemsGraphicsRef.current = itemsGraphics;
 
       // Set initial visibility based on layer state
-      treesGraphics.visible = initialLayerVisibility.get("trees") ?? true;
+      treesContainer.visible = initialLayerVisibility.get("trees") ?? true;
       structuresGraphics.visible =
         initialLayerVisibility.get("structures") ?? true;
       itemsGraphics.visible = initialLayerVisibility.get("items") ?? true;
@@ -453,9 +545,9 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
   );
 };
 
-/** Result of rendering world - separate graphics for each feature layer */
+/** Result of rendering world - separate containers/graphics for each feature layer */
 interface RenderWorldResult {
-  treesGraphics: Graphics;
+  treesContainer: Container;
   structuresGraphics: Graphics;
   itemsGraphics: Graphics;
 }
@@ -465,11 +557,14 @@ function renderWorld(
   viewport: SimpleViewport,
   level: ZLevel,
 ): RenderWorldResult {
-  // Terrain graphics (always visible, rendered once)
-  const terrainGraphics = new Graphics();
+  // Terrain container for sprites
+  const terrainContainer = new Container();
 
-  // Separate graphics for toggleable feature layers (O(1) visibility toggle)
-  const treesGraphics = new Graphics();
+  // Grid overlay graphics (drawn on top of terrain)
+  const gridGraphics = new Graphics();
+
+  // Separate containers/graphics for toggleable feature layers (O(1) visibility toggle)
+  const treesContainer = new Container();
   const structuresGraphics = new Graphics();
   const itemsGraphics = new Graphics();
 
@@ -480,65 +575,38 @@ function renderWorld(
       const px = x * CELL_SIZE;
       const py = y * CELL_SIZE;
 
-      // Draw terrain (always rendered)
-      const terrainColor = TERRAIN_COLORS[tile.terrain.type];
-      terrainGraphics.rect(px, py, CELL_SIZE, CELL_SIZE);
-      terrainGraphics.fill(terrainColor);
+      // Draw terrain sprite
+      const terrainTexture = terrainTextures.get(tile.terrain.type);
+      if (terrainTexture) {
+        const sprite = new Sprite(terrainTexture);
+        sprite.x = px;
+        sprite.y = py;
+        sprite.width = CELL_SIZE;
+        sprite.height = CELL_SIZE;
+        terrainContainer.addChild(sprite);
+      }
 
       // Draw structure overlay if present
       if (tile.structure && tile.structure.type !== "none") {
         const structureColor = STRUCTURE_COLORS[tile.structure.type];
         const structureType = tile.structure.type;
 
-        // Determine which layer this structure belongs to
-        const isTree =
-          structureType === "tree_oak" ||
-          structureType === "tree_pine" ||
-          structureType === "bush";
-        const isBoulder = structureType === "boulder";
-
-        // Select the appropriate graphics object based on structure type
-        let targetGraphics: Graphics;
-        if (isTree) {
-          targetGraphics = treesGraphics;
-        } else if (isBoulder) {
-          // Boulders go to terrain (always visible as natural feature)
-          targetGraphics = terrainGraphics;
-        } else {
-          targetGraphics = structuresGraphics;
-        }
-
-        // Different rendering for different structure types
-        if (structureType === "tree_oak" || structureType === "tree_pine") {
-          // Draw tree as a circle
-          targetGraphics.circle(
-            px + CELL_SIZE / 2,
-            py + CELL_SIZE / 2,
-            CELL_SIZE * 0.35,
-          );
-          targetGraphics.fill(structureColor);
-        } else if (structureType === "boulder") {
-          // Draw boulder as a smaller rectangle
-          const padding = CELL_SIZE * 0.15;
-          targetGraphics.rect(
-            px + padding,
-            py + padding,
-            CELL_SIZE - padding * 2,
-            CELL_SIZE - padding * 2,
-          );
-          targetGraphics.fill(structureColor);
-        } else if (structureType === "bush") {
-          // Draw bush as a small circle
-          targetGraphics.circle(
-            px + CELL_SIZE / 2,
-            py + CELL_SIZE / 2,
-            CELL_SIZE * 0.25,
-          );
-          targetGraphics.fill(structureColor);
+        // Check if this structure type has a sprite
+        if (hasStructureSprite(structureType)) {
+          // Use sprite for trees and bushes
+          const texture = structureTextures.get(structureType);
+          if (texture) {
+            const sprite = new Sprite(texture);
+            sprite.x = px;
+            sprite.y = py;
+            sprite.width = CELL_SIZE;
+            sprite.height = CELL_SIZE;
+            treesContainer.addChild(sprite);
+          }
         } else {
           // Draw other structures as full tiles
-          targetGraphics.rect(px, py, CELL_SIZE, CELL_SIZE);
-          targetGraphics.fill(structureColor);
+          structuresGraphics.rect(px, py, CELL_SIZE, CELL_SIZE);
+          structuresGraphics.fill(structureColor);
         }
       }
 
@@ -550,26 +618,27 @@ function renderWorld(
     }
   }
 
-  // Draw grid lines on terrain (subtle)
-  terrainGraphics.setStrokeStyle({ width: 0.5, color: 0x333333, alpha: 0.3 });
+  // Draw grid lines (subtle)
+  gridGraphics.setStrokeStyle({ width: 0.5, color: 0x333333, alpha: 0.3 });
   for (let x = 0; x <= level.width; x++) {
-    terrainGraphics.moveTo(x * CELL_SIZE, 0);
-    terrainGraphics.lineTo(x * CELL_SIZE, level.height * CELL_SIZE);
-    terrainGraphics.stroke();
+    gridGraphics.moveTo(x * CELL_SIZE, 0);
+    gridGraphics.lineTo(x * CELL_SIZE, level.height * CELL_SIZE);
+    gridGraphics.stroke();
   }
   for (let y = 0; y <= level.height; y++) {
-    terrainGraphics.moveTo(0, y * CELL_SIZE);
-    terrainGraphics.lineTo(level.width * CELL_SIZE, y * CELL_SIZE);
-    terrainGraphics.stroke();
+    gridGraphics.moveTo(0, y * CELL_SIZE);
+    gridGraphics.lineTo(level.width * CELL_SIZE, y * CELL_SIZE);
+    gridGraphics.stroke();
   }
 
   // Draw world boundary
-  terrainGraphics.rect(0, 0, level.width * CELL_SIZE, level.height * CELL_SIZE);
-  terrainGraphics.stroke({ width: 2, color: 0xffff00 });
+  gridGraphics.rect(0, 0, level.width * CELL_SIZE, level.height * CELL_SIZE);
+  gridGraphics.stroke({ width: 2, color: 0xffff00 });
 
   // Add all layers to viewport in correct z-order
-  viewport.addChild(terrainGraphics);
-  viewport.addChild(treesGraphics);
+  viewport.addChild(terrainContainer);
+  viewport.addChild(gridGraphics);
+  viewport.addChild(treesContainer);
   viewport.addChild(structuresGraphics);
   viewport.addChild(itemsGraphics);
 
@@ -586,7 +655,7 @@ function renderWorld(
   label.y = 10;
   viewport.addChild(label);
 
-  return { treesGraphics, structuresGraphics, itemsGraphics };
+  return { treesContainer, structuresGraphics, itemsGraphics };
 }
 
 /**

@@ -4,10 +4,10 @@ This document describes the ASCII-based pixel art format used for defining 32x32
 
 ## Directory Structure
 
-Each sprite lives in its own folder under `assets/sprites/`:
+Each sprite lives in its own folder under `src/renderer/public/sprites/`:
 
 ```
-assets/sprites/characters/
+src/renderer/public/sprites/characters/
   male-1/
     source.txt       # ASCII pixel definition (source of truth)
     male-1.png       # Generated PNG output
@@ -64,7 +64,7 @@ C = #3366CC
 Generate a PNG from a source file:
 
 ```bash
-npm run cli -- pixel-to-png assets/sprites/characters/male-1
+npm run cli -- pixel-to-png src/renderer/public/sprites/characters/male-1
 ```
 
 The command reads `source.txt` from the specified folder and outputs `<folder-name>.png` in the same folder.
@@ -80,18 +80,18 @@ The command reads `source.txt` from the specified folder and outputs `<folder-na
 
 ```bash
 # Standard 32x32 sprite
-npm run cli -- pixel-to-png assets/sprites/characters/female-1
+npm run cli -- pixel-to-png src/renderer/public/sprites/characters/female-1
 
 # Custom output name
-npm run cli -- pixel-to-png assets/sprites/characters/female-1 -o avatar
+npm run cli -- pixel-to-png src/renderer/public/sprites/characters/female-1 -o avatar
 
 # Different tile size (e.g., 16x16)
-npm run cli -- pixel-to-png assets/sprites/tiles/grass -s 16
+npm run cli -- pixel-to-png src/renderer/public/sprites/tiles/grass -s 16
 ```
 
 ## Workflow
 
-1. Create a new folder under `assets/sprites/`
+1. Create a new folder under `src/renderer/public/sprites/`
 2. Create `source.txt` with palette and pixel grid
 3. Run `npm run cli -- pixel-to-png <folder-path>`
 4. The PNG is generated in the same folder
