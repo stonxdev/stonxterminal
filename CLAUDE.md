@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Or so the narrator said...
+This is a Colony Simulator game akin to RimWorld and Dwarf Fortress
 
 ## Essential Commands
 

@@ -39,7 +39,7 @@ interface CharacterGraphics {
 const CHARACTER_SPRITE_SIZE = 32;
 
 /** Character sprite path */
-const CHARACTER_SPRITE_PATH = "/sprites/characters/male-1.png";
+const CHARACTER_SPRITE_PATH = "/sprites/characters/male-1/male-1.png";
 
 // =============================================================================
 // CHARACTER RENDERER CLASS
