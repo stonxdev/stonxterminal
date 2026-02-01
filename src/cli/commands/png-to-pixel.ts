@@ -3,6 +3,8 @@ import * as path from "node:path";
 import { Command } from "commander";
 import { PNG } from "pngjs";
 
+const DEFAULT_SPRITES_DIR = "src/renderer/public/sprites";
+
 // Characters to use for palette (excluding common punctuation that might confuse)
 // '.' is reserved for transparent
 const PALETTE_CHARS =
@@ -151,69 +153,165 @@ function generateSourceTxt(
   return lines.join("\n");
 }
 
-export const pngToPixelCommand = new Command("png-to-pixel")
-  .description("Convert a PNG file to source.txt pixel definition")
-  .argument("<input>", "Path to PNG file or folder containing PNG")
-  .option("-o, --output <name>", "Output filename (default: source.txt)")
-  .action((input: string, options: { output?: string }) => {
-    const inputPath = path.resolve(input);
-    let pngFile: string;
-    let outputDir: string;
+function findFoldersWithPng(baseDir: string): string[] {
+  const folders: string[] = [];
 
-    // Determine if input is a file or folder
-    const stat = fs.statSync(inputPath);
-    if (stat.isDirectory()) {
-      // Look for PNG files in the folder
-      const pngFiles = fs
-        .readdirSync(inputPath)
-        .filter((f) => f.endsWith(".png"));
-      if (pngFiles.length === 0) {
-        console.error(`Error: No PNG files found in ${inputPath}`);
-        process.exit(1);
+  function scanDir(dir: string): void {
+    if (!fs.existsSync(dir)) return;
+
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        const subPath = path.join(dir, entry.name);
+        const pngFiles = fs
+          .readdirSync(subPath)
+          .filter((f) => f.endsWith(".png"));
+
+        if (pngFiles.length === 1) {
+          folders.push(subPath);
+        }
+        // Always recurse to find nested sprites
+        scanDir(subPath);
       }
-      if (pngFiles.length > 1) {
-        console.error(
-          `Error: Multiple PNG files found. Please specify which one to convert.`,
-        );
-        process.exit(1);
-      }
-      pngFile = path.join(inputPath, pngFiles[0]);
-      outputDir = inputPath;
-    } else {
-      pngFile = inputPath;
-      outputDir = path.dirname(inputPath);
     }
+  }
 
-    const outputFile = path.join(outputDir, options.output || "source.txt");
+  scanDir(baseDir);
+  return folders;
+}
 
-    // Check if PNG file exists
-    if (!fs.existsSync(pngFile)) {
-      console.error(`Error: PNG file not found: ${pngFile}`);
+function convertSingle(
+  inputPath: string,
+  outputName?: string,
+): void {
+  let pngFile: string;
+  let outputDir: string;
+
+  const stat = fs.statSync(inputPath);
+  if (stat.isDirectory()) {
+    const pngFiles = fs
+      .readdirSync(inputPath)
+      .filter((f) => f.endsWith(".png"));
+    if (pngFiles.length === 0) {
+      console.error(`Error: No PNG files found in ${inputPath}`);
       process.exit(1);
     }
+    if (pngFiles.length > 1) {
+      console.error(
+        `Error: Multiple PNG files found. Please specify which one to convert.`,
+      );
+      process.exit(1);
+    }
+    pngFile = path.join(inputPath, pngFiles[0]);
+    outputDir = inputPath;
+  } else {
+    pngFile = inputPath;
+    outputDir = path.dirname(inputPath);
+  }
 
+  const outputFile = path.join(outputDir, outputName || "source.txt");
+
+  if (!fs.existsSync(pngFile)) {
+    console.error(`Error: PNG file not found: ${pngFile}`);
+    process.exit(1);
+  }
+
+  const buffer = fs.readFileSync(pngFile);
+  const png = PNG.sync.read(buffer);
+
+  console.log(`Reading: ${pngFile} (${png.width}x${png.height})`);
+
+  const colors = extractColorsFromPng(png);
+  console.log(`Found ${colors.size} unique colors`);
+
+  const palette = buildPalette(colors);
+  const content = generateSourceTxt(png, palette, colors);
+
+  fs.writeFileSync(outputFile, content);
+  console.log(`Created: ${outputFile}`);
+}
+
+function convertAll(baseDir: string): void {
+  console.log(`Scanning ${baseDir} for PNG files...\n`);
+
+  const folders = findFoldersWithPng(baseDir);
+
+  if (folders.length === 0) {
+    console.log("No folders with single PNG files found.");
+    return;
+  }
+
+  let successCount = 0;
+  let failCount = 0;
+
+  for (const folder of folders) {
     try {
-      // Read PNG file
+      const pngFiles = fs
+        .readdirSync(folder)
+        .filter((f) => f.endsWith(".png"));
+      const pngFile = path.join(folder, pngFiles[0]);
+      const outputFile = path.join(folder, "source.txt");
+
       const buffer = fs.readFileSync(pngFile);
       const png = PNG.sync.read(buffer);
 
-      console.log(`Reading: ${pngFile} (${png.width}x${png.height})`);
-
-      // Extract colors
       const colors = extractColorsFromPng(png);
-      console.log(`Found ${colors.size} unique colors`);
-
-      // Build palette
       const palette = buildPalette(colors);
-
-      // Generate source.txt content
       const content = generateSourceTxt(png, palette, colors);
 
-      // Write output file
       fs.writeFileSync(outputFile, content);
-      console.log(`Created: ${outputFile}`);
+
+      console.log(`✓ ${path.relative(baseDir, outputFile)} (${colors.size} colors)`);
+      successCount++;
     } catch (error) {
-      console.error(`Error: ${error instanceof Error ? error.message : error}`);
-      process.exit(1);
+      console.log(
+        `✗ ${path.relative(baseDir, folder)} - ${error instanceof Error ? error.message : error}`,
+      );
+      failCount++;
     }
-  });
+  }
+
+  console.log(`\nDone: ${successCount} converted, ${failCount} failed.`);
+
+  if (failCount > 0) {
+    process.exit(1);
+  }
+}
+
+export const pngToPixelCommand = new Command("png-to-pixel")
+  .description("Convert PNG files to source.txt pixel definitions")
+  .argument("[input]", "Path to PNG file or folder (or omit with --all)")
+  .option("-a, --all", "Process all sprites in the sprites directory")
+  .option(
+    "-d, --dir <path>",
+    "Base directory for --all mode",
+    DEFAULT_SPRITES_DIR,
+  )
+  .option("-o, --output <name>", "Output filename (default: source.txt)")
+  .action(
+    (
+      input: string | undefined,
+      options: { all?: boolean; dir: string; output?: string },
+    ) => {
+      try {
+        if (options.all) {
+          const baseDir = path.resolve(options.dir);
+          convertAll(baseDir);
+        } else if (input) {
+          const inputPath = path.resolve(input);
+          convertSingle(inputPath, options.output);
+        } else {
+          console.error(
+            "Error: Specify an input path or use --all to process all sprites",
+          );
+          process.exit(1);
+        }
+      } catch (error) {
+        console.error(
+          `Error: ${error instanceof Error ? error.message : error}`,
+        );
+        process.exit(1);
+      }
+    },
+  );
