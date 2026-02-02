@@ -22,6 +22,8 @@ import { getTileAt, setTileAt } from "../world/utils/tile-utils";
 import type {
   GameStore,
   InteractionMode,
+  MultiEntitySelection,
+  SelectableEntityType,
   Selection,
   SimulationStateSlice,
   WorldGenerationConfig,
@@ -209,6 +211,137 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     // Emit event
     eventBus.emit({ type: "selection:cleared" });
+  },
+
+  // ===========================================================================
+  // MULTI-SELECTION ACTIONS
+  // ===========================================================================
+
+  addToSelection: (entityType: SelectableEntityType, entityId: string) => {
+    const { selection } = get();
+
+    if (
+      selection.type === "multi-entity" &&
+      selection.entityType === entityType
+    ) {
+      // Add to existing multi-selection
+      const newIds = new Set(selection.entityIds);
+      newIds.add(entityId);
+      set({
+        selection: { type: "multi-entity", entityType, entityIds: newIds },
+      });
+    } else if (
+      selection.type === "entity" &&
+      selection.entityType === entityType
+    ) {
+      // Convert single to multi
+      const newIds = new Set([selection.entityId, entityId]);
+      set({
+        selection: { type: "multi-entity", entityType, entityIds: newIds },
+      });
+    } else {
+      // Start new multi-selection (clears any other selection type)
+      set({
+        selection: {
+          type: "multi-entity",
+          entityType,
+          entityIds: new Set([entityId]),
+        },
+      });
+    }
+
+    eventBus.emit({ type: "selection:changed" });
+  },
+
+  removeFromSelection: (entityId: string) => {
+    const { selection } = get();
+
+    if (selection.type === "multi-entity") {
+      const newIds = new Set(selection.entityIds);
+      newIds.delete(entityId);
+
+      if (newIds.size === 0) {
+        set({ selection: { type: "none" } });
+      } else if (newIds.size === 1) {
+        // Convert back to single selection
+        const [remainingId] = newIds;
+        set({
+          selection: {
+            type: "entity",
+            entityType: selection.entityType,
+            entityId: remainingId,
+          },
+        });
+      } else {
+        set({
+          selection: {
+            ...selection,
+            entityIds: newIds,
+          } as MultiEntitySelection,
+        });
+      }
+
+      eventBus.emit({ type: "selection:changed" });
+    } else if (selection.type === "entity" && selection.entityId === entityId) {
+      set({ selection: { type: "none" } });
+      eventBus.emit({ type: "selection:changed" });
+    }
+  },
+
+  toggleSelection: (entityType: SelectableEntityType, entityId: string) => {
+    const { selection, addToSelection, removeFromSelection } = get();
+
+    // Check if already selected
+    const isCurrentlySelected =
+      (selection.type === "entity" && selection.entityId === entityId) ||
+      (selection.type === "multi-entity" && selection.entityIds.has(entityId));
+
+    if (isCurrentlySelected) {
+      removeFromSelection(entityId);
+    } else {
+      addToSelection(entityType, entityId);
+    }
+  },
+
+  selectMultiple: (entityType: SelectableEntityType, entityIds: string[]) => {
+    if (entityIds.length === 0) {
+      set({ selection: { type: "none" } });
+    } else if (entityIds.length === 1) {
+      set({
+        selection: { type: "entity", entityType, entityId: entityIds[0] },
+      });
+    } else {
+      set({
+        selection: {
+          type: "multi-entity",
+          entityType,
+          entityIds: new Set(entityIds),
+        },
+      });
+    }
+    eventBus.emit({ type: "selection:changed" });
+  },
+
+  isSelected: (entityId: string) => {
+    const { selection } = get();
+    if (selection.type === "entity") {
+      return selection.entityId === entityId;
+    }
+    if (selection.type === "multi-entity") {
+      return selection.entityIds.has(entityId);
+    }
+    return false;
+  },
+
+  getSelectedIds: () => {
+    const { selection } = get();
+    if (selection.type === "entity") {
+      return [selection.entityId];
+    }
+    if (selection.type === "multi-entity") {
+      return Array.from(selection.entityIds);
+    }
+    return [];
   },
 
   // ===========================================================================

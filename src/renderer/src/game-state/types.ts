@@ -25,7 +25,12 @@ import type {
  * Types of entities that can be selected
  * EXTENSION POINT: Add new entity types here
  */
-export type SelectableEntityType = "colonist" | "item" | "structure" | "zone";
+export type SelectableEntityType =
+  | "colonist"
+  | "item"
+  | "structure"
+  | "zone"
+  | "layer";
 
 /**
  * No selection state
@@ -44,7 +49,7 @@ export interface TileSelection {
 }
 
 /**
- * An entity is selected
+ * An entity is selected (single)
  */
 export interface EntitySelection {
   type: "entity";
@@ -54,10 +59,23 @@ export interface EntitySelection {
 }
 
 /**
+ * Multiple entities of the same type are selected
+ */
+export interface MultiEntitySelection {
+  type: "multi-entity";
+  entityType: SelectableEntityType;
+  entityIds: Set<string>;
+}
+
+/**
  * Union of all selection states
  * EXTENSION POINT: Add new selection types here
  */
-export type Selection = NoSelection | TileSelection | EntitySelection;
+export type Selection =
+  | NoSelection
+  | TileSelection
+  | EntitySelection
+  | MultiEntitySelection;
 
 // =============================================================================
 // INTERACTION TYPES
@@ -132,6 +150,19 @@ export interface GameStateActions {
     position?: Position2D,
   ) => void;
   clearSelection: () => void;
+
+  // Multi-selection actions
+  addToSelection: (entityType: SelectableEntityType, entityId: string) => void;
+  removeFromSelection: (entityId: string) => void;
+  toggleSelection: (entityType: SelectableEntityType, entityId: string) => void;
+  selectMultiple: (
+    entityType: SelectableEntityType,
+    entityIds: string[],
+  ) => void;
+
+  // Selection query helpers (non-reactive, for imperative use)
+  isSelected: (entityId: string) => boolean;
+  getSelectedIds: () => string[];
 
   // Interaction actions
   setInteractionMode: (mode: InteractionMode) => void;

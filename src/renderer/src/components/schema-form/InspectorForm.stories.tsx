@@ -3,13 +3,13 @@
 // =============================================================================
 
 import type { Meta, StoryObj } from "@storybook/react";
-import { nu } from "../../schemas/core";
 import {
+  nu,
   structureTypeOptions,
   type TileInspectorData,
   terrainTypeOptions,
   tileInspectorSchema,
-} from "../../schemas/definitions/tile-schema";
+} from "../../schemas";
 import { InspectorForm } from "./InspectorForm";
 
 const meta = {

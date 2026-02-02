@@ -13,6 +13,8 @@ import {
   characterFocus,
   characterMoveTo,
   characterSelect,
+  layerSetVisibility,
+  layerToggleVisibility,
   workbenchRunCommand,
   workbenchSetTheme,
   worldSetZoom,
@@ -174,6 +176,10 @@ const ColonyContextInner: FC<{ children: ReactNode }> = ({ children }) => {
 
     // Register world commands
     commandRegistry.register(worldSetZoom);
+
+    // Register layer commands
+    commandRegistry.register(layerToggleVisibility);
+    commandRegistry.register(layerSetVisibility);
 
     // Set the context for the command registry
     commandRegistry.setContext(contextData);

@@ -3,6 +3,7 @@
 // =============================================================================
 
 import { z } from "zod";
+import type { SchemaAction, SchemaActionsConfig } from "./actions";
 
 /**
  * Metadata attached to schema fields for UI rendering
@@ -225,6 +226,7 @@ export class ObjectSchema<TShape extends ObjectShape> extends BaseSchema<
   readonly type = "object" as const;
   _shape: TShape;
   _layouts: { [name: string]: FormLayout<TShape> } = {};
+  _actions: SchemaActionsConfig | null = null;
 
   constructor(shape: TShape) {
     super();
@@ -279,6 +281,36 @@ export class ObjectSchema<TShape extends ObjectShape> extends BaseSchema<
    */
   getFieldKeys(): (keyof TShape)[] {
     return Object.keys(this._shape) as (keyof TShape)[];
+  }
+
+  /**
+   * Add actions configuration to the schema
+   */
+  withActions(config: SchemaActionsConfig): this {
+    this._actions = config;
+    return this;
+  }
+
+  /**
+   * Get actions configuration
+   */
+  getActions(): SchemaActionsConfig | null {
+    return this._actions;
+  }
+
+  /**
+   * Get a specific action by ID
+   */
+  getAction(actionId: string): SchemaAction | undefined {
+    return this._actions?.actions.find((a) => a.id === actionId);
+  }
+
+  /**
+   * Get the primary action
+   */
+  getPrimaryAction(): SchemaAction | undefined {
+    if (!this._actions?.primaryAction) return undefined;
+    return this.getAction(this._actions.primaryAction);
   }
 
   toZod(): z.ZodSchema<ObjectOutput<TShape>> {

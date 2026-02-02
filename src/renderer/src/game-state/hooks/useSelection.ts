@@ -91,6 +91,64 @@ export function useSelectionActions() {
   return { selectTile, selectEntity, clearSelection };
 }
 
+// Stable empty set to avoid creating new objects
+const EMPTY_SET: Set<string> = new Set();
+
+/**
+ * Get selected entity IDs as a Set (works for both single and multi-selection)
+ */
+export function useSelectedEntityIds(): Set<string> {
+  const selection = useGameStore((state) => state.selection);
+
+  return useMemo(() => {
+    if (selection.type === "entity") {
+      return new Set([selection.entityId]);
+    }
+    if (selection.type === "multi-entity") {
+      return selection.entityIds;
+    }
+    return EMPTY_SET;
+  }, [selection]);
+}
+
+/**
+ * Check if a specific entity is selected
+ */
+export function useIsEntitySelected(entityId: string): boolean {
+  return useGameStore((state) => {
+    const { selection } = state;
+    if (selection.type === "entity") {
+      return selection.entityId === entityId;
+    }
+    if (selection.type === "multi-entity") {
+      return selection.entityIds.has(entityId);
+    }
+    return false;
+  });
+}
+
+/**
+ * Get multi-selection actions
+ */
+export function useMultiSelectionActions() {
+  const addToSelection = useGameStore((state) => state.addToSelection);
+  const removeFromSelection = useGameStore(
+    (state) => state.removeFromSelection,
+  );
+  const toggleSelection = useGameStore((state) => state.toggleSelection);
+  const selectMultiple = useGameStore((state) => state.selectMultiple);
+
+  return useMemo(
+    () => ({
+      addToSelection,
+      removeFromSelection,
+      toggleSelection,
+      selectMultiple,
+    }),
+    [addToSelection, removeFromSelection, toggleSelection, selectMultiple],
+  );
+}
+
 /**
  * Get the tile at the selected position (if tile is selected)
  */

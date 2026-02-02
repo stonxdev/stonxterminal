@@ -5,13 +5,24 @@
 // Core schema system
 export * from "./core";
 
-// Tile inspector schema
+// Schema definitions
+export { characterSchema } from "./definitions/character-schema";
+
+export { layerSchema } from "./definitions/layer-schema";
+
+export { pathfindingDataSchema } from "./definitions/pathfinding-schema";
+
 export {
-  pathfindingDataSchema,
   structureDataSchema,
   structureTypeOptions,
-  type TileInspectorData,
+} from "./definitions/structure-schema";
+
+export {
   terrainDataSchema,
   terrainTypeOptions,
+} from "./definitions/terrain-schema";
+
+export {
+  type TileInspectorData,
   tileInspectorSchema,
-} from "./definitions/tile-schema";
+} from "./definitions/tile-inspector-schema";

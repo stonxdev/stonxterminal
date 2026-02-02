@@ -13,7 +13,10 @@ export {
 // Selection hooks
 export {
   useHasSelection,
+  useIsEntitySelected,
+  useMultiSelectionActions,
   useSelectedEntity,
+  useSelectedEntityIds,
   useSelectedTile,
   useSelectedTileData,
   useSelection,
@@ -62,6 +65,7 @@ export type {
   GameStateActions,
   GameStore,
   InteractionMode,
+  MultiEntitySelection,
   NoSelection,
   SelectableEntityType,
   SelectedStructureInfo,

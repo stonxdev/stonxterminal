@@ -8,7 +8,7 @@ import type { Position2D, Tile } from "../world/types";
  * Entity types that can be selected
  * EXTENSION POINT: Add new entity types here as the game grows
  */
-export type EntityType = "colonist" | "item" | "structure" | "zone";
+export type EntityType = "colonist" | "item" | "structure" | "zone" | "layer";
 
 /**
  * All game events as a discriminated union
@@ -19,6 +19,7 @@ export type GameEvent =
   | TileSelectedEvent
   | EntitySelectedEvent
   | SelectionClearedEvent
+  | SelectionChangedEvent
   // World events
   | TileUpdatedEvent
   | ZLevelChangedEvent
@@ -49,6 +50,11 @@ export interface EntitySelectedEvent {
 /** Fired when selection is cleared */
 export interface SelectionClearedEvent {
   type: "selection:cleared";
+}
+
+/** Fired when selection changes (add/remove/toggle in multi-selection) */
+export interface SelectionChangedEvent {
+  type: "selection:changed";
 }
 
 // =============================================================================

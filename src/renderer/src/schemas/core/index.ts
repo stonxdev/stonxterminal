@@ -2,7 +2,10 @@
 // SCHEMA CORE EXPORTS
 // =============================================================================
 
+// Actions
+export type { SchemaAction, SchemaActionsConfig } from "./actions";
 export { nu } from "./nu";
+
 export type {
   AnySchema,
   // Array utilities
