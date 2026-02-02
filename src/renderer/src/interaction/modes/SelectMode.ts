@@ -2,7 +2,7 @@
 // SELECT MODE HANDLER
 // =============================================================================
 
-import { commandRegistry } from "../../commands/CommandRegistry";
+import { actionRegistry } from "../../actions";
 import { useGameStore } from "../../game-state/store";
 import type { InteractionContext, InteractionModeHandler } from "../types";
 
@@ -123,8 +123,8 @@ export class SelectModeHandler implements InteractionModeHandler {
       z: ctx.zLevel,
     };
 
-    // Dispatch command instead of direct mutation
-    commandRegistry.execute("character.moveTo", { characterId, destination });
+    // Dispatch action instead of direct mutation
+    actionRegistry.dispatch("character.moveTo", { characterId, destination });
   }
 
   onHover(ctx: InteractionContext): void {

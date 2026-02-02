@@ -1,6 +1,5 @@
-import { commandRegistry } from "../commands/CommandRegistry";
-import type { Keybinding } from "../commands/types";
-import type { ColonyContextData } from "../context/types";
+import { actionRegistry } from "../actions";
+import type { Keybinding } from "../actions/types";
 import {
   matchesKeySequence,
   normalizeEventKey,
@@ -18,19 +17,9 @@ class KeybindingManager {
     chordTimeout: null,
     waitingForChord: false,
   };
-  // Context for action execution (reserved for future use)
-  // @ts-expect-error Reserved for future action-based keybindings
-  private _context: ColonyContextData | null = null;
 
   // Chord timeout duration (ms) - matches VS Code's behavior
   private readonly CHORD_TIMEOUT = 1000;
-
-  /**
-   * Sets the Colony context for action execution
-   */
-  setContext(context: ColonyContextData | null): void {
-    this._context = context;
-  }
 
   /**
    * Registers an array of keybindings
@@ -221,16 +210,13 @@ class KeybindingManager {
   }
 
   /**
-   * Executes a command for a matching keybinding
+   * Executes an action for a matching keybinding
    */
   private async executeKeybinding(keybinding: ParsedKeybinding): Promise<void> {
     try {
-      await commandRegistry.execute(keybinding.command, keybinding.commandArgs);
+      await actionRegistry.dispatch(keybinding.action, keybinding.payload);
     } catch (error) {
-      console.error(
-        `Failed to execute command "${keybinding.command}":`,
-        error,
-      );
+      console.error(`Failed to execute action "${keybinding.action}":`, error);
     }
   }
 

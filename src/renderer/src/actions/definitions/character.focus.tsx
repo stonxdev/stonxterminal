@@ -2,24 +2,31 @@ import { Focus, User } from "lucide-react";
 import { SearchableTreeNavigator } from "../../components/command-palette";
 import { ModalFrame } from "../../components/floating/modal";
 import type { MenuItem } from "../../menu/types";
-import { createCommand } from "../createCommand";
+import { defineAction } from "../defineAction";
 
-export interface CharacterFocusArgs {
+export interface CharacterFocusPayload {
   characterId?: string;
 }
 
-export const characterFocus = createCommand<CharacterFocusArgs>({
+export const characterFocus = defineAction<CharacterFocusPayload>({
   id: "character.focus",
   name: "Focus Character",
   icon: Focus,
-  execute: (context, args) => {
+  execute: (context, payload) => {
+    console.info("[character.focus] Executing with payload:", payload);
+
     // If a specific character ID is provided, focus it directly
-    if (args?.characterId) {
-      context.commands.execute("character.select", {
-        characterId: args.characterId,
+    if (payload?.characterId) {
+      console.info(
+        "[character.focus] Focusing character:",
+        payload.characterId,
+      );
+      context.actions.dispatch("character.select", {
+        characterId: payload.characterId,
       });
-      context.game.focusCharacter(args.characterId);
-      context.commands.execute("world.setZoom", { scale: 2 });
+      context.game.focusCharacter(payload.characterId);
+      context.actions.dispatch("world.setZoom", { scale: 2 });
+      console.info("[character.focus] Done focusing character");
       return;
     }
 
@@ -47,11 +54,11 @@ export const characterFocus = createCommand<CharacterFocusArgs>({
       subtitle: `${character.type} at (${character.position.x}, ${character.position.y})`,
       onExecute: () => {
         context.modal.closeModal();
-        context.commands.execute("character.select", {
+        context.actions.dispatch("character.select", {
           characterId: character.id,
         });
         context.game.focusCharacter(character.id);
-        context.commands.execute("world.setZoom", { scale: 2 });
+        context.actions.dispatch("world.setZoom", { scale: 2 });
       },
     }));
 

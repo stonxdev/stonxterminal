@@ -19,8 +19,7 @@ const baseButtonClass =
   "flex items-center justify-center w-7 h-7 rounded-md text-xs font-mono transition-colors";
 
 const activeButtonClass = "bg-primary text-primary-foreground";
-const inactiveButtonClass =
-  "bg-muted/50 text-muted-foreground hover:bg-muted";
+const inactiveButtonClass = "bg-muted/50 text-muted-foreground hover:bg-muted";
 
 // =============================================================================
 // SPEED BUTTON COMPONENT

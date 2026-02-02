@@ -1,12 +1,13 @@
 import type { ColonyContextData } from "../context/types";
-import type { Action, CommandAction, HandlerAction } from "./types";
+import { actionRegistry } from "./ActionRegistry";
+import type { Action, DispatchAction, HandlerAction } from "./types";
 
 /**
  * Standalone action executor that can be used outside of React components.
  * This is the core logic extracted for use in KeybindingManager.
  *
  * @param action - The action to execute
- * @param context - The Colony context (optional, required for command actions)
+ * @param context - The Colony context (optional, required for dispatch actions)
  * @returns Promise that resolves when action completes
  */
 export async function executeAction(
@@ -27,23 +28,23 @@ export async function executeAction(
       }
       break;
     }
-    case "command": {
-      const commandAction = action as CommandAction;
+    case "action": {
+      const dispatchAction = action as DispatchAction;
 
-      // Check if context is available for command execution
+      // Check if context is available for action execution
       if (!context) {
         throw new Error(
-          `Cannot execute command "${commandAction.command}" - ColonyContext not available.`,
+          `Cannot dispatch action "${dispatchAction.actionId}" - ColonyContext not available.`,
         );
       }
 
       try {
-        await context.commands.execute(
-          commandAction.command,
-          commandAction.commandArgs,
+        await actionRegistry.dispatch(
+          dispatchAction.actionId,
+          dispatchAction.payload,
         );
       } catch (error) {
-        console.error(`Error executing command action "${action.id}":`, error);
+        console.error(`Error dispatching action "${action.id}":`, error);
       }
       break;
     }

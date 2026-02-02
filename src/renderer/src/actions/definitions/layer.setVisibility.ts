@@ -1,0 +1,28 @@
+// =============================================================================
+// SET LAYER VISIBILITY ACTION
+// =============================================================================
+
+import { Eye } from "lucide-react";
+import { useLayerStore } from "../../layers/layer-store";
+import { defineAction } from "../defineAction";
+
+export interface SetLayerVisibilityPayload {
+  layerId: string;
+  visible: boolean;
+}
+
+export const layerSetVisibility = defineAction<SetLayerVisibilityPayload>({
+  id: "layer.setVisibility",
+  name: "Set Layer Visibility",
+  icon: Eye,
+  execute: (_context, payload) => {
+    if (!payload?.layerId || payload?.visible === undefined) {
+      console.warn(
+        "layer.setVisibility requires payload: { layerId, visible }",
+      );
+      return;
+    }
+
+    useLayerStore.getState().setLayerVisible(payload.layerId, payload.visible);
+  },
+});

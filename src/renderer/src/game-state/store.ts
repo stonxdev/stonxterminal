@@ -3,7 +3,7 @@
 // =============================================================================
 
 import { create } from "zustand";
-import { eventBus } from "../events";
+import { actionRegistry } from "../actions";
 import {
   entityStore,
   findPath,
@@ -34,7 +34,7 @@ import type {
 // =============================================================================
 
 const initialSimulationState: SimulationStateSlice = {
-  isPlaying: true,
+  isPlaying: false,
   speed: 1,
   currentTick: 0,
   characters: new Map(),
@@ -91,6 +91,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
         characters: new Map(),
       },
     });
+
+    // Auto-start the simulation when the world is loaded
+    get().play();
   },
 
   setCurrentZLevel: (zLevel: number) => {
@@ -106,9 +109,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (clampedZ !== previousZ) {
       set({ currentZLevel: clampedZ });
 
-      // Emit event
-      eventBus.emit({
-        type: "world:z-level-changed",
+      // Dispatch action
+      actionRegistry.dispatch("world.zLevelChanged", {
         previousZ,
         currentZ: clampedZ,
       });
@@ -152,9 +154,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // Update tile in level
     setTileAt(level, position.x, position.y, updatedTile);
 
-    // Emit event
-    eventBus.emit({
-      type: "world:tile-updated",
+    // Dispatch action
+    actionRegistry.dispatch("world.tileUpdated", {
       position,
       zLevel,
       changes,
@@ -180,9 +181,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       selection: { type: "tile", position, zLevel },
     });
 
-    // Emit event
-    eventBus.emit({
-      type: "selection:tile",
+    // Dispatch action
+    actionRegistry.dispatch("selection.tile", {
       position,
       zLevel,
       tile,
@@ -194,9 +194,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       selection: { type: "entity", entityType, entityId, position },
     });
 
-    // Emit event
-    eventBus.emit({
-      type: "selection:entity",
+    // Dispatch action
+    actionRegistry.dispatch("selection.entity", {
       entityType,
       entityId,
       position,
@@ -209,8 +208,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     set({ selection: { type: "none" } });
 
-    // Emit event
-    eventBus.emit({ type: "selection:cleared" });
+    // Dispatch action
+    actionRegistry.dispatch("selection.cleared");
   },
 
   // ===========================================================================
@@ -250,7 +249,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       });
     }
 
-    eventBus.emit({ type: "selection:changed" });
+    actionRegistry.dispatch("selection.changed");
   },
 
   removeFromSelection: (entityId: string) => {
@@ -281,10 +280,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
         });
       }
 
-      eventBus.emit({ type: "selection:changed" });
+      actionRegistry.dispatch("selection.changed");
     } else if (selection.type === "entity" && selection.entityId === entityId) {
       set({ selection: { type: "none" } });
-      eventBus.emit({ type: "selection:changed" });
+      actionRegistry.dispatch("selection.changed");
     }
   },
 
@@ -319,7 +318,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         },
       });
     }
-    eventBus.emit({ type: "selection:changed" });
+    actionRegistry.dispatch("selection.changed");
   },
 
   isSelected: (entityId: string) => {
@@ -354,9 +353,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     set({ interactionMode: mode });
 
-    // Emit event
-    eventBus.emit({
-      type: "interaction:mode-changed",
+    // Dispatch action
+    actionRegistry.dispatch("interaction.modeChanged", {
       previousMode,
       currentMode: mode,
     });
@@ -372,9 +370,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     set({ hoverPosition: position });
 
-    // Emit event
-    eventBus.emit({
-      type: "interaction:hover-changed",
+    // Dispatch action
+    actionRegistry.dispatch("interaction.hoverChanged", {
       position,
       zLevel: currentZLevel,
     });
@@ -406,6 +403,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   // ===========================================================================
 
   play: () => {
+    console.info("[store.play] Starting simulation loop");
     simulationLoop.start();
     set((state) => ({
       simulation: { ...state.simulation, isPlaying: true },
@@ -413,6 +411,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   pause: () => {
+    console.info("[store.pause] Stopping simulation loop");
     simulationLoop.stop();
     set((state) => ({
       simulation: { ...state.simulation, isPlaying: false },
@@ -488,14 +487,25 @@ export const useGameStore = create<GameStore>((set, get) => ({
   // ===========================================================================
 
   issueCommand: (characterId: EntityId, command: Command) => {
+    console.info("[store.issueCommand] Called with:", { characterId, command });
+
     const character = entityStore.get(characterId);
-    if (!character) return;
+    if (!character) {
+      console.warn("[store.issueCommand] Character not found in entityStore");
+      return;
+    }
 
     const { world, currentZLevel } = get();
-    if (!world) return;
+    if (!world) {
+      console.warn("[store.issueCommand] World not initialized");
+      return;
+    }
 
     const level = world.levels.get(currentZLevel);
-    if (!level) return;
+    if (!level) {
+      console.warn("[store.issueCommand] Level not found for z:", currentZLevel);
+      return;
+    }
 
     if (command.type === "move") {
       const moveCmd = command as MoveCommand;
@@ -504,22 +514,26 @@ export const useGameStore = create<GameStore>((set, get) => ({
       if (!moveCmd.path) {
         const start: Position3D = { ...character.position };
         const goal: Position3D = { ...moveCmd.destination, z: currentZLevel };
+        console.info("[store.issueCommand] Finding path from", start, "to", goal);
         const result = findPath(level, start, goal);
 
         if (!result.found) {
-          console.warn("No path found to destination");
+          console.warn("[store.issueCommand] No path found to destination");
           return;
         }
 
+        console.info("[store.issueCommand] Path found with", result.path.length, "waypoints");
         moveCmd.path = result.path;
       }
 
       // Issue move via movement system
+      console.info("[store.issueCommand] Issuing move to movement system");
       movementSystem.issueMove(characterId, moveCmd);
 
       // Update state
       const updated = entityStore.get(characterId);
       if (updated) {
+        console.info("[store.issueCommand] Updating store state, isMoving:", updated.movement.isMoving);
         set((state) => {
           const newCharacters = new Map(state.simulation.characters);
           newCharacters.set(characterId, updated);
@@ -552,6 +566,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
 // Set up tick callback to update movement
 simulationLoop.setTickCallback((deltaTime, tick) => {
+  // Log every 60 ticks (once per second at 60 TPS)
+  if (tick % 60 === 0) {
+    console.info("[simulationLoop] Tick", tick, "deltaTime:", deltaTime);
+  }
+
   // Update movement system
   movementSystem.update(deltaTime);
 

@@ -2,20 +2,20 @@ import { User, Users } from "lucide-react";
 import { SearchableTreeNavigator } from "../../components/command-palette";
 import { ModalFrame } from "../../components/floating/modal";
 import type { MenuItem } from "../../menu/types";
-import { createCommand } from "../createCommand";
+import { defineAction } from "../defineAction";
 
-export interface CharacterSelectArgs {
+export interface CharacterSelectPayload {
   characterId?: string;
 }
 
-export const characterSelect = createCommand<CharacterSelectArgs>({
+export const characterSelect = defineAction<CharacterSelectPayload>({
   id: "character.select",
   name: "Select Character",
   icon: Users,
-  execute: (context, args) => {
+  execute: (context, payload) => {
     // If a specific character ID is provided, select it directly
-    if (args?.characterId) {
-      context.game.selectCharacter(args.characterId);
+    if (payload?.characterId) {
+      context.game.selectCharacter(payload.characterId);
       return;
     }
 

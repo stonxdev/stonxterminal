@@ -44,24 +44,25 @@ export function EntityListWidget<TShape extends ObjectShape>({
     isRowChecked !== undefined && onRowCheckboxToggle !== undefined;
 
   const [searchQuery, setSearchQuery] = useState("");
-  const { commands } = useColony();
+  const { actions } = useColony();
   const selectedIds = useSelectedEntityIds();
   const { selectMultiple } = useMultiSelectionActions();
 
   // Execute schema action
   const executeAction = useCallback(
     (action: SchemaAction, entity: Record<string, unknown>) => {
-      let args: unknown;
+      let payload: unknown;
 
       if (typeof action.argsMapper === "function") {
-        args = action.argsMapper(entity);
+        payload = action.argsMapper(entity);
       } else if (typeof action.argsMapper === "string") {
-        args = { [action.argsMapper]: entity[action.argsMapper] };
+        payload = { [action.argsMapper]: entity[action.argsMapper] };
       }
 
-      commands.execute(action.commandId, args);
+      // Use action ID - schema actions use commandId for backwards compatibility
+      actions.dispatch(action.commandId, payload);
     },
-    [commands],
+    [actions],
   );
 
   // Derive columns from schema

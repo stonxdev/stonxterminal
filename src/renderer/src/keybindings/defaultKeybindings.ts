@@ -1,4 +1,4 @@
-import type { Keybinding } from "../commands/types";
+import type { Keybinding } from "../actions/types";
 
 /**
  * Default keybindings for Colony applications
@@ -7,8 +7,7 @@ import type { Keybinding } from "../commands/types";
 const DEFAULT_KEYBINDINGS: Keybinding[] = [
   {
     key: ["meta+k", "ctrl+k"],
-    command: "workbench.runCommand",
-    commandArgs: {},
+    action: "workbench.runCommand",
   },
 ];
 
@@ -21,9 +20,9 @@ export interface KeybindingExtendOptions {
    */
   add?: Keybinding[];
   /**
-   * List of command IDs to remove from defaults
+   * List of action IDs to remove from defaults
    */
-  removeCommands?: string[];
+  removeActions?: string[];
 }
 
 /**
@@ -34,15 +33,15 @@ export interface KeybindingExtendOptions {
 function extendKeybindings(
   options: KeybindingExtendOptions = {},
 ): Keybinding[] {
-  const { add = [], removeCommands = [] } = options;
+  const { add = [], removeActions = [] } = options;
 
   // Start with defaults
   let result = [...DEFAULT_KEYBINDINGS];
 
-  // Remove commands explicitly
-  if (removeCommands.length > 0) {
+  // Remove actions explicitly
+  if (removeActions.length > 0) {
     result = result.filter((binding) => {
-      return !removeCommands.includes(binding.command);
+      return !removeActions.includes(binding.action);
     });
   }
 
