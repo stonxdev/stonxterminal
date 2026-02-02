@@ -1,5 +1,6 @@
 import { RouterProvider } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { registerBuiltInControlBars } from "./components/control-bars";
 import { registerBuiltInWidgets } from "./components/widgets";
 import { ColonyProvider } from "./context/ColonyContext";
 import { useIsMobilePhone } from "./hooks/useIsMobilePhone";
@@ -47,10 +48,11 @@ export const App: React.FC = () => {
   usePreventBrowserZoom();
   const isMobilePhone = useIsMobilePhone();
 
-  // Initialize widget and layer systems
+  // Initialize widget, layer, and control bar systems
   useEffect(() => {
     registerBuiltInWidgets();
     registerBuiltInLayers();
+    registerBuiltInControlBars();
     useLayerStore.getState().initialize();
   }, []);
 

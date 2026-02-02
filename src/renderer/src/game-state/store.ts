@@ -34,7 +34,7 @@ import type {
 // =============================================================================
 
 const initialSimulationState: SimulationStateSlice = {
-  isPlaying: false,
+  isPlaying: true,
   speed: 1,
   currentTick: 0,
   characters: new Map(),

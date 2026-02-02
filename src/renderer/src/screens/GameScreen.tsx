@@ -1,11 +1,10 @@
+import { WorldWithControlBars } from "@renderer/components/control-bars";
 import { Dock } from "@renderer/components/dock/Dock";
-import { TopBar } from "@renderer/components/hud";
 import type { TabItem } from "@renderer/components/tabs";
 import { Tabs } from "@renderer/components/tabs";
 import { useIsSlotEmpty, WidgetSlot } from "@renderer/components/widgets";
 import { Map as MapIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import World from "../components/pixi/World";
 import {
   useCharacterActions,
   useCurrentZLevel,
@@ -108,10 +107,10 @@ export const GameScreen: React.FC = () => {
         id: "world",
         label: "World",
         icon: MapIcon,
-        content: <World world={world} zLevel={currentZLevel} />,
+        content: <WorldWithControlBars />,
       },
     ];
-  }, [world, currentLevel, currentZLevel]);
+  }, [world, currentLevel]);
 
   // Check which slots are empty to conditionally render them
   const isLeftTopEmpty = useIsSlotEmpty("left-top");
@@ -122,7 +121,6 @@ export const GameScreen: React.FC = () => {
 
   return (
     <Dock
-      top={<TopBar />}
       leftTop={isLeftTopEmpty ? undefined : <WidgetSlot slotId="left-top" />}
       leftBottom={
         isLeftBottomEmpty ? undefined : <WidgetSlot slotId="left-bottom" />
