@@ -23,8 +23,10 @@ export interface DockProps {
   defaultLeftWidth?: number;
   defaultRightWidth?: number;
   defaultCenterBottomHeight?: number;
-  defaultLeftBottomHeight?: number;
-  defaultRightBottomHeight?: number;
+  /** Ratio of bottom panel height (0.0-1.0), defaults to 0.5 for equal split */
+  defaultLeftBottomRatio?: number;
+  /** Ratio of bottom panel height (0.0-1.0), defaults to 0.5 for equal split */
+  defaultRightBottomRatio?: number;
 }
 
 export const Dock: React.FC<DockProps> = ({
@@ -35,22 +37,23 @@ export const Dock: React.FC<DockProps> = ({
   rightTop,
   rightBottom,
   centerBottom,
-  defaultLeftWidth = 300,
-  defaultRightWidth = 300,
+  defaultLeftWidth = 400,
+  defaultRightWidth = 400,
   defaultCenterBottomHeight = 300,
-  defaultLeftBottomHeight = 300,
-  defaultRightBottomHeight = 300,
+  defaultLeftBottomRatio = 0.5,
+  defaultRightBottomRatio = 0.5,
 }) => {
   const [leftWidth, setLeftWidth] = useState(defaultLeftWidth);
   const [rightWidth, setRightWidth] = useState(defaultRightWidth);
   const [centerBottomHeight, setCenterBottomHeight] = useState(
     defaultCenterBottomHeight,
   );
-  const [leftBottomHeight, setLeftBottomHeight] = useState(
-    defaultLeftBottomHeight,
+  // Ratio-based heights for side panels (0.5 = equal split)
+  const [leftBottomRatio, setLeftBottomRatio] = useState(
+    defaultLeftBottomRatio,
   );
-  const [rightBottomHeight, setRightBottomHeight] = useState(
-    defaultRightBottomHeight,
+  const [rightBottomRatio, setRightBottomRatio] = useState(
+    defaultRightBottomRatio,
   );
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -86,20 +89,9 @@ export const Dock: React.FC<DockProps> = ({
     return { min: 50, max: Number.POSITIVE_INFINITY };
   }, []);
 
-  const getLeftBottomConstraints = useCallback(() => {
-    if (containerRef.current) {
-      const maxHeight = containerRef.current.offsetHeight - 100;
-      return { min: 50, max: maxHeight };
-    }
-    return { min: 50, max: Number.POSITIVE_INFINITY };
-  }, []);
-
-  const getRightBottomConstraints = useCallback(() => {
-    if (containerRef.current) {
-      const maxHeight = containerRef.current.offsetHeight - 100;
-      return { min: 50, max: maxHeight };
-    }
-    return { min: 50, max: Number.POSITIVE_INFINITY };
+  // Ratio constraints for side panel splits (0.1 to 0.9)
+  const getRatioConstraints = useCallback(() => {
+    return { min: 0.1, max: 0.9 };
   }, []);
 
   const leftResize = useResize(
@@ -120,17 +112,36 @@ export const Dock: React.FC<DockProps> = ({
     true,
     true,
   );
+  // Ratio-based resize for side panel splits
+  // Convert ratio to pixel height, let useResize handle the drag, then convert back to ratio
+  const getLeftColumnHeight = useCallback(() => {
+    return containerRef.current?.offsetHeight ?? 600;
+  }, []);
+
+  const getRightColumnHeight = useCallback(() => {
+    return containerRef.current?.offsetHeight ?? 600;
+  }, []);
+
   const leftBottomResize = useResize(
-    setLeftBottomHeight,
-    () => leftBottomHeight,
-    getLeftBottomConstraints,
+    (newHeight: number) => {
+      const columnHeight = getLeftColumnHeight();
+      const newRatio = Math.max(0.1, Math.min(0.9, newHeight / columnHeight));
+      setLeftBottomRatio(newRatio);
+    },
+    () => leftBottomRatio * getLeftColumnHeight(),
+    getRatioConstraints,
     true,
     true,
   );
+
   const rightBottomResize = useResize(
-    setRightBottomHeight,
-    () => rightBottomHeight,
-    getRightBottomConstraints,
+    (newHeight: number) => {
+      const columnHeight = getRightColumnHeight();
+      const newRatio = Math.max(0.1, Math.min(0.9, newHeight / columnHeight));
+      setRightBottomRatio(newRatio);
+    },
+    () => rightBottomRatio * getRightColumnHeight(),
+    getRatioConstraints,
     true,
     true,
   );
@@ -162,16 +173,17 @@ export const Dock: React.FC<DockProps> = ({
               }}
             >
               {leftTop && (
-                <div className="flex-1 bg-background relative overflow-y-auto">
+                <div
+                  className="bg-background relative overflow-y-auto"
+                  style={{ flex: `${1 - leftBottomRatio} 1 0`, minHeight: 0 }}
+                >
                   {leftTop}
                 </div>
               )}
               {leftBottom && (
                 <div
                   className="bg-background relative overflow-y-auto"
-                  style={{
-                    height: leftBottomHeight,
-                  }}
+                  style={{ flex: `${leftBottomRatio} 1 0`, minHeight: 0 }}
                 >
                   {leftTop && (
                     <VerticalResizeHandle
@@ -225,16 +237,17 @@ export const Dock: React.FC<DockProps> = ({
               }}
             >
               {rightTop && (
-                <div className="flex-1 bg-background relative overflow-y-auto">
+                <div
+                  className="bg-background relative overflow-y-auto"
+                  style={{ flex: `${1 - rightBottomRatio} 1 0`, minHeight: 0 }}
+                >
                   {rightTop}
                 </div>
               )}
               {rightBottom && (
                 <div
                   className="bg-background relative overflow-y-auto"
-                  style={{
-                    height: rightBottomHeight,
-                  }}
+                  style={{ flex: `${rightBottomRatio} 1 0`, minHeight: 0 }}
                 >
                   {rightTop && (
                     <VerticalResizeHandle
