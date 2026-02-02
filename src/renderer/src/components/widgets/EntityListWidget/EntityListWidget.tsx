@@ -11,7 +11,7 @@ import {
 } from "../../../game-state";
 import type { SchemaAction } from "../../../schemas/core/actions";
 import type { ObjectShape } from "../../../schemas/core/schema";
-import { type Column, DataGrid } from "../../data-grid";
+import { type Column, DataGrid, SelectColumn } from "../../data-grid";
 import { ActionsDropdown } from "./ActionsDropdown";
 import type { EntityListWidgetConfig } from "./types";
 
@@ -34,6 +34,9 @@ export function EntityListWidget<TShape extends ObjectShape>({
     searchPlaceholder = "Search...",
     searchFields,
     multiSelect = true,
+    showCheckboxSelection = false,
+    selectedRows: customSelectedRows,
+    onSelectedRowsChange: customOnSelectedRowsChange,
   } = config;
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -109,6 +112,12 @@ export function EntityListWidget<TShape extends ObjectShape>({
     return cols;
   }, [schema, config.visibleColumns, executeAction]);
 
+  // Add SelectColumn when checkbox selection is enabled
+  const columnsWithSelect = useMemo(() => {
+    if (!showCheckboxSelection) return columns;
+    return [SelectColumn, ...columns];
+  }, [showCheckboxSelection, columns]);
+
   // Filter data based on search query
   const filteredData = useMemo(() => {
     if (!searchQuery.trim()) return data;
@@ -137,7 +146,7 @@ export function EntityListWidget<TShape extends ObjectShape>({
     [schema, executeAction],
   );
 
-  // Handle selection change
+  // Handle selection change (default game state behavior)
   const handleSelectedRowsChange = useCallback(
     (newSelected: Set<string>) => {
       selectMultiple(entityType, Array.from(newSelected));
@@ -145,13 +154,21 @@ export function EntityListWidget<TShape extends ObjectShape>({
     [entityType, selectMultiple],
   );
 
+  // Determine effective selection state and handlers
+  // Custom props override game state selection when provided
+  const effectiveSelectedRows =
+    customSelectedRows ?? (multiSelect ? selectedIds : undefined);
+  const effectiveOnSelectedRowsChange =
+    customOnSelectedRowsChange ??
+    (multiSelect ? handleSelectedRowsChange : undefined);
+
   // Row class for highlighting selection
   const rowClass = useCallback(
     (row: Record<string, unknown>) => {
       const key = getRowKey(row);
-      return selectedIds.has(key) ? "bg-cyan-900/30" : "";
+      return effectiveSelectedRows?.has(key) ? "bg-cyan-900/30" : "";
     },
-    [selectedIds, getRowKey],
+    [effectiveSelectedRows, getRowKey],
   );
 
   return (
@@ -172,13 +189,11 @@ export function EntityListWidget<TShape extends ObjectShape>({
       )}
       <div className="flex-1 overflow-hidden">
         <DataGrid
-          columns={columns}
+          columns={columnsWithSelect}
           rows={filteredData}
           rowKeyGetter={getRowKey}
-          selectedRows={multiSelect ? selectedIds : undefined}
-          onSelectedRowsChange={
-            multiSelect ? handleSelectedRowsChange : undefined
-          }
+          selectedRows={effectiveSelectedRows}
+          onSelectedRowsChange={effectiveOnSelectedRowsChange}
           rowClass={rowClass}
           onCellDoubleClick={({ row }) => handleRowDoubleClick(row)}
         />

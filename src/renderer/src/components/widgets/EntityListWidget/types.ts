@@ -25,6 +25,12 @@ export interface EntityListWidgetConfig<TShape extends ObjectShape> {
   searchFields?: (keyof TShape)[];
   /** Whether multi-selection is enabled (default: true) */
   multiSelect?: boolean;
+  /** Whether to show checkbox column for selection (default: false) */
+  showCheckboxSelection?: boolean;
+  /** Custom selected rows - overrides game state selection when provided */
+  selectedRows?: Set<string>;
+  /** Custom selection change handler - overrides game state selection when provided */
+  onSelectedRowsChange?: (selectedRows: Set<string>) => void;
 }
 
 /**

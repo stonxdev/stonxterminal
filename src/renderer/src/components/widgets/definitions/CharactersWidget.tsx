@@ -29,6 +29,7 @@ function CharactersWidget(_props: WidgetComponentProps) {
         visibleColumns: ["name", "type", "position"],
         searchFields: ["name", "type"],
         searchPlaceholder: "Search characters...",
+        showCheckboxSelection: true,
         multiSelect: true,
       }}
       data={data}
