@@ -4,7 +4,7 @@ export const HomeScreen: React.FC = () => {
   const navigate = useNavigate();
 
   const handleStartGame = () => {
-    navigate({ to: "/game" });
+    navigate({ to: "/" });
   };
 
   return (

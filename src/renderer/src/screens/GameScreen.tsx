@@ -4,7 +4,7 @@ import type { TabItem } from "@renderer/components/tabs";
 import { Tabs } from "@renderer/components/tabs";
 import { useIsSlotEmpty, WidgetSlot } from "@renderer/components/widgets";
 import { Map as MapIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import {
   useCharacterActions,
   useCurrentZLevel,
@@ -13,7 +13,8 @@ import {
 } from "../game-state";
 import { createCharacter } from "../simulation/types";
 import { generateWorld } from "../world/factories/procedural-generator";
-import type { BiomeType } from "../world/types";
+import { SeededRandom } from "../world/factories/world-factory";
+import type { BiomeType, ZLevel } from "../world/types";
 
 // Default world generation configuration
 const DEFAULT_WORLD_CONFIG = {
@@ -28,37 +29,71 @@ const DEFAULT_WORLD_CONFIG = {
 const COLONIST_COLORS = [0x4a90d9, 0xd94a4a, 0x4ad94a];
 const COLONIST_NAMES = ["Alice", "Bob", "Charlie"];
 
+/**
+ * Find a cluster of nearby passable tiles for spawning characters.
+ * Uses seeded RNG for deterministic results.
+ */
+function findSpawnCluster(
+  level: ZLevel,
+  count: number,
+  seed: number,
+): Array<{ x: number; y: number }> {
+  const rng = new SeededRandom(seed);
+
+  // Collect all passable tiles
+  const passableTiles: Array<{ x: number; y: number }> = [];
+  for (let y = 0; y < level.height; y++) {
+    for (let x = 0; x < level.width; x++) {
+      const tile = level.tiles[y * level.width + x];
+      if (tile?.pathfinding?.isPassable) {
+        passableTiles.push({ x, y });
+      }
+    }
+  }
+
+  if (passableTiles.length === 0) return [];
+
+  // Pick a deterministic starting point near the center
+  const centerX = Math.floor(level.width / 2);
+  const centerY = Math.floor(level.height / 2);
+
+  // Find passable tiles near center, sorted by distance
+  const tilesWithDistance = passableTiles.map((tile) => ({
+    ...tile,
+    distance: Math.abs(tile.x - centerX) + Math.abs(tile.y - centerY),
+  }));
+  tilesWithDistance.sort((a, b) => a.distance - b.distance);
+
+  // Pick a starting tile from the closest 20% using seeded RNG
+  const candidateCount = Math.max(1, Math.floor(tilesWithDistance.length * 0.2));
+  const startIndex = rng.nextInt(0, candidateCount);
+  const startTile = tilesWithDistance[startIndex];
+
+  // Find nearby passable tiles (within 5 tiles of start)
+  const maxSpawnRadius = 5;
+  const nearbyTiles = passableTiles.filter((tile) => {
+    const dx = Math.abs(tile.x - startTile.x);
+    const dy = Math.abs(tile.y - startTile.y);
+    return dx <= maxSpawnRadius && dy <= maxSpawnRadius;
+  });
+
+  // Sort by distance from start tile for consistent ordering
+  nearbyTiles.sort((a, b) => {
+    const distA = Math.abs(a.x - startTile.x) + Math.abs(a.y - startTile.y);
+    const distB = Math.abs(b.x - startTile.x) + Math.abs(b.y - startTile.y);
+    return distA - distB;
+  });
+
+  // Take the first 'count' tiles (closest to start)
+  return nearbyTiles.slice(0, count);
+}
+
 export const GameScreen: React.FC = () => {
   const { setWorld } = useWorldActions();
   const { addCharacter } = useCharacterActions();
   const world = useWorld();
   const currentZLevel = useCurrentZLevel();
   const hasSpawnedCharacters = useRef(false);
-
-  // Find passable tiles for spawning characters
-  const findPassableTiles = useCallback(
-    (count: number, zLevel: number) => {
-      if (!world) return [];
-      const level = world.levels.get(zLevel);
-      if (!level) return [];
-
-      const passableTiles: Array<{ x: number; y: number }> = [];
-      for (let y = 0; y < level.height; y++) {
-        for (let x = 0; x < level.width; x++) {
-          // Tiles are stored as flat array: tiles[y * width + x]
-          const tile = level.tiles[y * level.width + x];
-          if (tile?.pathfinding?.isPassable) {
-            passableTiles.push({ x, y });
-          }
-        }
-      }
-
-      // Shuffle and take first 'count' tiles
-      const shuffled = passableTiles.sort(() => Math.random() - 0.5);
-      return shuffled.slice(0, count);
-    },
-    [world],
-  );
 
   // Generate and set world on mount
   useEffect(() => {
@@ -74,10 +109,16 @@ export const GameScreen: React.FC = () => {
   useEffect(() => {
     if (!world || hasSpawnedCharacters.current) return;
 
-    const spawnPositions = findPassableTiles(3, currentZLevel);
-    if (spawnPositions.length === 0) {
-      return;
-    }
+    const level = world.levels.get(currentZLevel);
+    if (!level) return;
+
+    // Use the world seed for deterministic spawning
+    const spawnPositions = findSpawnCluster(
+      level,
+      3,
+      DEFAULT_WORLD_CONFIG.seed,
+    );
+    if (spawnPositions.length === 0) return;
 
     // Mark as spawned to prevent re-spawning
     hasSpawnedCharacters.current = true;
@@ -92,7 +133,7 @@ export const GameScreen: React.FC = () => {
       });
       addCharacter(character);
     });
-  }, [world, currentZLevel, findPassableTiles, addCharacter]);
+  }, [world, currentZLevel, addCharacter]);
 
   // Get the current level
   const currentLevel = useMemo(() => {
