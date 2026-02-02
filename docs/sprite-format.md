@@ -2,98 +2,150 @@
 
 This document describes the ASCII-based pixel art format used for defining 32x32 sprites.
 
+## Universal Palette
+
+All sprites share a universal palette defined in:
+```
+src/renderer/public/sprites/palette/palette.txt
+```
+
+The palette maps single characters to colors. For example:
+- `.` = transparent
+- `0` = #000000 (Black)
+- `W` = #FFFFFF (White)
+- `M` = #32CD32 (Lime green)
+- etc.
+
+View the palette file for the complete list of available colors and their character codes.
+
 ## Directory Structure
 
 Each sprite lives in its own folder under `src/renderer/public/sprites/`:
 
 ```
-src/renderer/public/sprites/characters/
-  male-1/
-    source.txt       # ASCII pixel definition (source of truth)
-    male-1.png       # Generated PNG output
-    male-1.aseprite  # Optional: Aseprite file for manual edits
+src/renderer/public/sprites/
+  palette/
+    palette.txt          # Universal color palette (shared by all sprites)
+  characters/
+    male-1/
+      source.txt         # ASCII pixel grid (source of truth)
+      male-1.png         # Generated PNG output
+      male-1.aseprite    # Optional: Aseprite file for manual edits
+  terrain/
+    soil/
+      source.txt
+      soil.png
 ```
 
 ## Source File Format
 
-The `source.txt` file has two sections: a **palette** and a **pixel grid**.
+The `source.txt` file contains **only the pixel grid** (no palette section - colors come from the universal palette).
 
 ### Example
 
 ```
-# Palette
-. = transparent
-X = #000000
-S = #F5DEB3
-H = #8B4513
-C = #3366CC
-
-# Pixels (32x32)
+# 32x32 sprite
 ................................
 ................................
-...........HHHHHH...............
-..........HHHHHHHH..............
-..........SSSSSSSS..............
-..........S.SS.SS.S.............
-..........SSSSSSSS..............
-...........CCCCCC...............
-..........CCCCCCCC..............
-...........CC..CC...............
-...........SS..SS...............
+...........MMMMMM...............
+..........MNNNNNNM..............
+.........MNNLLLLNNM.............
+........MNNNLLLLNNNM............
+.......MNNNNLLLLNNNNM...........
 ................................
 ```
 
-### Palette Section
+### Rules
 
-- Lines starting with `#` are comments
-- Format: `char = color`
-- `char` is a single character used in the pixel grid
-- `color` can be:
-  - `transparent` - fully transparent pixel
-  - `#RRGGBB` - 6-digit hex color (opaque)
-  - `#RRGGBBAA` - 8-digit hex color (with alpha)
-
-### Pixel Grid Section
-
-- Begins after a comment containing the word "pixel" (e.g., `# Pixels (32x32)`)
+- Lines starting with `#` are comments (optional)
+- Each non-comment, non-empty line is a row of pixels
 - Exactly 32 rows of exactly 32 characters each
-- Each character must be defined in the palette
+- Each character must exist in the universal palette
+- If a character is not in the palette, the conversion will fail
 
-## CLI Usage
+## CLI Commands
 
-Generate a PNG from a source file:
+### pixel-to-png
+
+Convert source.txt to PNG:
 
 ```bash
-npm run cli -- pixel-to-png src/renderer/public/sprites/characters/male-1
+# Single sprite
+npm run cli -- pixel-to-png src/renderer/public/sprites/terrain/soil
+
+# All sprites
+npm run cli -- pixel-to-png --all
 ```
 
-The command reads `source.txt` from the specified folder and outputs `<folder-name>.png` in the same folder.
-
-### Options
-
+Options:
 | Option | Description |
 |--------|-------------|
+| `-a, --all` | Process all sprites |
+| `-d, --dir <path>` | Base directory (default: src/renderer/public/sprites) |
 | `-s, --size <number>` | Tile size in pixels (default: 32) |
 | `-o, --output <name>` | Output filename without extension |
 
-### Examples
+### png-to-pixel
+
+Convert PNG to source.txt (validates colors against palette):
 
 ```bash
-# Standard 32x32 sprite
-npm run cli -- pixel-to-png src/renderer/public/sprites/characters/female-1
+# Single sprite
+npm run cli -- png-to-pixel src/renderer/public/sprites/terrain/soil
 
-# Custom output name
-npm run cli -- pixel-to-png src/renderer/public/sprites/characters/female-1 -o avatar
-
-# Different tile size (e.g., 16x16)
-npm run cli -- pixel-to-png src/renderer/public/sprites/tiles/grass -s 16
+# All sprites
+npm run cli -- png-to-pixel --all
 ```
+
+**Important:** The PNG must only contain colors that exist in the universal palette. If any color is not found, the command will fail and list the missing colors.
+
+Options:
+| Option | Description |
+|--------|-------------|
+| `-a, --all` | Process all sprites |
+| `-d, --dir <path>` | Base directory (default: src/renderer/public/sprites) |
+| `-o, --output <name>` | Output filename (default: source.txt) |
 
 ## Workflow
 
-1. Create a new folder under `src/renderer/public/sprites/`
-2. Create `source.txt` with palette and pixel grid
+### Creating a new sprite
+
+1. Create a new folder under `src/renderer/public/sprites/<category>/`
+2. Create `source.txt` with the pixel grid using characters from the universal palette
 3. Run `npm run cli -- pixel-to-png <folder-path>`
 4. The PNG is generated in the same folder
 
-For manual touch-ups, you can edit the PNG in Aseprite and save alongside the source file.
+### Importing an existing PNG
+
+1. Ensure the PNG only uses colors from the universal palette
+2. Run `npm run cli -- png-to-pixel <folder-path>`
+3. The command generates `source.txt` from the PNG
+4. If colors are missing from the palette, either:
+   - Add them to `palette/palette.txt`, or
+   - Adjust the PNG to use existing palette colors
+
+### Editing sprites
+
+For manual edits, you can:
+1. Edit `source.txt` directly using palette characters
+2. Run `pixel-to-png` to regenerate the PNG
+
+Or:
+1. Edit the PNG in an image editor (using only palette colors)
+2. Run `png-to-pixel` to regenerate the source.txt
+
+## Palette Format
+
+The palette file uses this format:
+```
+# Comment
+char = #RRGGBB  Name
+```
+
+Example:
+```
+. = transparent    Void
+0 = #000000        Black
+W = #FFFFFF        White
+M = #32CD32        Lime
+```

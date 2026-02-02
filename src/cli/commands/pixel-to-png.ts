@@ -2,92 +2,39 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { Command } from "commander";
 import { PNG } from "pngjs";
+import {
+  type Color,
+  getColorForChar,
+  loadPalette,
+  type Palette,
+} from "../lib/palette";
 
 const DEFAULT_SPRITES_DIR = "src/renderer/public/sprites";
 
-interface Palette {
-  [char: string]: { r: number; g: number; b: number; a: number };
-}
-
-function parseHexColor(hex: string): {
-  r: number;
-  g: number;
-  b: number;
-  a: number;
-} {
-  const cleanHex = hex.replace("#", "");
-
-  if (cleanHex.length === 6) {
-    return {
-      r: Number.parseInt(cleanHex.slice(0, 2), 16),
-      g: Number.parseInt(cleanHex.slice(2, 4), 16),
-      b: Number.parseInt(cleanHex.slice(4, 6), 16),
-      a: 255,
-    };
-  }
-
-  if (cleanHex.length === 8) {
-    return {
-      r: Number.parseInt(cleanHex.slice(0, 2), 16),
-      g: Number.parseInt(cleanHex.slice(2, 4), 16),
-      b: Number.parseInt(cleanHex.slice(4, 6), 16),
-      a: Number.parseInt(cleanHex.slice(6, 8), 16),
-    };
-  }
-
-  throw new Error(`Invalid hex color: ${hex}`);
-}
-
-function parseSourceFile(content: string): {
-  palette: Palette;
-  pixels: string[];
-} {
+function parseSourceFile(content: string): string[] {
   const lines = content.split("\n");
-  const palette: Palette = {};
   const pixels: string[] = [];
-
-  let inPixelSection = false;
 
   for (const line of lines) {
     const trimmed = line.trim();
 
     // Skip empty lines and comments
     if (trimmed === "" || trimmed.startsWith("#")) {
-      // Check if we're entering the pixel section
-      if (trimmed.toLowerCase().includes("pixel")) {
-        inPixelSection = true;
-      }
       continue;
     }
 
-    // Check for palette definition: "char = #hexcolor" or "char = transparent"
-    const paletteMatch = trimmed.match(/^(.)[ ]*=[ ]*(.+)$/);
-    if (paletteMatch && !inPixelSection) {
-      const [, char, colorValue] = paletteMatch;
-      const cleanColor = colorValue.trim();
-
-      if (cleanColor.toLowerCase() === "transparent") {
-        palette[char] = { r: 0, g: 0, b: 0, a: 0 };
-      } else {
-        palette[char] = parseHexColor(cleanColor);
-      }
-      continue;
-    }
-
-    // If we have palette entries, assume remaining non-comment lines are pixel rows
-    if (Object.keys(palette).length > 0) {
-      inPixelSection = true;
-      pixels.push(trimmed);
-    }
+    // All non-comment, non-empty lines are pixel rows
+    pixels.push(trimmed);
   }
 
-  return { palette, pixels };
+  return pixels;
 }
 
 function validatePixelData(
   pixels: string[],
   palette: Palette,
   size: number,
+  sourceFile: string,
 ): void {
   if (pixels.length !== size) {
     throw new Error(`Expected ${size} rows of pixels, got ${pixels.length}`);
@@ -102,9 +49,11 @@ function validatePixelData(
 
     for (let col = 0; col < pixels[row].length; col++) {
       const char = pixels[row][col];
-      if (!(char in palette)) {
+      const color = getColorForChar(palette, char);
+      if (!color) {
         throw new Error(
-          `Unknown palette character '${char}' at row ${row + 1}, column ${col + 1}`,
+          `Unknown palette character '${char}' at row ${row + 1}, column ${col + 1} in ${sourceFile}. ` +
+            `Character must exist in the universal palette.`,
         );
       }
     }
@@ -117,7 +66,7 @@ function createPng(pixels: string[], palette: Palette, size: number): PNG {
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
       const char = pixels[y][x];
-      const color = palette[char];
+      const color = getColorForChar(palette, char) as Color;
       const idx = (size * y + x) << 2;
 
       png.data[idx] = color.r;
@@ -140,6 +89,9 @@ function findFoldersWithSourceTxt(baseDir: string): string[] {
 
     for (const entry of entries) {
       if (entry.isDirectory()) {
+        // Skip the palette directory
+        if (entry.name === "palette") continue;
+
         const subPath = path.join(dir, entry.name);
         const sourceFile = path.join(subPath, "source.txt");
 
@@ -159,6 +111,7 @@ function findFoldersWithSourceTxt(baseDir: string): string[] {
 function convertSingle(
   folderPath: string,
   size: number,
+  palette: Palette,
   outputName?: string,
 ): void {
   const sourceFile = path.join(folderPath, "source.txt");
@@ -172,13 +125,13 @@ function convertSingle(
   }
 
   const content = fs.readFileSync(sourceFile, "utf-8");
-  const { palette, pixels } = parseSourceFile(content);
+  const pixels = parseSourceFile(content);
 
-  if (Object.keys(palette).length === 0) {
-    throw new Error("No palette entries found in source.txt");
+  if (pixels.length === 0) {
+    throw new Error("No pixel data found in source.txt");
   }
 
-  validatePixelData(pixels, palette, size);
+  validatePixelData(pixels, palette, size, sourceFile);
 
   const png = createPng(pixels, palette, size);
   const buffer = PNG.sync.write(png);
@@ -187,7 +140,7 @@ function convertSingle(
   console.log(`Created: ${outputFile}`);
 }
 
-function convertAll(baseDir: string, size: number): void {
+function convertAll(baseDir: string, size: number, palette: Palette): void {
   console.log(`Scanning ${baseDir} for source.txt files...\n`);
 
   const folders = findFoldersWithSourceTxt(baseDir);
@@ -207,13 +160,13 @@ function convertAll(baseDir: string, size: number): void {
       const outputFile = path.join(folder, `${folderName}.png`);
 
       const content = fs.readFileSync(sourceFile, "utf-8");
-      const { palette, pixels } = parseSourceFile(content);
+      const pixels = parseSourceFile(content);
 
-      if (Object.keys(palette).length === 0) {
-        throw new Error("No palette entries");
+      if (pixels.length === 0) {
+        throw new Error("No pixel data");
       }
 
-      validatePixelData(pixels, palette, size);
+      validatePixelData(pixels, palette, size, sourceFile);
 
       const png = createPng(pixels, palette, size);
       const buffer = PNG.sync.write(png);
@@ -237,7 +190,9 @@ function convertAll(baseDir: string, size: number): void {
 }
 
 export const pixelToPngCommand = new Command("pixel-to-png")
-  .description("Convert source.txt pixel definitions to PNG")
+  .description(
+    "Convert source.txt pixel definitions to PNG using universal palette",
+  )
   .argument("[folder]", "Path to sprite folder (or omit with --all)")
   .option("-a, --all", "Process all sprites in the sprites directory")
   .option(
@@ -255,12 +210,16 @@ export const pixelToPngCommand = new Command("pixel-to-png")
       const size = Number.parseInt(options.size, 10);
 
       try {
+        // Load universal palette
+        const palette = loadPalette();
+        console.log(`Loaded palette with ${palette.entries.length} colors\n`);
+
         if (options.all) {
           const baseDir = path.resolve(options.dir);
-          convertAll(baseDir, size);
+          convertAll(baseDir, size, palette);
         } else if (folder) {
           const folderPath = path.resolve(folder);
-          convertSingle(folderPath, size, options.output);
+          convertSingle(folderPath, size, palette, options.output);
         } else {
           console.error(
             "Error: Specify a folder path or use --all to process all sprites",
