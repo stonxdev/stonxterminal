@@ -10,14 +10,14 @@ const rootRoute = createRootRoute({
 // Home screen route
 const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/",
+  path: "/home",
   component: HomeScreen,
 });
 
-// Game screen route
+// Game screen route (temporarily set as default)
 const gameRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/game",
+  path: "/",
   component: GameScreen,
 });
 
