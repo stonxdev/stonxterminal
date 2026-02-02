@@ -8,7 +8,7 @@ import type { Position2D, Tile } from "../world/types";
  * Entity types that can be selected
  * EXTENSION POINT: Add new entity types here as the game grows
  */
-export type EntityType = "colonist" | "item" | "structure" | "zone" | "layer";
+export type EntityType = "colonist" | "item" | "structure" | "zone";
 
 /**
  * All game events as a discriminated union

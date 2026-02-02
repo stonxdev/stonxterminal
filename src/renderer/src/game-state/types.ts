@@ -25,12 +25,7 @@ import type {
  * Types of entities that can be selected
  * EXTENSION POINT: Add new entity types here
  */
-export type SelectableEntityType =
-  | "colonist"
-  | "item"
-  | "structure"
-  | "zone"
-  | "layer";
+export type SelectableEntityType = "colonist" | "item" | "structure" | "zone";
 
 /**
  * No selection state

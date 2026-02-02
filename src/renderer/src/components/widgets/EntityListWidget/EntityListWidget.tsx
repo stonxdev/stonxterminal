@@ -35,9 +35,13 @@ export function EntityListWidget<TShape extends ObjectShape>({
     searchFields,
     multiSelect = true,
     showCheckboxSelection = false,
-    selectedRows: customSelectedRows,
-    onSelectedRowsChange: customOnSelectedRowsChange,
+    isRowChecked,
+    onRowCheckboxToggle,
   } = config;
+
+  // Determine if we're using custom toggle mode (for things like layer visibility)
+  const useCustomToggle =
+    isRowChecked !== undefined && onRowCheckboxToggle !== undefined;
 
   const [searchQuery, setSearchQuery] = useState("");
   const { commands } = useColony();
@@ -112,11 +116,45 @@ export function EntityListWidget<TShape extends ObjectShape>({
     return cols;
   }, [schema, config.visibleColumns, executeAction]);
 
-  // Add SelectColumn when checkbox selection is enabled
+  // Create custom toggle checkbox column for simple toggle use cases (like layer visibility)
+  const customToggleColumn: Column<Record<string, unknown>> = useMemo(
+    () => ({
+      key: "__checkbox",
+      name: "",
+      width: 35,
+      minWidth: 35,
+      maxWidth: 35,
+      resizable: false,
+      sortable: false,
+      frozen: true,
+      renderCell: ({ row }) => {
+        const key = getRowKey(row);
+        const checked = isRowChecked?.(row) ?? false;
+        return (
+          <div className="flex items-center justify-center">
+            <input
+              type="checkbox"
+              checked={checked}
+              onChange={(e) => onRowCheckboxToggle?.(key, e.target.checked)}
+              className="h-4 w-4 cursor-pointer accent-primary"
+              aria-label="Toggle"
+            />
+          </div>
+        );
+      },
+    }),
+    [getRowKey, isRowChecked, onRowCheckboxToggle],
+  );
+
+  // Build final columns list
   const columnsWithSelect = useMemo(() => {
     if (!showCheckboxSelection) return columns;
+    // Use custom toggle column for simple toggle use cases, SelectColumn for game state selection
+    if (useCustomToggle) {
+      return [customToggleColumn, ...columns];
+    }
     return [SelectColumn, ...columns];
-  }, [showCheckboxSelection, columns]);
+  }, [showCheckboxSelection, columns, useCustomToggle, customToggleColumn]);
 
   // Filter data based on search query
   const filteredData = useMemo(() => {
@@ -146,29 +184,28 @@ export function EntityListWidget<TShape extends ObjectShape>({
     [schema, executeAction],
   );
 
-  // Handle selection change (default game state behavior)
+  // Handle selection change (game state behavior - only used when not in custom toggle mode)
   const handleSelectedRowsChange = useCallback(
     (newSelected: Set<string>) => {
-      selectMultiple(entityType, Array.from(newSelected));
+      if (entityType) {
+        selectMultiple(entityType, Array.from(newSelected));
+      }
     },
     [entityType, selectMultiple],
   );
 
-  // Determine effective selection state and handlers
-  // Custom props override game state selection when provided
-  const effectiveSelectedRows =
-    customSelectedRows ?? (multiSelect ? selectedIds : undefined);
-  const effectiveOnSelectedRowsChange =
-    customOnSelectedRowsChange ??
-    (multiSelect ? handleSelectedRowsChange : undefined);
-
   // Row class for highlighting selection
   const rowClass = useCallback(
     (row: Record<string, unknown>) => {
+      if (useCustomToggle) {
+        // In custom toggle mode, highlight checked rows
+        return isRowChecked?.(row) ? "bg-cyan-900/30" : "";
+      }
+      // In game state mode, highlight selected rows
       const key = getRowKey(row);
-      return effectiveSelectedRows?.has(key) ? "bg-cyan-900/30" : "";
+      return selectedIds.has(key) ? "bg-cyan-900/30" : "";
     },
-    [effectiveSelectedRows, getRowKey],
+    [useCustomToggle, isRowChecked, getRowKey, selectedIds],
   );
 
   return (
@@ -192,8 +229,16 @@ export function EntityListWidget<TShape extends ObjectShape>({
           columns={columnsWithSelect}
           rows={filteredData}
           rowKeyGetter={getRowKey}
-          selectedRows={effectiveSelectedRows}
-          onSelectedRowsChange={effectiveOnSelectedRowsChange}
+          selectedRows={
+            useCustomToggle ? undefined : multiSelect ? selectedIds : undefined
+          }
+          onSelectedRowsChange={
+            useCustomToggle
+              ? undefined
+              : multiSelect
+                ? handleSelectedRowsChange
+                : undefined
+          }
           rowClass={rowClass}
           onCellDoubleClick={({ row }) => handleRowDoubleClick(row)}
         />

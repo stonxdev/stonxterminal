@@ -19,46 +19,34 @@ function LayersWidget(_props: WidgetComponentProps) {
     }));
   }, [visibility]);
 
-  // Selected rows = visible layers (checkbox checked = layer visible)
-  const visibleLayerIds = useMemo(() => {
-    const ids = new Set<string>();
-    for (const layer of layerRegistry.getAll()) {
-      const isVisible = visibility.get(layer.id) ?? layer.defaultEnabled;
-      if (isVisible) {
-        ids.add(layer.id);
-      }
-    }
-    return ids;
-  }, [visibility]);
-
-  // Handle checkbox changes → update layer visibility
-  const handleSelectionChange = useCallback(
-    (newSelected: Set<string>) => {
-      for (const layer of layerRegistry.getAll()) {
-        const shouldBeVisible = newSelected.has(layer.id);
-        const currentlyVisible =
-          visibility.get(layer.id) ?? layer.defaultEnabled;
-        if (shouldBeVisible !== currentlyVisible) {
-          setLayerVisible(layer.id, shouldBeVisible);
-        }
-      }
+  // Check if a layer is visible (for checkbox state)
+  const isRowChecked = useCallback(
+    (row: Record<string, unknown>) => {
+      const layer = layerRegistry.get(row.id as string);
+      return visibility.get(row.id as string) ?? layer?.defaultEnabled ?? false;
     },
-    [visibility, setLayerVisible],
+    [visibility],
+  );
+
+  // Handle checkbox toggle → update layer visibility directly
+  const handleToggle = useCallback(
+    (layerId: string, visible: boolean) => {
+      setLayerVisible(layerId, visible);
+    },
+    [setLayerVisible],
   );
 
   return (
     <EntityListWidget
       config={{
         schema: layerSchema,
-        entityType: "layer",
         getRowKey: (row) => row.id as string,
         visibleColumns: ["name", "category"],
         searchFields: ["name", "category"],
         searchPlaceholder: "Search layers...",
         showCheckboxSelection: true,
-        selectedRows: visibleLayerIds,
-        onSelectedRowsChange: handleSelectionChange,
-        multiSelect: false,
+        isRowChecked,
+        onRowCheckboxToggle: handleToggle,
       }}
       data={data}
     />
