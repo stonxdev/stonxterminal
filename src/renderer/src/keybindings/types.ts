@@ -1,14 +1,14 @@
 /**
- * Parsed keybinding using string-based actions
+ * Parsed keybinding using string-based commands
  */
 export interface ParsedKeybinding {
   /** The original key string */
   key: string;
   /** Array of key sequences for chords (e.g., ["ctrl+k", "ctrl+c"]) */
   sequences: string[];
-  /** The action to dispatch */
-  action: string;
-  /** Optional payload for the action */
+  /** The command to dispatch */
+  command: string;
+  /** Optional payload for the command */
   payload?: Record<string, unknown>;
 }
 

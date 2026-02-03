@@ -1,4 +1,4 @@
-import type { Keybinding } from "../actions/types";
+import type { Keybinding } from "../commands/types";
 import { keybindingManager } from "./KeybindingManager";
 
 let isListenerAttached = false;

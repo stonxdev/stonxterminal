@@ -4,14 +4,14 @@
 
 import { Eye } from "lucide-react";
 import { useLayerStore } from "../../layers/layer-store";
-import { defineAction } from "../defineAction";
+import { defineCommand } from "../defineCommand";
 
 export interface SetLayerVisibilityPayload {
   layerId: string;
   visible: boolean;
 }
 
-export const layerSetVisibility = defineAction<SetLayerVisibilityPayload>({
+export const layerSetVisibility = defineCommand<SetLayerVisibilityPayload>({
   id: "layer.setVisibility",
   name: "Set Layer Visibility",
   icon: Eye,

@@ -1,5 +1,5 @@
-import { actionRegistry } from "../actions";
-import type { Keybinding } from "../actions/types";
+import { commandRegistry } from "../commands";
+import type { Keybinding } from "../commands/types";
 import {
   matchesKeySequence,
   normalizeEventKey,
@@ -210,13 +210,16 @@ class KeybindingManager {
   }
 
   /**
-   * Executes an action for a matching keybinding
+   * Executes a command for a matching keybinding
    */
   private async executeKeybinding(keybinding: ParsedKeybinding): Promise<void> {
     try {
-      await actionRegistry.dispatch(keybinding.action, keybinding.payload);
+      await commandRegistry.dispatch(keybinding.command, keybinding.payload);
     } catch (error) {
-      console.error(`Failed to execute action "${keybinding.action}":`, error);
+      console.error(
+        `Failed to execute command "${keybinding.command}":`,
+        error,
+      );
     }
   }
 

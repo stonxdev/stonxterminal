@@ -1,4 +1,4 @@
-import type { Keybinding } from "../actions/types";
+import type { Keybinding } from "../commands/types";
 import type { KeySequence, ParsedKeybinding } from "./types";
 
 /**
@@ -57,7 +57,7 @@ export function parseKeybinding(keybinding: Keybinding): ParsedKeybinding[] {
     return {
       key: keyString,
       sequences,
-      action: keybinding.action,
+      command: keybinding.command,
       payload: keybinding.payload,
     };
   });

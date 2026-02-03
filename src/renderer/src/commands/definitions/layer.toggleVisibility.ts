@@ -4,14 +4,14 @@
 
 import { ToggleLeft } from "lucide-react";
 import { useLayerStore } from "../../layers/layer-store";
-import { defineAction } from "../defineAction";
+import { defineCommand } from "../defineCommand";
 
 export interface ToggleLayerVisibilityPayload {
   layerId: string;
 }
 
-export const layerToggleVisibility = defineAction<ToggleLayerVisibilityPayload>(
-  {
+export const layerToggleVisibility =
+  defineCommand<ToggleLayerVisibilityPayload>({
     id: "layer.toggleVisibility",
     name: "Toggle Layer Visibility",
     icon: ToggleLeft,
@@ -23,5 +23,4 @@ export const layerToggleVisibility = defineAction<ToggleLayerVisibilityPayload>(
 
       useLayerStore.getState().toggleLayer(payload.layerId);
     },
-  },
-);
+  });

@@ -1,5 +1,5 @@
 import type { ColonyContextData } from "../context/types";
-import { actionRegistry } from "./ActionRegistry";
+import { commandRegistry } from "./CommandRegistry";
 import type { Action, DispatchAction, HandlerAction } from "./types";
 
 /**
@@ -28,23 +28,23 @@ export async function executeAction(
       }
       break;
     }
-    case "action": {
+    case "command": {
       const dispatchAction = action as DispatchAction;
 
-      // Check if context is available for action execution
+      // Check if context is available for command execution
       if (!context) {
         throw new Error(
-          `Cannot dispatch action "${dispatchAction.actionId}" - ColonyContext not available.`,
+          `Cannot dispatch command "${dispatchAction.commandId}" - ColonyContext not available.`,
         );
       }
 
       try {
-        await actionRegistry.dispatch(
-          dispatchAction.actionId,
+        await commandRegistry.dispatch(
+          dispatchAction.commandId,
           dispatchAction.payload,
         );
       } catch (error) {
-        console.error(`Error dispatching action "${action.id}":`, error);
+        console.error(`Error dispatching command "${action.id}":`, error);
       }
       break;
     }

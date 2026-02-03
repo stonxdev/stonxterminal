@@ -8,7 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { actionRegistry } from "../actions";
+import { commandRegistry } from "../commands";
 import {
   characterFocus,
   characterMoveTo,
@@ -18,7 +18,7 @@ import {
   workbenchRunCommand,
   workbenchSetTheme,
   worldSetZoom,
-} from "../actions/definitions";
+} from "../commands/definitions";
 import { ModalProvider, useModal } from "../components/floating/modal";
 import { useGameStore } from "../game-state";
 import { defaultKeybindings } from "../keybindings/defaultKeybindings";
@@ -141,7 +141,7 @@ const ColonyContextInner: FC<{ children: ReactNode }> = ({ children }) => {
   // Create the context data
   const contextData: ColonyContextData = useMemo(
     () => ({
-      actions: actionRegistry,
+      commands: commandRegistry,
       modal,
       theming,
       game,
@@ -159,29 +159,29 @@ const ColonyContextInner: FC<{ children: ReactNode }> = ({ children }) => {
     document.documentElement.setAttribute("data-theme", activeThemeId);
   }, []);
 
-  // Register actions on mount
+  // Register commands on mount
   useEffect(() => {
-    // Clear any existing actions
-    actionRegistry.clear();
+    // Clear any existing commands
+    commandRegistry.clear();
 
-    // Register workbench actions
-    actionRegistry.register(workbenchRunCommand);
-    actionRegistry.register(workbenchSetTheme);
+    // Register workbench commands
+    commandRegistry.register(workbenchRunCommand);
+    commandRegistry.register(workbenchSetTheme);
 
-    // Register character actions
-    actionRegistry.register(characterSelect);
-    actionRegistry.register(characterMoveTo);
-    actionRegistry.register(characterFocus);
+    // Register character commands
+    commandRegistry.register(characterSelect);
+    commandRegistry.register(characterMoveTo);
+    commandRegistry.register(characterFocus);
 
-    // Register world actions
-    actionRegistry.register(worldSetZoom);
+    // Register world commands
+    commandRegistry.register(worldSetZoom);
 
-    // Register layer actions
-    actionRegistry.register(layerToggleVisibility);
-    actionRegistry.register(layerSetVisibility);
+    // Register layer commands
+    commandRegistry.register(layerToggleVisibility);
+    commandRegistry.register(layerSetVisibility);
 
-    // Set the context for the action registry
-    actionRegistry.setContext(contextData);
+    // Set the context for the command registry
+    commandRegistry.setContext(contextData);
 
     // Register keybindings
     const keybindings = defaultKeybindings.get();

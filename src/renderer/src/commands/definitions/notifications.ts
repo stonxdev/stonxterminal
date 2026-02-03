@@ -1,12 +1,12 @@
 // =============================================================================
-// NOTIFICATION ACTIONS (converted from events)
+// NOTIFICATION COMMANDS (converted from events)
 //
-// These are "pure notification" actions - they have no execute function and
+// These are "pure notification" commands - they have no execute function and
 // are only dispatched to notify subscribers about state changes.
 // =============================================================================
 
 import type { Position2D, Tile } from "../../world/types";
-import { defineAction } from "../defineAction";
+import { defineCommand } from "../defineCommand";
 
 // =============================================================================
 // SELECTION NOTIFICATIONS
@@ -20,7 +20,7 @@ export interface SelectionTilePayload {
   tile: Tile;
 }
 
-export const selectionTile = defineAction<SelectionTilePayload>({
+export const selectionTile = defineCommand<SelectionTilePayload>({
   id: "selection.tile",
   name: "Tile Selected",
   description: "Fired when a tile is selected",
@@ -32,19 +32,19 @@ export interface SelectionEntityPayload {
   position?: Position2D;
 }
 
-export const selectionEntity = defineAction<SelectionEntityPayload>({
+export const selectionEntity = defineCommand<SelectionEntityPayload>({
   id: "selection.entity",
   name: "Entity Selected",
   description: "Fired when an entity (colonist, item, structure) is selected",
 });
 
-export const selectionCleared = defineAction({
+export const selectionCleared = defineCommand({
   id: "selection.cleared",
   name: "Selection Cleared",
   description: "Fired when selection is cleared",
 });
 
-export const selectionChanged = defineAction({
+export const selectionChanged = defineCommand({
   id: "selection.changed",
   name: "Selection Changed",
   description:
@@ -62,7 +62,7 @@ export interface WorldTileUpdatedPayload {
   tile: Tile;
 }
 
-export const worldTileUpdated = defineAction<WorldTileUpdatedPayload>({
+export const worldTileUpdated = defineCommand<WorldTileUpdatedPayload>({
   id: "world.tileUpdated",
   name: "Tile Updated",
   description: "Fired when a tile is modified",
@@ -73,7 +73,7 @@ export interface WorldZLevelChangedPayload {
   currentZ: number;
 }
 
-export const worldZLevelChanged = defineAction<WorldZLevelChangedPayload>({
+export const worldZLevelChanged = defineCommand<WorldZLevelChangedPayload>({
   id: "world.zLevelChanged",
   name: "Z-Level Changed",
   description: "Fired when the current z-level view changes",
@@ -83,7 +83,7 @@ export interface WorldReadyPayload {
   timestamp: number;
 }
 
-export const worldReady = defineAction<WorldReadyPayload>({
+export const worldReady = defineCommand<WorldReadyPayload>({
   id: "world.ready",
   name: "World Ready",
   description:
@@ -100,7 +100,7 @@ export interface InteractionHoverChangedPayload {
 }
 
 export const interactionHoverChanged =
-  defineAction<InteractionHoverChangedPayload>({
+  defineCommand<InteractionHoverChangedPayload>({
     id: "interaction.hoverChanged",
     name: "Hover Changed",
     description: "Fired when mouse hovers over a new position",
@@ -114,7 +114,7 @@ export interface InteractionModeChangedPayload {
 }
 
 export const interactionModeChanged =
-  defineAction<InteractionModeChangedPayload>({
+  defineCommand<InteractionModeChangedPayload>({
     id: "interaction.modeChanged",
     name: "Interaction Mode Changed",
     description: "Fired when interaction mode changes",

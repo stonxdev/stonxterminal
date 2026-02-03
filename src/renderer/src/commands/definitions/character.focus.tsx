@@ -1,21 +1,32 @@
-import { User, Users } from "lucide-react";
+import { Focus, User } from "lucide-react";
 import { SearchableTreeNavigator } from "../../components/command-palette";
 import { ModalFrame } from "../../components/floating/modal";
 import type { MenuItem } from "../../menu/types";
-import { defineAction } from "../defineAction";
+import { defineCommand } from "../defineCommand";
 
-export interface CharacterSelectPayload {
+export interface CharacterFocusPayload {
   characterId?: string;
 }
 
-export const characterSelect = defineAction<CharacterSelectPayload>({
-  id: "character.select",
-  name: "Select Character",
-  icon: Users,
+export const characterFocus = defineCommand<CharacterFocusPayload>({
+  id: "character.focus",
+  name: "Focus Character",
+  icon: Focus,
   execute: (context, payload) => {
-    // If a specific character ID is provided, select it directly
+    console.info("[character.focus] Executing with payload:", payload);
+
+    // If a specific character ID is provided, focus it directly
     if (payload?.characterId) {
-      context.game.selectCharacter(payload.characterId);
+      console.info(
+        "[character.focus] Focusing character:",
+        payload.characterId,
+      );
+      context.commands.dispatch("character.select", {
+        characterId: payload.characterId,
+      });
+      context.game.focusCharacter(payload.characterId);
+      context.commands.dispatch("world.setZoom", { scale: 2 });
+      console.info("[character.focus] Done focusing character");
       return;
     }
 
@@ -23,6 +34,7 @@ export const characterSelect = defineAction<CharacterSelectPayload>({
     const characters = context.game.getCharacters();
 
     if (characters.length === 0) {
+      console.warn("No characters to focus");
       return;
     }
 
@@ -42,17 +54,21 @@ export const characterSelect = defineAction<CharacterSelectPayload>({
       subtitle: `${character.type} at (${character.position.x}, ${character.position.y})`,
       onExecute: () => {
         context.modal.closeModal();
-        context.game.selectCharacter(character.id);
+        context.commands.dispatch("character.select", {
+          characterId: character.id,
+        });
+        context.game.focusCharacter(character.id);
+        context.commands.dispatch("world.setZoom", { scale: 2 });
       },
     }));
 
     context.modal.openModal({
       content: (
-        <ModalFrame data-testid="character-picker">
+        <ModalFrame data-testid="character-focus-picker">
           <SearchableTreeNavigator
             items={characterItems}
-            placeHolder="Search characters..."
-            data-testid="character-picker-navigator"
+            placeHolder="Search characters to focus..."
+            data-testid="character-focus-picker-navigator"
           />
         </ModalFrame>
       ),

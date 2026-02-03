@@ -9,6 +9,7 @@ import type { ObjectSchema } from "../schemas";
 
 /**
  * Base action interface with common properties shared by all action types.
+ * These are for UI elements (buttons, menu items) and their click behavior.
  */
 export interface BaseAction {
   id: string;
@@ -28,12 +29,12 @@ export interface HandlerAction extends BaseAction {
 }
 
 /**
- * Action-based UI action that dispatches through the action registry.
- * Best for application-wide actions that need to be consistent and type-safe.
+ * Command-based UI action that dispatches through the command registry.
+ * Best for application-wide commands that need to be consistent and type-safe.
  */
 export interface DispatchAction extends BaseAction {
-  type: "action";
-  actionId: string;
+  type: "command";
+  commandId: string;
   payload?: Record<string, unknown>;
 }
 
@@ -43,24 +44,24 @@ export interface DispatchAction extends BaseAction {
 export type Action = HandlerAction | DispatchAction;
 
 // =============================================================================
-// SYSTEM ACTION TYPES (unified command/event system)
+// COMMAND SYSTEM TYPES (unified command/event system)
 // =============================================================================
 
 export type { ColonyContextData };
 
 /**
- * Type-safe action definition for Colony.
+ * Type-safe command definition for Colony.
  *
- * Actions unify the concepts of "commands" (executable user actions) and
- * "events" (notifications about state changes) into a single system.
+ * Commands unify the concepts of "executable commands" (user actions) and
+ * "notifications" (events about state changes) into a single system.
  *
- * - Actions with `execute` are "commands" - they can be triggered by keybindings,
+ * - Commands with `execute` are "executable" - they can be triggered by keybindings,
  *   the command palette, or programmatically.
- * - Actions without `execute` are "notifications" - they're dispatched by the
+ * - Commands without `execute` are "notifications" - they're dispatched by the
  *   system to notify subscribers about state changes.
- * - All actions can have subscribers via `actionRegistry.on()`.
+ * - All commands can have subscribers via `commandRegistry.on()`.
  */
-export interface ActionDefinition<TPayload = void> {
+export interface CommandDefinition<TPayload = void> {
   /** Unique identifier, e.g., "world.setZoom" or "selection.changed" */
   id: string;
 
@@ -71,28 +72,28 @@ export interface ActionDefinition<TPayload = void> {
   description?: string;
 
   /**
-   * Icon component (not instantiated) for this action.
-   * Used in command palettes, menus, and anywhere the action is displayed.
+   * Icon component (not instantiated) for this command.
+   * Used in command palettes, menus, and anywhere the command is displayed.
    */
   icon?: IconComponent;
 
   /**
-   * Schema for action payload.
-   * If provided and action is dispatched without payload, a form modal will be shown.
+   * Schema for command payload.
+   * If provided and command is dispatched without payload, a form modal will be shown.
    * Also used for validation when payload is provided.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payloadSchema?: ObjectSchema<any>;
 
   /**
-   * Optional execution function. If provided, this action is "executable" and
+   * Optional execution function. If provided, this command is "executable" and
    * can be invoked via keybindings, command palette, etc.
    *
-   * If not provided, this action is a pure notification - it can only be
+   * If not provided, this command is a pure notification - it can only be
    * dispatched to notify subscribers.
    *
    * @param context - The colony context data
-   * @param payload - Optional payload passed to the action
+   * @param payload - Optional payload passed to the command
    */
   execute?: (
     context: ColonyContextData,
@@ -101,91 +102,91 @@ export interface ActionDefinition<TPayload = void> {
 }
 
 /**
- * Handler function for action subscriptions.
+ * Handler function for command subscriptions.
  */
-export type ActionHandler<TPayload = unknown> = (payload: TPayload) => void;
+export type CommandHandler<TPayload = unknown> = (payload: TPayload) => void;
 
 /**
- * Generic handler that can receive any action payload.
+ * Generic handler that can receive any command payload.
  */
-export type AnyActionHandler = (actionId: string, payload: unknown) => void;
+export type AnyCommandHandler = (commandId: string, payload: unknown) => void;
 
 /**
- * Action ID type for clarity.
+ * Command ID type for clarity.
  */
-export type ActionId = string;
+export type CommandId = string;
 
 /**
- * Keybinding interface for action-based keybindings.
+ * Keybinding interface for command-based keybindings.
  */
 export interface Keybinding {
   key: string | string[];
-  action: string;
+  command: string;
   payload?: Record<string, unknown>;
 }
 
 /**
- * Action registry interface.
+ * Command registry interface.
  */
-export interface ActionRegistry {
+export interface CommandRegistry {
   /**
-   * Register an action definition.
+   * Register a command definition.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  register: (action: ActionDefinition<any>) => void;
+  register: (command: CommandDefinition<any>) => void;
 
   /**
-   * Set the context for action execution.
+   * Set the context for command execution.
    */
   setContext: (context: ColonyContextData) => void;
 
   /**
-   * Dispatch an action by ID.
-   * - If the action has an `execute` function, it will be called first.
+   * Dispatch a command by ID.
+   * - If the command has an `execute` function, it will be called first.
    * - All subscribers will be notified after execution (or immediately for notifications).
    *
-   * @param actionId - The action ID to dispatch
-   * @param payload - Optional payload for the action
+   * @param commandId - The command ID to dispatch
+   * @param payload - Optional payload for the command
    */
-  dispatch: (actionId: string, payload?: unknown) => Promise<void>;
+  dispatch: (commandId: string, payload?: unknown) => Promise<void>;
 
   /**
-   * Subscribe to an action.
-   * Handler will be called whenever the action is dispatched.
+   * Subscribe to a command.
+   * Handler will be called whenever the command is dispatched.
    *
    * @returns Unsubscribe function
    */
   on: <TPayload = unknown>(
-    actionId: string,
-    handler: ActionHandler<TPayload>,
+    commandId: string,
+    handler: CommandHandler<TPayload>,
   ) => () => void;
 
   /**
-   * Subscribe to all actions.
-   * Handler will be called for every action dispatch.
+   * Subscribe to all commands.
+   * Handler will be called for every command dispatch.
    *
    * @returns Unsubscribe function
    */
-  onAny: (handler: AnyActionHandler) => () => void;
+  onAny: (handler: AnyCommandHandler) => () => void;
 
   /**
-   * Get an action definition by ID.
+   * Get a command definition by ID.
    */
-  getAction: (actionId: string) => ActionDefinition | undefined;
+  getCommand: (commandId: string) => CommandDefinition | undefined;
 
   /**
-   * Get all registered actions.
+   * Get all registered commands.
    */
-  getAllActions: () => ActionDefinition[];
+  getAllCommands: () => CommandDefinition[];
 
   /**
-   * Get only executable actions (those with an `execute` function).
+   * Get only executable commands (those with an `execute` function).
    * Useful for command palette.
    */
-  getExecutableActions: () => ActionDefinition[];
+  getExecutableCommands: () => CommandDefinition[];
 
   /**
-   * Clear all registered actions.
+   * Clear all registered commands.
    */
   clear: () => void;
 }

@@ -1,12 +1,12 @@
 import { createMoveCommand } from "../../simulation/types";
-import { defineAction } from "../defineAction";
+import { defineCommand } from "../defineCommand";
 
 export interface MoveToPayload {
   characterId: string;
   destination: { x: number; y: number; z: number };
 }
 
-export const characterMoveTo = defineAction<MoveToPayload>({
+export const characterMoveTo = defineCommand<MoveToPayload>({
   id: "character.moveTo",
   name: "Move Character To",
   execute: (context, payload) => {

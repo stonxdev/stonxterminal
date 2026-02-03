@@ -1,6 +1,6 @@
 import { ZoomIn } from "lucide-react";
 import { type Infer, nu } from "../../schemas";
-import { defineAction } from "../defineAction";
+import { defineCommand } from "../defineCommand";
 
 const setZoomSchema = nu.object({
   scale: nu.number().withMetadata({
@@ -12,7 +12,7 @@ const setZoomSchema = nu.object({
 
 export type SetZoomPayload = Infer<typeof setZoomSchema>;
 
-export const worldSetZoom = defineAction<SetZoomPayload>({
+export const worldSetZoom = defineCommand<SetZoomPayload>({
   id: "world.setZoom",
   name: "Set Zoom Level",
   icon: ZoomIn,

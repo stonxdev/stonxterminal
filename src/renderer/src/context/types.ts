@@ -1,4 +1,4 @@
-import type { ActionRegistry } from "../actions/types";
+import type { CommandRegistry } from "../commands/types";
 import type { UseModalResult } from "../components/floating/modal";
 import type { Character, Command, EntityId } from "../simulation/types";
 import type { AvailableThemeId, themeMap } from "../theming/themes";
@@ -34,8 +34,8 @@ export interface GameContextData {
 }
 
 export interface ColonyContextData {
-  /** Unified action registry for commands and events */
-  actions: ActionRegistry;
+  /** Unified command registry for commands and events */
+  commands: CommandRegistry;
   modal: UseModalResult;
   theming: ThemingContextData;
   game: GameContextData;

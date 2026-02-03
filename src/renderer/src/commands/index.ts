@@ -1,28 +1,28 @@
 // =============================================================================
-// ACTIONS MODULE - Unified command/event system
+// COMMANDS MODULE - Unified command/event system
 // =============================================================================
 
 // Core registry
-export { ActionRegistryImpl, actionRegistry } from "./ActionRegistry";
+export { CommandRegistryImpl, commandRegistry } from "./CommandRegistry";
 
 // Factory function
-export { defineAction } from "./defineAction";
+export { defineCommand } from "./defineCommand";
 
-// Action executor
+// Command executor
 export { executeAction } from "./executeAction";
 
 // Types
 export type {
   // UI action types (for buttons, menus)
   Action,
-  // System action types
-  ActionDefinition,
-  ActionHandler,
-  ActionId,
-  ActionRegistry,
-  AnyActionHandler,
+  AnyCommandHandler,
   BaseAction,
   ColonyContextData,
+  // Command system types
+  CommandDefinition,
+  CommandHandler,
+  CommandId,
+  CommandRegistry,
   DispatchAction,
   HandlerAction,
   Keybinding,
@@ -30,9 +30,9 @@ export type {
 
 // React hooks
 export {
-  useAction,
-  useActionAny,
-  useActionOnce,
+  useCommand,
+  useCommandAny,
+  useCommandOnce,
   useDispatch,
-  useDispatchAction,
-} from "./useAction";
+  useDispatchCommand,
+} from "./useCommand";

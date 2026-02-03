@@ -5,7 +5,7 @@ import { Tabs } from "@renderer/components/tabs";
 import { useIsSlotEmpty, WidgetSlot } from "@renderer/components/widgets";
 import { Map as MapIcon } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
-import { actionRegistry } from "../actions";
+import { commandRegistry } from "../commands";
 import { useColony } from "../context/ColonyContext";
 import {
   useCharacterActions,
@@ -152,7 +152,7 @@ export const GameScreen: React.FC = () => {
 
   // Subscribe to world.ready to focus on the first character after viewport is initialized
   useEffect(() => {
-    const unsubscribe = actionRegistry.on("world.ready", () => {
+    const unsubscribe = commandRegistry.on("world.ready", () => {
       if (characterToFocusRef.current) {
         console.info(
           "[GameScreen] World ready, focusing on character:",

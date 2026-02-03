@@ -3,7 +3,7 @@
 // =============================================================================
 
 import { create } from "zustand";
-import { actionRegistry } from "../actions";
+import { commandRegistry } from "../commands";
 import {
   entityStore,
   findPath,
@@ -110,7 +110,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ currentZLevel: clampedZ });
 
       // Dispatch action
-      actionRegistry.dispatch("world.zLevelChanged", {
+      commandRegistry.dispatch("world.zLevelChanged", {
         previousZ,
         currentZ: clampedZ,
       });
@@ -155,7 +155,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     setTileAt(level, position.x, position.y, updatedTile);
 
     // Dispatch action
-    actionRegistry.dispatch("world.tileUpdated", {
+    commandRegistry.dispatch("world.tileUpdated", {
       position,
       zLevel,
       changes,
@@ -182,7 +182,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
 
     // Dispatch action
-    actionRegistry.dispatch("selection.tile", {
+    commandRegistry.dispatch("selection.tile", {
       position,
       zLevel,
       tile,
@@ -195,7 +195,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
 
     // Dispatch action
-    actionRegistry.dispatch("selection.entity", {
+    commandRegistry.dispatch("selection.entity", {
       entityType,
       entityId,
       position,
@@ -209,7 +209,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ selection: { type: "none" } });
 
     // Dispatch action
-    actionRegistry.dispatch("selection.cleared");
+    commandRegistry.dispatch("selection.cleared");
   },
 
   // ===========================================================================
@@ -249,7 +249,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       });
     }
 
-    actionRegistry.dispatch("selection.changed");
+    commandRegistry.dispatch("selection.changed");
   },
 
   removeFromSelection: (entityId: string) => {
@@ -280,10 +280,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
         });
       }
 
-      actionRegistry.dispatch("selection.changed");
+      commandRegistry.dispatch("selection.changed");
     } else if (selection.type === "entity" && selection.entityId === entityId) {
       set({ selection: { type: "none" } });
-      actionRegistry.dispatch("selection.changed");
+      commandRegistry.dispatch("selection.changed");
     }
   },
 
@@ -318,7 +318,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         },
       });
     }
-    actionRegistry.dispatch("selection.changed");
+    commandRegistry.dispatch("selection.changed");
   },
 
   isSelected: (entityId: string) => {
@@ -354,7 +354,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ interactionMode: mode });
 
     // Dispatch action
-    actionRegistry.dispatch("interaction.modeChanged", {
+    commandRegistry.dispatch("interaction.modeChanged", {
       previousMode,
       currentMode: mode,
     });
@@ -371,7 +371,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ hoverPosition: position });
 
     // Dispatch action
-    actionRegistry.dispatch("interaction.hoverChanged", {
+    commandRegistry.dispatch("interaction.hoverChanged", {
       position,
       zLevel: currentZLevel,
     });

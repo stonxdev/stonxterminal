@@ -1,11 +1,11 @@
 import { Command } from "lucide-react";
 import type React from "react";
-import { actionRegistry } from "../../actions";
+import { commandRegistry } from "../../commands";
 import { TimeControls } from "./TimeControls";
 
 export const TopBar: React.FC = () => {
   const handleCommandPalette = () => {
-    actionRegistry.dispatch("workbench.runCommand");
+    commandRegistry.dispatch("workbench.runCommand");
   };
 
   return (

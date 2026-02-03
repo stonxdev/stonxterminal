@@ -3,9 +3,9 @@ import { SearchableTreeNavigator } from "../../components/command-palette";
 import { ModalFrame } from "../../components/floating/modal";
 import type { MenuItem } from "../../menu/types";
 import type { AvailableThemeId } from "../../theming/themes";
-import { defineAction } from "../defineAction";
+import { defineCommand } from "../defineCommand";
 
-export const workbenchSetTheme = defineAction({
+export const workbenchSetTheme = defineCommand({
   id: "workbench.setTheme",
   name: "Set Theme",
   icon: Palette,
