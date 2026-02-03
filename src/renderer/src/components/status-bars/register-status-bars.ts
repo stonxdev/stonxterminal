@@ -2,7 +2,11 @@
 // STATUS BAR REGISTRATION
 // =============================================================================
 
-import { themeStatusBar, versionStatusBar } from "./definitions";
+import {
+  runCommandStatusBar,
+  themeStatusBar,
+  versionStatusBar,
+} from "./definitions";
 import { statusBarRegistry } from "./status-bar-registry";
 
 /**
@@ -12,4 +16,5 @@ import { statusBarRegistry } from "./status-bar-registry";
 export function registerBuiltInStatusBars(): void {
   statusBarRegistry.register(versionStatusBar);
   statusBarRegistry.register(themeStatusBar);
+  statusBarRegistry.register(runCommandStatusBar);
 }
