@@ -91,25 +91,15 @@ export const Dock: React.FC<DockProps> = ({
 
   // Ratio-based resize for side panel splits
   // Convert ratio to pixel height, let useResize handle the drag, then convert back to ratio
-  const getLeftColumnHeight = useCallback(() => {
+  const getColumnHeight = useCallback(() => {
     return containerRef.current?.offsetHeight ?? 600;
   }, []);
 
-  const getRightColumnHeight = useCallback(() => {
-    return containerRef.current?.offsetHeight ?? 600;
-  }, []);
-
-  // Pixel constraints for left side panel split (10% to 90% of column height)
-  const getLeftRatioConstraints = useCallback(() => {
-    const columnHeight = getLeftColumnHeight();
+  // Pixel constraints for side panel splits (10% to 90% of column height)
+  const getSideRatioConstraints = useCallback(() => {
+    const columnHeight = getColumnHeight();
     return { min: 0.1 * columnHeight, max: 0.9 * columnHeight };
-  }, [getLeftColumnHeight]);
-
-  // Pixel constraints for right side panel split (10% to 90% of column height)
-  const getRightRatioConstraints = useCallback(() => {
-    const columnHeight = getRightColumnHeight();
-    return { min: 0.1 * columnHeight, max: 0.9 * columnHeight };
-  }, [getRightColumnHeight]);
+  }, [getColumnHeight]);
 
   const leftResize = useResize(
     setLeftWidth,
@@ -132,24 +122,24 @@ export const Dock: React.FC<DockProps> = ({
 
   const leftBottomResize = useResize(
     (newHeight: number) => {
-      const columnHeight = getLeftColumnHeight();
+      const columnHeight = getColumnHeight();
       const newRatio = Math.max(0.1, Math.min(0.9, newHeight / columnHeight));
       setLeftBottomRatio(newRatio);
     },
-    () => leftBottomRatio * getLeftColumnHeight(),
-    getLeftRatioConstraints,
+    () => leftBottomRatio * getColumnHeight(),
+    getSideRatioConstraints,
     true,
     true,
   );
 
   const rightBottomResize = useResize(
     (newHeight: number) => {
-      const columnHeight = getRightColumnHeight();
+      const columnHeight = getColumnHeight();
       const newRatio = Math.max(0.1, Math.min(0.9, newHeight / columnHeight));
       setRightBottomRatio(newRatio);
     },
-    () => rightBottomRatio * getRightColumnHeight(),
-    getRightRatioConstraints,
+    () => rightBottomRatio * getColumnHeight(),
+    getSideRatioConstraints,
     true,
     true,
   );
