@@ -14,6 +14,7 @@ const DockContext = createContext<boolean>(false);
 
 export interface DockProps {
   top?: React.ReactNode;
+  bottom?: React.ReactNode;
   center: React.ReactNode;
   leftTop?: React.ReactNode;
   leftBottom?: React.ReactNode;
@@ -31,6 +32,7 @@ export interface DockProps {
 
 export const Dock: React.FC<DockProps> = ({
   top,
+  bottom,
   center,
   leftTop,
   leftBottom,
@@ -261,6 +263,14 @@ export const Dock: React.FC<DockProps> = ({
             </div>
           )}
         </div>
+        {bottom && (
+          <div
+            className="w-full bg-background border-t border-border"
+            style={{ pointerEvents: "auto" }}
+          >
+            {bottom}
+          </div>
+        )}
       </div>
     </DockContext.Provider>
   );

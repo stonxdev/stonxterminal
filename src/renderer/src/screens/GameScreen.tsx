@@ -1,5 +1,6 @@
 import { WorldWithControlBars } from "@renderer/components/control-bars";
 import { Dock } from "@renderer/components/dock/Dock";
+import { StatusBar } from "@renderer/components/status-bars";
 import type { TabItem } from "@renderer/components/tabs";
 import { Tabs } from "@renderer/components/tabs";
 import { useIsSlotEmpty, WidgetSlot } from "@renderer/components/widgets";
@@ -205,6 +206,7 @@ export const GameScreen: React.FC = () => {
       rightBottom={
         isRightBottomEmpty ? undefined : <WidgetSlot slotId="right-bottom" />
       }
+      bottom={<StatusBar />}
     />
   );
 };
