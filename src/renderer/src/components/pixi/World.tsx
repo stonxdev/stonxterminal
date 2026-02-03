@@ -476,20 +476,49 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
       // Center on the world
       viewport.panTo(worldPixelWidth / 2, worldPixelHeight / 2);
 
-      // Handle resizes
-      const resizeObserver = new ResizeObserver((entries) => {
-        for (const entry of entries) {
-          const { width, height } = entry.contentRect;
-          if (width > 0 && height > 0 && viewportRef.current) {
+      // Handle resize when container size changes (e.g., dock panel resize)
+      // Queue resize to happen on Pixi's ticker to sync with render loop (prevents flickering)
+      let pendingResize = false;
+
+      const handleResize = () => {
+        if (!pendingResize) return;
+        pendingResize = false;
+
+        const currentApp = appRef.current;
+        if (!currentApp || !container) return;
+
+        const { width, height } = container.getBoundingClientRect();
+        if (width > 0 && height > 0) {
+          // Resize renderer in sync with render loop
+          currentApp.renderer.resize(width, height);
+          // Update viewport's internal screen dimensions
+          if (viewportRef.current) {
             viewportRef.current.resize(width, height);
           }
         }
+      };
+
+      // Add resize handler to Pixi's ticker
+      app.ticker.add(handleResize);
+
+      const resizeObserver = new ResizeObserver(() => {
+        // Just flag that resize is needed - actual resize happens on next tick
+        pendingResize = true;
       });
       resizeObserver.observe(container);
 
       (
-        app as Application & { _resizeObserver?: ResizeObserver }
+        app as Application & {
+          _resizeObserver?: ResizeObserver;
+          _resizeHandler?: () => void;
+        }
       )._resizeObserver = resizeObserver;
+      (
+        app as Application & {
+          _resizeObserver?: ResizeObserver;
+          _resizeHandler?: () => void;
+        }
+      )._resizeHandler = handleResize;
 
       // Dispatch world.ready command to notify that viewport is fully initialized
       commandRegistry.dispatch("world.ready", { timestamp: Date.now() });
@@ -518,8 +547,12 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
       if (appRef.current) {
         const app = appRef.current as Application & {
           _resizeObserver?: ResizeObserver;
+          _resizeHandler?: () => void;
         };
         app._resizeObserver?.disconnect();
+        if (app._resizeHandler) {
+          app.ticker.remove(app._resizeHandler);
+        }
       }
       if (viewportRef.current) {
         viewportStore.setViewport(null);
