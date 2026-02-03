@@ -18,13 +18,11 @@ import type { EntityListWidgetConfig } from "./types";
 interface EntityListWidgetProps<TShape extends ObjectShape> {
   config: EntityListWidgetConfig<TShape>;
   data: Record<string, unknown>[];
-  isLoading?: boolean;
 }
 
 export function EntityListWidget<TShape extends ObjectShape>({
   config,
   data,
-  isLoading: _isLoading,
 }: EntityListWidgetProps<TShape>) {
   const {
     schema,
@@ -209,6 +207,16 @@ export function EntityListWidget<TShape extends ObjectShape>({
     [useCustomToggle, isRowChecked, getRowKey, selectedIds],
   );
 
+  // Selection props - only used when not in custom toggle mode
+  const selectionProps = useCustomToggle
+    ? {}
+    : {
+        selectedRows: multiSelect ? selectedIds : undefined,
+        onSelectedRowsChange: multiSelect
+          ? handleSelectedRowsChange
+          : undefined,
+      };
+
   return (
     <div className="flex flex-col h-full">
       {showSearch && (
@@ -231,16 +239,7 @@ export function EntityListWidget<TShape extends ObjectShape>({
           columns={columnsWithSelect}
           rows={filteredData}
           rowKeyGetter={getRowKey}
-          selectedRows={
-            useCustomToggle ? undefined : multiSelect ? selectedIds : undefined
-          }
-          onSelectedRowsChange={
-            useCustomToggle
-              ? undefined
-              : multiSelect
-                ? handleSelectedRowsChange
-                : undefined
-          }
+          {...selectionProps}
           rowClass={rowClass}
           onCellDoubleClick={({ row }) => handleRowDoubleClick(row)}
         />
