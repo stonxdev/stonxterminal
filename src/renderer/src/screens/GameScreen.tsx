@@ -5,6 +5,8 @@ import { Tabs } from "@renderer/components/tabs";
 import { useIsSlotEmpty, WidgetSlot } from "@renderer/components/widgets";
 import { Map as MapIcon } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
+import { actionRegistry } from "../actions";
+import { useColony } from "../context/ColonyContext";
 import {
   useCharacterActions,
   useCurrentZLevel,
@@ -65,7 +67,10 @@ function findSpawnCluster(
   tilesWithDistance.sort((a, b) => a.distance - b.distance);
 
   // Pick a starting tile from the closest 20% using seeded RNG
-  const candidateCount = Math.max(1, Math.floor(tilesWithDistance.length * 0.2));
+  const candidateCount = Math.max(
+    1,
+    Math.floor(tilesWithDistance.length * 0.2),
+  );
   const startIndex = rng.nextInt(0, candidateCount);
   const startTile = tilesWithDistance[startIndex];
 
@@ -91,9 +96,11 @@ function findSpawnCluster(
 export const GameScreen: React.FC = () => {
   const { setWorld } = useWorldActions();
   const { addCharacter } = useCharacterActions();
+  const { game } = useColony();
   const world = useWorld();
   const currentZLevel = useCurrentZLevel();
   const hasSpawnedCharacters = useRef(false);
+  const characterToFocusRef = useRef<string | null>(null);
 
   // Generate and set world on mount
   useEffect(() => {
@@ -124,6 +131,7 @@ export const GameScreen: React.FC = () => {
     hasSpawnedCharacters.current = true;
 
     // Create demo colonists
+    let firstCharacterId: string | null = null;
     spawnPositions.forEach((pos, index) => {
       const character = createCharacter({
         name: COLONIST_NAMES[index] ?? `Colonist ${index + 1}`,
@@ -132,8 +140,37 @@ export const GameScreen: React.FC = () => {
         color: COLONIST_COLORS[index] ?? 0x888888,
       });
       addCharacter(character);
+      if (index === 0) {
+        firstCharacterId = character.id;
+      }
     });
+
+    // Store the first character ID to focus after world is ready
+    if (firstCharacterId) {
+      console.info(
+        "[GameScreen] Spawned characters at positions:",
+        spawnPositions,
+      );
+      characterToFocusRef.current = firstCharacterId;
+    }
   }, [world, currentZLevel, addCharacter]);
+
+  // Subscribe to world.ready to focus on the first character after viewport is initialized
+  useEffect(() => {
+    const unsubscribe = actionRegistry.on("world.ready", () => {
+      if (characterToFocusRef.current) {
+        console.info(
+          "[GameScreen] World ready, focusing on character:",
+          characterToFocusRef.current,
+        );
+        game.selectCharacter(characterToFocusRef.current);
+        game.focusCharacter(characterToFocusRef.current);
+        game.setZoom(2);
+        characterToFocusRef.current = null; // Clear after focusing
+      }
+    });
+    return unsubscribe;
+  }, [game]);
 
   // Get the current level
   const currentLevel = useMemo(() => {

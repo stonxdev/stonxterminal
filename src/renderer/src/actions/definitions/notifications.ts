@@ -79,6 +79,17 @@ export const worldZLevelChanged = defineAction<WorldZLevelChangedPayload>({
   description: "Fired when the current z-level view changes",
 });
 
+export interface WorldReadyPayload {
+  timestamp: number;
+}
+
+export const worldReady = defineAction<WorldReadyPayload>({
+  id: "world.ready",
+  name: "World Ready",
+  description:
+    "Fired when the World component finishes rendering and viewport is initialized",
+});
+
 // =============================================================================
 // INTERACTION NOTIFICATIONS
 // =============================================================================

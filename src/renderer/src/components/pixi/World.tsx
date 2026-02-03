@@ -1,3 +1,4 @@
+import { actionRegistry } from "@renderer/actions";
 import { SimpleViewport, viewportStore } from "@renderer/lib/viewport-simple";
 import type {
   StructureType,
@@ -489,6 +490,9 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
       (
         app as Application & { _resizeObserver?: ResizeObserver }
       )._resizeObserver = resizeObserver;
+
+      // Dispatch world.ready event to notify that viewport is fully initialized
+      actionRegistry.dispatch("world.ready", { timestamp: Date.now() });
     };
 
     setup();

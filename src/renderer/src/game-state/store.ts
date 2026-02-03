@@ -503,7 +503,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     const level = world.levels.get(currentZLevel);
     if (!level) {
-      console.warn("[store.issueCommand] Level not found for z:", currentZLevel);
+      console.warn(
+        "[store.issueCommand] Level not found for z:",
+        currentZLevel,
+      );
       return;
     }
 
@@ -514,7 +517,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
       if (!moveCmd.path) {
         const start: Position3D = { ...character.position };
         const goal: Position3D = { ...moveCmd.destination, z: currentZLevel };
-        console.info("[store.issueCommand] Finding path from", start, "to", goal);
+        console.info(
+          "[store.issueCommand] Finding path from",
+          start,
+          "to",
+          goal,
+        );
         const result = findPath(level, start, goal);
 
         if (!result.found) {
@@ -522,7 +530,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
           return;
         }
 
-        console.info("[store.issueCommand] Path found with", result.path.length, "waypoints");
+        console.info(
+          "[store.issueCommand] Path found with",
+          result.path.length,
+          "waypoints",
+        );
         moveCmd.path = result.path;
       }
 
@@ -533,7 +545,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
       // Update state
       const updated = entityStore.get(characterId);
       if (updated) {
-        console.info("[store.issueCommand] Updating store state, isMoving:", updated.movement.isMoving);
+        console.info(
+          "[store.issueCommand] Updating store state, isMoving:",
+          updated.movement.isMoving,
+        );
         set((state) => {
           const newCharacters = new Map(state.simulation.characters);
           newCharacters.set(characterId, updated);
@@ -566,11 +581,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
 // Set up tick callback to update movement
 simulationLoop.setTickCallback((deltaTime, tick) => {
-  // Log every 60 ticks (once per second at 60 TPS)
-  if (tick % 60 === 0) {
-    console.info("[simulationLoop] Tick", tick, "deltaTime:", deltaTime);
-  }
-
   // Update movement system
   movementSystem.update(deltaTime);
 
