@@ -46,6 +46,8 @@ export default defineConfig({
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2,ttf}"],
         skipWaiting: true,
         clientsClaim: true,
+        // Monaco editor and TypeScript worker are large (~6MB and ~3.3MB)
+        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10 MB
       },
     }),
   ],
