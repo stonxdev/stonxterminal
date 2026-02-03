@@ -99,8 +99,8 @@ export const GameScreen: React.FC = () => {
   const { game } = useColony();
   const world = useWorld();
   const currentZLevel = useCurrentZLevel();
-  const hasSpawnedCharacters = useRef(false);
-  const characterToFocusRef = useRef<string | null>(null);
+  // undefined = not spawned, string = spawned & waiting to focus, null = spawned & focused
+  const characterToFocusRef = useRef<string | null | undefined>(undefined);
 
   // Generate and set world on mount
   useEffect(() => {
@@ -114,7 +114,7 @@ export const GameScreen: React.FC = () => {
 
   // Spawn demo characters after world is loaded
   useEffect(() => {
-    if (!world || hasSpawnedCharacters.current) return;
+    if (!world || characterToFocusRef.current !== undefined) return;
 
     const level = world.levels.get(currentZLevel);
     if (!level) return;
@@ -126,9 +126,6 @@ export const GameScreen: React.FC = () => {
       DEFAULT_WORLD_CONFIG.seed,
     );
     if (spawnPositions.length === 0) return;
-
-    // Mark as spawned to prevent re-spawning
-    hasSpawnedCharacters.current = true;
 
     // Create demo colonists
     let firstCharacterId: string | null = null;
@@ -145,14 +142,12 @@ export const GameScreen: React.FC = () => {
       }
     });
 
-    // Store the first character ID to focus after world is ready
-    if (firstCharacterId) {
-      console.info(
-        "[GameScreen] Spawned characters at positions:",
-        spawnPositions,
-      );
-      characterToFocusRef.current = firstCharacterId;
-    }
+    // Store the first character ID to focus after world is ready (null if none)
+    console.info(
+      "[GameScreen] Spawned characters at positions:",
+      spawnPositions,
+    );
+    characterToFocusRef.current = firstCharacterId;
   }, [world, currentZLevel, addCharacter]);
 
   // Subscribe to world.ready to focus on the first character after viewport is initialized
