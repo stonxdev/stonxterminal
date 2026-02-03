@@ -14,7 +14,7 @@ export const DEFAULT_WIDGET_LAYOUT: WidgetLayoutConfig = {
   slots: {
     "left-top": [],
     "left-bottom": [],
-    center: ["world", "characters"],
+    center: ["world"],
     "center-bottom": [],
     "right-top": ["tile-inspector"],
     "right-bottom": ["layers", "characters"],
