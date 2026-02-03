@@ -17,20 +17,33 @@ export function StatusBar() {
     return null;
   }
 
+  const renderItemsWithSeparators = (
+    items: typeof leftItems,
+  ): React.ReactNode[] => {
+    const result: React.ReactNode[] = [];
+    items.forEach((item, index) => {
+      if (index > 0) {
+        result.push(
+          <span key={`sep-${item.id}`} className="text-border">
+            |
+          </span>,
+        );
+      }
+      result.push(<item.component key={item.id} itemId={item.id} />);
+    });
+    return result;
+  };
+
   return (
     <div className="flex items-center justify-between w-full h-6 px-2 text-xs text-muted-foreground bg-background">
       {/* Left-aligned items */}
-      <div className="flex items-center gap-3">
-        {leftItems.map((item) => (
-          <item.component key={item.id} itemId={item.id} />
-        ))}
+      <div className="flex items-center gap-2">
+        {renderItemsWithSeparators(leftItems)}
       </div>
 
       {/* Right-aligned items */}
-      <div className="flex items-center gap-3">
-        {rightItems.map((item) => (
-          <item.component key={item.id} itemId={item.id} />
-        ))}
+      <div className="flex items-center gap-2">
+        {renderItemsWithSeparators(rightItems)}
       </div>
     </div>
   );
