@@ -10,16 +10,26 @@ interface WidgetSlotProps {
   slotId: WidgetSlotId;
   /** Optional class name for styling */
   className?: string;
+  /** Tab variant - defaults to "secondary" */
+  variant?: "primary" | "secondary";
+  /** Keep all tab panels mounted when switching tabs */
+  keepMounted?: boolean;
 }
 
 /**
  * WidgetSlot renders all widgets assigned to a specific slot as tabs.
  *
- * - Uses secondary variant tabs (transparent background, bottom border indicators)
+ * - Uses secondary variant tabs by default (transparent background, bottom border indicators)
  * - Always shows tabs even when there's only 1 widget
  * - Returns null when slot has zero widgets (Dock will hide the slot)
+ * - Respects widget placement constraints (pinned widgets cannot be closed)
  */
-export function WidgetSlot({ slotId, className }: WidgetSlotProps) {
+export function WidgetSlot({
+  slotId,
+  className,
+  variant = "secondary",
+  keepMounted = false,
+}: WidgetSlotProps) {
   const widgetIds = useWidgetsForSlot(slotId);
 
   // Convert widget IDs to TabItems
@@ -35,11 +45,15 @@ export function WidgetSlot({ slotId, className }: WidgetSlotProps) {
 
       const Component = definition.component;
 
+      // Pinned widgets are never closable, regardless of the closable property
+      const isPinned = definition.placement?.pinned ?? false;
+      const isClosable = isPinned ? false : (definition.closable ?? false);
+
       result.push({
         id: widgetId,
         label: definition.label,
         icon: definition.icon,
-        closable: definition.closable ?? false,
+        closable: isClosable,
         content: <Component widgetId={widgetId} slotId={slotId} />,
       });
     }
@@ -52,5 +66,12 @@ export function WidgetSlot({ slotId, className }: WidgetSlotProps) {
     return null;
   }
 
-  return <Tabs tabs={tabs} variant="secondary" className={className} />;
+  return (
+    <Tabs
+      tabs={tabs}
+      variant={variant}
+      className={className}
+      keepMounted={keepMounted}
+    />
+  );
 }

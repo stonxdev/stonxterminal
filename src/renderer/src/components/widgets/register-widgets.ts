@@ -2,6 +2,7 @@ import {
   charactersWidget,
   layersWidget,
   tileInspectorWidget,
+  worldWidget,
 } from "./definitions";
 import type { WidgetLayoutConfig } from "./types";
 import { widgetRegistry } from "./widget-registry";
@@ -13,6 +14,7 @@ export const DEFAULT_WIDGET_LAYOUT: WidgetLayoutConfig = {
   slots: {
     "left-top": [],
     "left-bottom": [],
+    center: ["world", "characters"],
     "center-bottom": [],
     "right-top": ["tile-inspector"],
     "right-bottom": ["layers", "characters"],
@@ -24,6 +26,7 @@ export const DEFAULT_WIDGET_LAYOUT: WidgetLayoutConfig = {
  * Call this during app initialization.
  */
 export function registerBuiltInWidgets(): void {
+  widgetRegistry.register(worldWidget);
   widgetRegistry.register(charactersWidget);
   widgetRegistry.register(layersWidget);
   widgetRegistry.register(tileInspectorWidget);

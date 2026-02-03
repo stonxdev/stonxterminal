@@ -12,6 +12,7 @@ export function Tabs({
   onTabClose,
   variant = "primary",
   className,
+  keepMounted = false,
 }: TabsProps) {
   const tabListRef = useRef<HTMLDivElement>(null);
 
@@ -23,7 +24,7 @@ export function Tabs({
     onTabClose,
   });
 
-  const activeTab = tabs.find((t) => t.id === activeTabId);
+  const activeTab = keepMounted ? null : tabs.find((t) => t.id === activeTabId);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     const currentIndex = tabs.findIndex((t) => t.id === activeTabId);
@@ -84,15 +85,37 @@ export function Tabs({
         ))}
       </div>
 
-      {/* Tab Panel */}
-      <div
-        id={`tabpanel-${activeTabId}`}
-        role="tabpanel"
-        aria-labelledby={activeTabId}
-        className="flex-1 min-h-0 min-w-0 overflow-y-auto"
-      >
-        {activeTab?.content}
-      </div>
+      {/* Tab Panel(s) */}
+      {keepMounted ? (
+        // Render all panels, hide inactive ones with CSS
+        <div className="flex-1 min-h-0 min-w-0 relative">
+          {tabs.map((tab) => (
+            <div
+              key={tab.id}
+              id={`tabpanel-${tab.id}`}
+              role="tabpanel"
+              aria-labelledby={tab.id}
+              aria-hidden={tab.id !== activeTabId}
+              className={cn(
+                "absolute inset-0 overflow-y-auto",
+                tab.id === activeTabId ? "visible" : "invisible",
+              )}
+            >
+              {tab.content}
+            </div>
+          ))}
+        </div>
+      ) : (
+        // Only render active panel
+        <div
+          id={`tabpanel-${activeTabId}`}
+          role="tabpanel"
+          aria-labelledby={activeTabId}
+          className="flex-1 min-h-0 min-w-0 overflow-y-auto"
+        >
+          {activeTab?.content}
+        </div>
+      )}
     </div>
   );
 }

@@ -3,11 +3,11 @@ import type { ComponentType } from "react";
 
 /**
  * Available dock slots for widgets (dash-case).
- * Note: center-top is reserved for main content, NOT for widgets.
  */
 export type WidgetSlotId =
   | "left-top"
   | "left-bottom"
+  | "center"
   | "center-bottom"
   | "right-top"
   | "right-bottom";
@@ -29,6 +29,16 @@ export interface WidgetComponentProps {
 }
 
 /**
+ * Placement constraints for a widget.
+ */
+export interface WidgetPlacement {
+  /** If true, this widget is pinned and cannot be removed or moved from its default slot */
+  pinned?: boolean;
+  /** If set, this widget can ONLY be placed in these slots (whitelist) */
+  allowedSlots?: WidgetSlotId[];
+}
+
+/**
  * Widget definition registered in the widget registry.
  */
 export interface WidgetDefinition {
@@ -40,8 +50,12 @@ export interface WidgetDefinition {
   icon?: LucideIcon;
   /** The React component to render */
   component: ComponentType<WidgetComponentProps>;
-  /** Whether this widget can be closed (removed from slot) */
+  /** Whether this widget can be closed (removed from slot). Ignored if placement.pinned is true. */
   closable?: boolean;
+  /** Placement constraints for this widget */
+  placement?: WidgetPlacement;
+  /** Default slot for pinned widgets */
+  defaultSlot?: WidgetSlotId;
 }
 
 /**

@@ -60,4 +60,11 @@ export interface TabsProps {
   variant?: TabVariant;
   /** Additional className for the container */
   className?: string;
+  /**
+   * Keep all tab panels mounted when switching tabs.
+   * Inactive panels are hidden with CSS instead of unmounting.
+   * Useful for tabs with expensive initialization (e.g., canvases, editors).
+   * @default false
+   */
+  keepMounted?: boolean;
 }

@@ -1,11 +1,7 @@
-import { WorldWithControlBars } from "@renderer/components/control-bars";
 import { Dock } from "@renderer/components/dock/Dock";
 import { StatusBar } from "@renderer/components/status-bars";
-import type { TabItem } from "@renderer/components/tabs";
-import { Tabs } from "@renderer/components/tabs";
 import { useIsSlotEmpty, WidgetSlot } from "@renderer/components/widgets";
-import { Map as MapIcon } from "lucide-react";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { commandRegistry } from "../commands";
 import { useColony } from "../context/ColonyContext";
 import {
@@ -167,24 +163,6 @@ export const GameScreen: React.FC = () => {
     return unsubscribe;
   }, [game]);
 
-  // Get the current level
-  const currentLevel = useMemo(() => {
-    if (!world) return null;
-    return world.levels.get(currentZLevel) ?? null;
-  }, [world, currentZLevel]);
-
-  const centerTabs: TabItem[] = useMemo(() => {
-    if (!world || !currentLevel) return [];
-    return [
-      {
-        id: "world",
-        label: "World",
-        icon: MapIcon,
-        content: <WorldWithControlBars />,
-      },
-    ];
-  }, [world, currentLevel]);
-
   // Check which slots are empty to conditionally render them
   const isLeftTopEmpty = useIsSlotEmpty("left-top");
   const isLeftBottomEmpty = useIsSlotEmpty("left-bottom");
@@ -198,7 +176,7 @@ export const GameScreen: React.FC = () => {
       leftBottom={
         isLeftBottomEmpty ? undefined : <WidgetSlot slotId="left-bottom" />
       }
-      center={<Tabs variant="primary" tabs={centerTabs} />}
+      center={<WidgetSlot slotId="center" variant="primary" keepMounted />}
       centerBottom={
         isCenterBottomEmpty ? undefined : <WidgetSlot slotId="center-bottom" />
       }
