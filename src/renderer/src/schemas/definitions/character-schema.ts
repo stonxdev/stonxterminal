@@ -36,7 +36,7 @@ export const characterSchema = nu
         icon: MousePointer,
         commandId: "character.select",
         argsMapper: (entity) => ({
-          characterId: (entity as { id: string }).id,
+          characterIds: [(entity as { id: string }).id],
         }),
         showInRowMenu: true,
         showInToolbar: false,
@@ -47,7 +47,7 @@ export const characterSchema = nu
         icon: Focus,
         commandId: "character.focus",
         argsMapper: (entity) => ({
-          characterId: (entity as { id: string }).id,
+          characterIds: [(entity as { id: string }).id],
         }),
         showInRowMenu: true,
         showInToolbar: false,
