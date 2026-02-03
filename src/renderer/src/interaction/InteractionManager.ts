@@ -2,6 +2,7 @@
 // INTERACTION MANAGER
 // =============================================================================
 
+import { modalStateStore } from "../components/floating/modal";
 import type { InteractionMode } from "../game-state/types";
 import type { Position2D, Tile, World } from "../world/types";
 import { getTileAt } from "../world/utils/tile-utils";
@@ -164,6 +165,9 @@ export class InteractionManager {
    * Handle pointer down event
    */
   handlePointerDown(event: PointerEventData): void {
+    // Block interactions when modal is open
+    if (modalStateStore.isModalOpen()) return;
+
     // Handle left and right click
     if (event.button !== 0 && event.button !== 2) return;
 
@@ -178,6 +182,9 @@ export class InteractionManager {
    * Handle pointer up event
    */
   handlePointerUp(event: PointerEventData): void {
+    // Block interactions when modal is open
+    if (modalStateStore.isModalOpen()) return;
+
     // Handle left and right click
     if (event.button !== 0 && event.button !== 2) return;
 
@@ -192,6 +199,9 @@ export class InteractionManager {
    * Handle pointer move event (while pressed)
    */
   handlePointerMove(event: PointerEventData): void {
+    // Block interactions when modal is open
+    if (modalStateStore.isModalOpen()) return;
+
     const ctx = this.buildContext(event);
     if (!ctx) return;
 
@@ -203,6 +213,9 @@ export class InteractionManager {
    * Handle hover event (pointer move without press)
    */
   handleHover(event: PointerEventData): void {
+    // Block interactions when modal is open
+    if (modalStateStore.isModalOpen()) return;
+
     const ctx = this.buildContext(event);
 
     if (!ctx) {
@@ -220,6 +233,7 @@ export class InteractionManager {
    * Handle hover end (pointer left the canvas)
    */
   handleHoverEnd(): void {
+    // Note: We don't block this - hover should end when modal opens
     const handler = this.handlers.get(this.currentMode);
     handler?.onHoverEnd?.();
   }

@@ -4,10 +4,12 @@ import {
   type ReactNode,
   useCallback,
   useContext,
+  useEffect,
   useRef,
   useState,
 } from "react";
 import { Modal } from "./Modal";
+import { modalStateStore } from "./modalState";
 import type { ModalConfig, ModalInstance } from "./types";
 
 type ModalContextType = {
@@ -19,6 +21,10 @@ type ModalContextType = {
 
 export const ModalContext = createContext<ModalContextType | null>(null);
 
+/**
+ * Provides modal state management without rendering modals.
+ * Use ModalRenderer to render modals in the appropriate place in the component tree.
+ */
 export const ModalProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [modals, setModals] = useState<ModalInstance[]>([]);
 
@@ -46,6 +52,54 @@ export const ModalProvider: FC<{ children: ReactNode }> = ({ children }) => {
     setModals([]);
   }, []);
 
+  return (
+    <ModalContext.Provider
+      value={{
+        openModal,
+        closeModal,
+        closeAllModals,
+        modals,
+      }}
+    >
+      {children}
+    </ModalContext.Provider>
+  );
+};
+
+/**
+ * Renders modals from the ModalContext.
+ * Place this component where you want modals to appear in the React tree,
+ * ensuring they have access to any required context providers.
+ */
+export const ModalRenderer: FC = () => {
+  const context = useContext(ModalContext);
+  if (!context) {
+    throw new Error("ModalRenderer must be used within a ModalProvider");
+  }
+
+  const { modals, closeModal } = context;
+  const prevCountRef = useRef(0);
+
+  // Sync modal count with the global store for non-React code
+  useEffect(() => {
+    const prevCount = prevCountRef.current;
+    const currentCount = modals.length;
+
+    if (currentCount > prevCount) {
+      // Modals were opened
+      for (let i = 0; i < currentCount - prevCount; i++) {
+        modalStateStore.increment();
+      }
+    } else if (currentCount < prevCount) {
+      // Modals were closed
+      for (let i = 0; i < prevCount - currentCount; i++) {
+        modalStateStore.decrement();
+      }
+    }
+
+    prevCountRef.current = currentCount;
+  }, [modals.length]);
+
   const handleModalClose = useCallback(
     (modalId: string) => {
       const modal = modals.find((m) => m.id === modalId);
@@ -58,15 +112,7 @@ export const ModalProvider: FC<{ children: ReactNode }> = ({ children }) => {
   );
 
   return (
-    <ModalContext.Provider
-      value={{
-        openModal,
-        closeModal,
-        closeAllModals,
-        modals,
-      }}
-    >
-      {children}
+    <>
       {modals.map((modal, index) => {
         const { content, ...modalProps } = modal.config;
         return (
@@ -80,7 +126,7 @@ export const ModalProvider: FC<{ children: ReactNode }> = ({ children }) => {
           />
         );
       })}
-    </ModalContext.Provider>
+    </>
   );
 };
 

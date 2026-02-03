@@ -13,6 +13,7 @@ export { layerToggleVisibility } from "./layer.toggleVisibility";
 export * from "./notifications";
 // Widget commands
 export { widgetBringToFront } from "./widget.bringToFront";
+export { widgetOpenInModal } from "./widget.openInModal";
 export { widgetSetActiveTab } from "./widget.setActiveTab";
 // Workbench commands
 export { workbenchRunCommand } from "./workbench.runCommand";

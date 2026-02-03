@@ -24,4 +24,5 @@ export const worldWidget: WidgetDefinition = {
     pinned: true,
   },
   defaultSlot: "center",
+  canOpenInModal: false,
 };

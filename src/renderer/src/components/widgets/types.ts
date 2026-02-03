@@ -56,6 +56,8 @@ export interface WidgetDefinition {
   placement?: WidgetPlacement;
   /** Default slot for pinned widgets */
   defaultSlot?: WidgetSlotId;
+  /** Whether this widget can be opened in a modal. Defaults to true. */
+  canOpenInModal?: boolean;
 }
 
 /**

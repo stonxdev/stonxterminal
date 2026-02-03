@@ -21,8 +21,7 @@ export function Tab({ tab, isActive, variant, onSelect, onClose }: TabProps) {
   };
 
   return (
-    <button
-      type="button"
+    <div
       role="tab"
       aria-selected={isActive}
       aria-controls={`tabpanel-${id}`}
@@ -30,7 +29,7 @@ export function Tab({ tab, isActive, variant, onSelect, onClose }: TabProps) {
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       className={cn(
-        "group flex items-center gap-1.5 px-3 py-1.5 text-sm transition-colors outline-none",
+        "group flex items-center gap-1.5 px-3 py-1.5 text-sm transition-colors outline-none cursor-pointer",
         "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
         // Primary variant styles
         variant === "primary" && [
@@ -61,12 +60,6 @@ export function Tab({ tab, isActive, variant, onSelect, onClose }: TabProps) {
           type="button"
           tabIndex={-1}
           onClick={handleClose}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              handleClose(e as unknown as React.MouseEvent);
-            }
-          }}
           className={cn(
             "h-4 w-4 shrink-0 rounded flex items-center justify-center",
             "opacity-0 group-hover:opacity-100 hover:bg-accent",
@@ -77,6 +70,6 @@ export function Tab({ tab, isActive, variant, onSelect, onClose }: TabProps) {
           <X className="h-3 w-3" />
         </button>
       )}
-    </button>
+    </div>
   );
 }

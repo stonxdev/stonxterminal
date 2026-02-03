@@ -47,9 +47,13 @@ export const Modal: FC<ModalProps> = ({
       className="relative"
       style={{ zIndex }}
     >
-      {showBackdrop && (
-        <DialogBackdrop className="fixed inset-0 bg-black/50 transition-opacity duration-300 ease-out data-[closed]:opacity-0" />
-      )}
+      {/* Always render a full-screen backdrop to block all pointer events.
+          Visual opacity is conditional based on showBackdrop prop. */}
+      <DialogBackdrop
+        className={`fixed inset-0 transition-opacity duration-300 ease-out data-[closed]:opacity-0 ${
+          showBackdrop ? "bg-black/50" : "bg-transparent"
+        }`}
+      />
 
       <div className={`fixed inset-0 flex p-4 ${alignmentClasses[alignment]}`}>
         <DialogPanel

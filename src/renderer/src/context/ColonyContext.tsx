@@ -15,11 +15,16 @@ import {
   characterSelect,
   layerSetVisibility,
   layerToggleVisibility,
+  widgetOpenInModal,
   workbenchRunCommand,
   workbenchSetTheme,
   worldSetZoom,
 } from "../commands/definitions";
-import { ModalProvider, useModal } from "../components/floating/modal";
+import {
+  ModalProvider,
+  ModalRenderer,
+  useModal,
+} from "../components/floating/modal";
 import { useGameStore } from "../game-state";
 import { defaultKeybindings } from "../keybindings/defaultKeybindings";
 import { registerKeybindings } from "../keybindings/registerKeybindings";
@@ -180,6 +185,9 @@ const ColonyContextInner: FC<{ children: ReactNode }> = ({ children }) => {
     commandRegistry.register(layerToggleVisibility);
     commandRegistry.register(layerSetVisibility);
 
+    // Register widget commands
+    commandRegistry.register(widgetOpenInModal);
+
     // Set the context for the command registry
     commandRegistry.setContext(contextData);
 
@@ -191,6 +199,7 @@ const ColonyContextInner: FC<{ children: ReactNode }> = ({ children }) => {
   return (
     <ColonyContext.Provider value={contextData}>
       {children}
+      <ModalRenderer />
     </ColonyContext.Provider>
   );
 };

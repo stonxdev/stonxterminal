@@ -8,6 +8,7 @@ import {
   ModalFrame,
   ModalFrameStructured,
   ModalProvider,
+  ModalRenderer,
   useModal,
 } from "./index";
 
@@ -18,6 +19,7 @@ const meta = {
       <ToastProvider>
         <ModalProvider>
           <Story />
+          <ModalRenderer />
           <ToastContainer />
         </ModalProvider>
       </ToastProvider>
@@ -30,10 +32,10 @@ type Story = StoryObj<typeof meta>;
 
 export const BasicModalFrame: Story = {
   render: () => {
-    const { openModal } = useModal();
+    const { openModal, closeModal } = useModal();
 
     const handleOpen = () => {
-      openModal({
+      const modalId = openModal({
         content: (
           <ModalFrame>
             <div>
@@ -43,7 +45,9 @@ export const BasicModalFrame: Story = {
                 default size and behavior of the ModalFrame component.
               </p>
               <div className="flex justify-end">
-                <Button variant="default">Got it</Button>
+                <Button variant="default" onClick={() => closeModal(modalId)}>
+                  Got it
+                </Button>
               </div>
             </div>
           </ModalFrame>
@@ -57,10 +61,10 @@ export const BasicModalFrame: Story = {
 
 export const BasicModalWithScrolling: Story = {
   render: () => {
-    const { openModal } = useModal();
+    const { openModal, closeModal } = useModal();
 
     const handleOpen = () => {
-      openModal({
+      const modalId = openModal({
         content: (
           <ModalFrame>
             <div>
@@ -100,7 +104,9 @@ export const BasicModalWithScrolling: Story = {
               ))}
 
               <div className="flex justify-end mt-6">
-                <Button variant="default">Close</Button>
+                <Button variant="default" onClick={() => closeModal(modalId)}>
+                  Close
+                </Button>
               </div>
             </div>
           </ModalFrame>
@@ -382,10 +388,10 @@ export const DifferentSizes: Story = {
 
 export const TopAlignedModal: Story = {
   render: () => {
-    const { openModal } = useModal();
+    const { openModal, closeModal } = useModal();
 
     const handleOpen = () => {
-      openModal({
+      const modalId = openModal({
         content: (
           <ModalFrameStructured
             header={
@@ -405,7 +411,9 @@ export const TopAlignedModal: Story = {
             }
             footer={
               <ButtonBar alignment="right" className="p-4">
-                <Button variant="default">Done</Button>
+                <Button variant="default" onClick={() => closeModal(modalId)}>
+                  Done
+                </Button>
               </ButtonBar>
             }
           />
