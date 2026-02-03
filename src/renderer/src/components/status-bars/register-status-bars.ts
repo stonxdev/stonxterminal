@@ -3,6 +3,7 @@
 // =============================================================================
 
 import {
+  fpsStatusBar,
   runCommandStatusBar,
   themeStatusBar,
   versionStatusBar,
@@ -17,4 +18,5 @@ export function registerBuiltInStatusBars(): void {
   statusBarRegistry.register(versionStatusBar);
   statusBarRegistry.register(themeStatusBar);
   statusBarRegistry.register(runCommandStatusBar);
+  statusBarRegistry.register(fpsStatusBar);
 }

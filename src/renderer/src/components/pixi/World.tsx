@@ -1,4 +1,5 @@
 import { commandRegistry } from "@renderer/commands";
+import { usePerformanceStore } from "@renderer/lib/performance-store";
 import { SimpleViewport, viewportStore } from "@renderer/lib/viewport-simple";
 import type {
   StructureType,
@@ -478,6 +479,18 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
       // Add resize handler to Pixi's ticker
       app.ticker.add(handleResize);
 
+      // Throttled FPS update callback (updates every 500ms to reduce overhead)
+      let lastFpsUpdate = 0;
+      const FPS_UPDATE_INTERVAL = 500;
+      const fpsCallback = () => {
+        const now = performance.now();
+        if (now - lastFpsUpdate >= FPS_UPDATE_INTERVAL) {
+          lastFpsUpdate = now;
+          usePerformanceStore.getState().pushFps(Math.round(app.ticker.FPS));
+        }
+      };
+      app.ticker.add(fpsCallback);
+
       const resizeObserver = new ResizeObserver(() => {
         // Just flag that resize is needed - actual resize happens on next tick
         pendingResize = true;
@@ -488,9 +501,11 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
       const appWithExtras = app as Application & {
         _resizeObserver?: ResizeObserver;
         _resizeHandler?: () => void;
+        _fpsHandler?: () => void;
       };
       appWithExtras._resizeObserver = resizeObserver;
       appWithExtras._resizeHandler = handleResize;
+      appWithExtras._fpsHandler = fpsCallback;
 
       // Dispatch world.ready command to notify that viewport is fully initialized
       commandRegistry.dispatch("world.ready", { timestamp: Date.now() });
@@ -520,10 +535,14 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
         const app = appRef.current as Application & {
           _resizeObserver?: ResizeObserver;
           _resizeHandler?: () => void;
+          _fpsHandler?: () => void;
         };
         app._resizeObserver?.disconnect();
         if (app._resizeHandler) {
           app.ticker.remove(app._resizeHandler);
+        }
+        if (app._fpsHandler) {
+          app.ticker.remove(app._fpsHandler);
         }
       }
       if (viewportRef.current) {

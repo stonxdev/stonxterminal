@@ -1,6 +1,7 @@
 import {
   charactersWidget,
   layersWidget,
+  performanceWidget,
   tileInspectorWidget,
   worldWidget,
 } from "./definitions";
@@ -17,7 +18,7 @@ export const DEFAULT_WIDGET_LAYOUT: WidgetLayoutConfig = {
     center: ["world"],
     "center-bottom": [],
     "right-top": ["tile-inspector"],
-    "right-bottom": ["layers", "characters"],
+    "right-bottom": ["layers", "characters", "performance"],
   },
 };
 
@@ -29,5 +30,6 @@ export function registerBuiltInWidgets(): void {
   widgetRegistry.register(worldWidget);
   widgetRegistry.register(charactersWidget);
   widgetRegistry.register(layersWidget);
+  widgetRegistry.register(performanceWidget);
   widgetRegistry.register(tileInspectorWidget);
 }
