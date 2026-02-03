@@ -89,10 +89,27 @@ export const Dock: React.FC<DockProps> = ({
     return { min: 50, max: Number.POSITIVE_INFINITY };
   }, []);
 
-  // Ratio constraints for side panel splits (0.1 to 0.9)
-  const getRatioConstraints = useCallback(() => {
-    return { min: 0.1, max: 0.9 };
+  // Ratio-based resize for side panel splits
+  // Convert ratio to pixel height, let useResize handle the drag, then convert back to ratio
+  const getLeftColumnHeight = useCallback(() => {
+    return containerRef.current?.offsetHeight ?? 600;
   }, []);
+
+  const getRightColumnHeight = useCallback(() => {
+    return containerRef.current?.offsetHeight ?? 600;
+  }, []);
+
+  // Pixel constraints for left side panel split (10% to 90% of column height)
+  const getLeftRatioConstraints = useCallback(() => {
+    const columnHeight = getLeftColumnHeight();
+    return { min: 0.1 * columnHeight, max: 0.9 * columnHeight };
+  }, [getLeftColumnHeight]);
+
+  // Pixel constraints for right side panel split (10% to 90% of column height)
+  const getRightRatioConstraints = useCallback(() => {
+    const columnHeight = getRightColumnHeight();
+    return { min: 0.1 * columnHeight, max: 0.9 * columnHeight };
+  }, [getRightColumnHeight]);
 
   const leftResize = useResize(
     setLeftWidth,
@@ -112,15 +129,6 @@ export const Dock: React.FC<DockProps> = ({
     true,
     true,
   );
-  // Ratio-based resize for side panel splits
-  // Convert ratio to pixel height, let useResize handle the drag, then convert back to ratio
-  const getLeftColumnHeight = useCallback(() => {
-    return containerRef.current?.offsetHeight ?? 600;
-  }, []);
-
-  const getRightColumnHeight = useCallback(() => {
-    return containerRef.current?.offsetHeight ?? 600;
-  }, []);
 
   const leftBottomResize = useResize(
     (newHeight: number) => {
@@ -129,7 +137,7 @@ export const Dock: React.FC<DockProps> = ({
       setLeftBottomRatio(newRatio);
     },
     () => leftBottomRatio * getLeftColumnHeight(),
-    getRatioConstraints,
+    getLeftRatioConstraints,
     true,
     true,
   );
@@ -141,7 +149,7 @@ export const Dock: React.FC<DockProps> = ({
       setRightBottomRatio(newRatio);
     },
     () => rightBottomRatio * getRightColumnHeight(),
-    getRatioConstraints,
+    getRightRatioConstraints,
     true,
     true,
   );
