@@ -1,4 +1,5 @@
 import { commandRegistry } from "@renderer/commands";
+import { useConfigStore } from "@renderer/config";
 import { usePerformanceStore } from "@renderer/lib/performance-store";
 import { SimpleViewport, viewportStore } from "@renderer/lib/viewport-simple";
 import type {
@@ -331,6 +332,20 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
         e.preventDefault();
       });
 
+      // Apply maxFPS from config
+      const maxFramerate = useConfigStore.getState().get("pixi.maxFramerate");
+      if (typeof maxFramerate === "number") {
+        app.ticker.maxFPS = maxFramerate;
+      }
+
+      // Subscribe to config changes for maxFPS
+      const unsubscribeConfig = useConfigStore.subscribe((state) => {
+        const newMaxFps = state.computed["pixi.maxFramerate"];
+        if (typeof newMaxFps === "number" && appRef.current) {
+          appRef.current.ticker.maxFPS = newMaxFps;
+        }
+      });
+
       appRef.current = app;
       isInitializedRef.current = true;
 
@@ -502,10 +517,12 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
         _resizeObserver?: ResizeObserver;
         _resizeHandler?: () => void;
         _fpsHandler?: () => void;
+        _configUnsubscribe?: () => void;
       };
       appWithExtras._resizeObserver = resizeObserver;
       appWithExtras._resizeHandler = handleResize;
       appWithExtras._fpsHandler = fpsCallback;
+      appWithExtras._configUnsubscribe = unsubscribeConfig;
 
       // Dispatch world.ready command to notify that viewport is fully initialized
       commandRegistry.dispatch("world.ready", { timestamp: Date.now() });
@@ -536,6 +553,7 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
           _resizeObserver?: ResizeObserver;
           _resizeHandler?: () => void;
           _fpsHandler?: () => void;
+          _configUnsubscribe?: () => void;
         };
         app._resizeObserver?.disconnect();
         if (app._resizeHandler) {
@@ -544,6 +562,7 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
         if (app._fpsHandler) {
           app.ticker.remove(app._fpsHandler);
         }
+        app._configUnsubscribe?.();
       }
       if (viewportRef.current) {
         viewportStore.setViewport(null);
