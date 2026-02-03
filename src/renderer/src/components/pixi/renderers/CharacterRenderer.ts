@@ -86,12 +86,12 @@ export class CharacterRenderer {
    * Update all character graphics.
    *
    * @param characters - Map of all characters to render
-   * @param selectedId - ID of the currently selected character (if any)
+   * @param selectedIds - Set of selected character IDs (supports multi-selection)
    * @param zLevel - Current z-level to filter characters by (optional)
    */
   update(
     characters: Map<EntityId, Character>,
-    selectedId: EntityId | null,
+    selectedIds: Set<EntityId>,
     zLevel?: number,
   ): void {
     // Track which characters we've seen
@@ -116,7 +116,11 @@ export class CharacterRenderer {
       }
 
       // Update position and appearance
-      this.updateCharacterGraphics(charGraphics, character, id === selectedId);
+      this.updateCharacterGraphics(
+        charGraphics,
+        character,
+        selectedIds.has(id),
+      );
     }
 
     // Remove graphics for characters that no longer exist

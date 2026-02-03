@@ -1,11 +1,12 @@
 import { User, Users } from "lucide-react";
 import { SearchableTreeNavigator } from "../../components/command-palette";
 import { ModalFrame } from "../../components/floating/modal";
+import { useGameStore } from "../../game-state/store";
 import type { MenuItem } from "../../menu/types";
 import { defineCommand } from "../defineCommand";
 
 export interface CharacterSelectPayload {
-  characterId?: string;
+  characterId?: string | string[];
 }
 
 export const characterSelect = defineCommand<CharacterSelectPayload>({
@@ -13,9 +14,15 @@ export const characterSelect = defineCommand<CharacterSelectPayload>({
   name: "Select Character",
   icon: Users,
   execute: (context, payload) => {
-    // If a specific character ID is provided, select it directly
+    // If character ID(s) provided, select directly
     if (payload?.characterId) {
-      context.game.selectCharacter(payload.characterId);
+      if (Array.isArray(payload.characterId)) {
+        // Multi-select via store
+        useGameStore.getState().selectMultiple("colonist", payload.characterId);
+      } else {
+        // Single select
+        context.game.selectCharacter(payload.characterId);
+      }
       return;
     }
 

@@ -1,11 +1,12 @@
 import { Focus, User } from "lucide-react";
 import { SearchableTreeNavigator } from "../../components/command-palette";
 import { ModalFrame } from "../../components/floating/modal";
+import { viewportStore } from "../../lib/viewport-simple";
 import type { MenuItem } from "../../menu/types";
 import { defineCommand } from "../defineCommand";
 
 export interface CharacterFocusPayload {
-  characterId?: string;
+  characterId?: string | string[];
 }
 
 export const characterFocus = defineCommand<CharacterFocusPayload>({
@@ -15,18 +16,43 @@ export const characterFocus = defineCommand<CharacterFocusPayload>({
   execute: (context, payload) => {
     console.info("[character.focus] Executing with payload:", payload);
 
-    // If a specific character ID is provided, focus it directly
+    // If character ID(s) provided, focus directly
     if (payload?.characterId) {
-      console.info(
-        "[character.focus] Focusing character:",
-        payload.characterId,
-      );
-      context.commands.dispatch("character.select", {
-        characterId: payload.characterId,
-      });
-      context.game.focusCharacter(payload.characterId);
-      context.commands.dispatch("world.setZoom", { scale: 2 });
-      console.info("[character.focus] Done focusing character");
+      const ids = Array.isArray(payload.characterId)
+        ? payload.characterId
+        : [payload.characterId];
+
+      if (ids.length === 1) {
+        // Single character - existing behavior
+        console.info("[character.focus] Focusing single character:", ids[0]);
+        context.commands.dispatch("character.select", { characterId: ids[0] });
+        context.game.focusCharacter(ids[0]);
+        context.commands.dispatch("world.setZoom", { scale: 2 });
+      } else {
+        // Multiple characters - focus on centroid
+        console.info("[character.focus] Focusing", ids.length, "characters");
+        context.commands.dispatch("character.select", { characterId: ids });
+
+        const chars = ids
+          .map((id) => context.game.getCharacter(id))
+          .filter((c): c is NonNullable<typeof c> => c != null);
+
+        if (chars.length > 0) {
+          const avgX =
+            chars.reduce((sum, c) => sum + c.position.x, 0) / chars.length;
+          const avgY =
+            chars.reduce((sum, c) => sum + c.position.y, 0) / chars.length;
+          const cellSize = 32;
+          // Pan to centroid
+          viewportStore.panTo(
+            avgX * cellSize + cellSize / 2,
+            avgY * cellSize + cellSize / 2,
+          );
+          // Zoom out slightly to show all characters
+          context.commands.dispatch("world.setZoom", { scale: 1.5 });
+        }
+      }
+      console.info("[character.focus] Done focusing");
       return;
     }
 

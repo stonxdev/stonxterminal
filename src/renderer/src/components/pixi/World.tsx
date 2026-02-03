@@ -207,27 +207,32 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
       selection: ReturnType<typeof useGameStore.getState>["selection"],
       shouldRenderCharacters: boolean,
     ) => {
-      const selectedCharacterId =
-        selection.type === "entity" && selection.entityType === "colonist"
-          ? selection.entityId
-          : null;
+      // Compute selected IDs set (supports both single and multi-selection)
+      let selectedIds: Set<string>;
+      if (selection.type === "entity" && selection.entityType === "colonist") {
+        selectedIds = new Set([selection.entityId]);
+      } else if (
+        selection.type === "multi-entity" &&
+        selection.entityType === "colonist"
+      ) {
+        selectedIds = selection.entityIds;
+      } else {
+        selectedIds = new Set();
+      }
 
       if (characterRendererRef.current) {
         if (shouldRenderCharacters) {
-          characterRendererRef.current.update(
-            characters,
-            selectedCharacterId,
-            zLevel,
-          );
+          characterRendererRef.current.update(characters, selectedIds, zLevel);
         } else {
-          characterRendererRef.current.update(new Map(), null, zLevel);
+          characterRendererRef.current.update(new Map(), new Set(), zLevel);
         }
       }
 
       if (pathRendererRef.current) {
+        // For path rendering, show path for first selected character (or none if multiple)
         const selectedCharacter =
-          selectedCharacterId && shouldRenderCharacters
-            ? characters.get(selectedCharacterId)
+          selectedIds.size === 1 && shouldRenderCharacters
+            ? characters.get([...selectedIds][0])
             : null;
         pathRendererRef.current.update(selectedCharacter ?? null);
       }
@@ -431,14 +436,24 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
           (c) => ({ name: c.name, pos: c.position }),
         ),
       });
-      const selectedCharacterId =
+      // Compute initial selected IDs (supports both single and multi-selection)
+      let initialSelectedIds: Set<string>;
+      if (
         initialState.selection.type === "entity" &&
         initialState.selection.entityType === "colonist"
-          ? initialState.selection.entityId
-          : null;
+      ) {
+        initialSelectedIds = new Set([initialState.selection.entityId]);
+      } else if (
+        initialState.selection.type === "multi-entity" &&
+        initialState.selection.entityType === "colonist"
+      ) {
+        initialSelectedIds = initialState.selection.entityIds;
+      } else {
+        initialSelectedIds = new Set();
+      }
       characterRenderer.update(
         initialState.simulation.characters,
-        selectedCharacterId,
+        initialSelectedIds,
         zLevel,
       );
 

@@ -91,11 +91,16 @@ export class SelectModeHandler implements InteractionModeHandler {
       const distance = Math.sqrt(dx * dx + dy * dy);
 
       if (distance <= CHARACTER_CLICK_RADIUS) {
-        // Select this character
-        state.selectEntity("colonist", character.id, {
-          x: character.position.x,
-          y: character.position.y,
-        });
+        if (ctx.shiftKey) {
+          // Shift-click: Add to selection
+          state.addToSelection("colonist", character.id);
+        } else {
+          // Regular click: Replace selection
+          state.selectEntity("colonist", character.id, {
+            x: character.position.x,
+            y: character.position.y,
+          });
+        }
         return;
       }
     }
@@ -106,25 +111,37 @@ export class SelectModeHandler implements InteractionModeHandler {
 
   /**
    * Handle right-click to issue move command via command dispatch
+   * Supports both single and multi-entity selection
    */
   private handleRightClick(ctx: InteractionContext): void {
     const state = useGameStore.getState();
     const { selection } = state;
 
-    // Only issue command if a character is selected
-    if (selection.type !== "entity" || selection.entityType !== "colonist") {
-      return;
-    }
-
-    const characterId = selection.entityId;
     const destination = {
       x: ctx.worldPosition.x,
       y: ctx.worldPosition.y,
       z: ctx.zLevel,
     };
 
-    // Dispatch command instead of direct mutation
-    commandRegistry.dispatch("character.moveTo", { characterId, destination });
+    // Single character selected
+    if (selection.type === "entity" && selection.entityType === "colonist") {
+      commandRegistry.dispatch("character.moveTo", {
+        characterId: selection.entityId,
+        destination,
+      });
+      return;
+    }
+
+    // Multiple characters selected
+    if (
+      selection.type === "multi-entity" &&
+      selection.entityType === "colonist"
+    ) {
+      commandRegistry.dispatch("character.moveTo", {
+        characterId: Array.from(selection.entityIds),
+        destination,
+      });
+    }
   }
 
   onHover(ctx: InteractionContext): void {

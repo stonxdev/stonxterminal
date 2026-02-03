@@ -172,15 +172,15 @@ export const Dock: React.FC<DockProps> = ({
             >
               {leftTop && (
                 <div
-                  className="bg-background relative overflow-y-auto"
+                  className="bg-background relative overflow-hidden"
                   style={{ flex: `${1 - leftBottomRatio} 1 0`, minHeight: 0 }}
                 >
-                  {leftTop}
+                  <div className="absolute inset-0">{leftTop}</div>
                 </div>
               )}
               {leftBottom && (
                 <div
-                  className="bg-background relative overflow-y-auto"
+                  className="bg-background relative overflow-hidden"
                   style={{ flex: `${leftBottomRatio} 1 0`, minHeight: 0 }}
                 >
                   {leftTop && (
@@ -190,7 +190,7 @@ export const Dock: React.FC<DockProps> = ({
                       align="top"
                     />
                   )}
-                  {leftBottom}
+                  <div className="absolute inset-0">{leftBottom}</div>
                 </div>
               )}
               <HorizontalResizeHandle
@@ -210,7 +210,7 @@ export const Dock: React.FC<DockProps> = ({
             </div>
             {centerBottom && (
               <div
-                className="bg-background relative overflow-y-auto border-t border-border"
+                className="bg-background relative overflow-hidden border-t border-border"
                 style={{
                   height: centerBottomHeight,
                   pointerEvents: "auto",
@@ -221,7 +221,7 @@ export const Dock: React.FC<DockProps> = ({
                   isDragging={centerBottomResize.isDragging}
                   align="top"
                 />
-                {centerBottom}
+                <div className="absolute inset-0">{centerBottom}</div>
               </div>
             )}
           </div>
@@ -236,15 +236,15 @@ export const Dock: React.FC<DockProps> = ({
             >
               {rightTop && (
                 <div
-                  className="bg-background relative overflow-y-auto"
+                  className="bg-background relative overflow-hidden"
                   style={{ flex: `${1 - rightBottomRatio} 1 0`, minHeight: 0 }}
                 >
-                  {rightTop}
+                  <div className="absolute inset-0">{rightTop}</div>
                 </div>
               )}
               {rightBottom && (
                 <div
-                  className="bg-background relative overflow-y-auto"
+                  className="bg-background relative overflow-hidden"
                   style={{ flex: `${rightBottomRatio} 1 0`, minHeight: 0 }}
                 >
                   {rightTop && (
@@ -254,7 +254,7 @@ export const Dock: React.FC<DockProps> = ({
                       align="top"
                     />
                   )}
-                  {rightBottom}
+                  <div className="absolute inset-0">{rightBottom}</div>
                 </div>
               )}
               <HorizontalResizeHandle
