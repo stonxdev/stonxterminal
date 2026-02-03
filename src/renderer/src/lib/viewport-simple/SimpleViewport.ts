@@ -195,11 +195,21 @@ export class SimpleViewport extends Container {
     // Detect Mac trackpad pinch-to-zoom (reports ctrlKey as true)
     const isPinchGesture = event.ctrlKey;
 
+    // Detect if this is likely a trackpad two-finger scroll vs a discrete mouse wheel
+    // Trackpad scrolls typically have deltaMode 0 (pixels) and smaller deltaY values
+    // Mouse wheels typically have deltaMode 1 (lines) or larger deltaY values (±100/±120)
+    const isTrackpadScroll =
+      !isPinchGesture && event.deltaMode === 0 && Math.abs(event.deltaY) < 50;
+
     // Calculate zoom factor based on deltaY magnitude for smooth zooming
     let zoomFactor: number;
     if (isPinchGesture) {
       // For trackpad pinch: use deltaY directly with a small multiplier for smooth zoom
       zoomFactor = 1 - event.deltaY * 0.01;
+    } else if (isTrackpadScroll) {
+      // For trackpad two-finger scroll: use deltaY proportionally but with lower sensitivity
+      // Trackpad scroll deltaY is typically -3 to 3 per event, so use a smaller multiplier
+      zoomFactor = 1 - event.deltaY * 0.003;
     } else {
       // For mouse wheel: normalize deltaY and use direction-based zoom
       const direction = event.deltaY < 0 ? 1 : -1;
