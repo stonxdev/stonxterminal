@@ -23,6 +23,6 @@ function FpsStatusBarComponent(_props: StatusBarItemProps) {
 export const fpsStatusBar: StatusBarItemDefinition = {
   id: "fps",
   component: FpsStatusBarComponent,
-  alignment: "left",
-  priority: 50,
+  alignment: "right",
+  priority: 100,
 };
