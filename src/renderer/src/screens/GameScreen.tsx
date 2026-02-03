@@ -158,7 +158,6 @@ export const GameScreen: React.FC = () => {
           "[GameScreen] World ready, focusing on character:",
           characterToFocusRef.current,
         );
-        game.selectCharacter(characterToFocusRef.current);
         game.focusCharacter(characterToFocusRef.current);
         game.setZoom(2);
         characterToFocusRef.current = null; // Clear after focusing
