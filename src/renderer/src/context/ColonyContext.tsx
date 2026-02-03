@@ -157,7 +157,7 @@ const ColonyContextInner: FC<{ children: ReactNode }> = ({ children }) => {
 
     // Set initial theme
     document.documentElement.setAttribute("data-theme", activeThemeId);
-  }, []);
+  }, [activeThemeId]);
 
   // Register commands on mount
   useEffect(() => {
