@@ -1,5 +1,7 @@
 import { DEFAULT_SETTINGS } from "./settings/defaults";
 import type {
+  ConfigRecord,
+  ConfigStorageProvider,
   GameSave,
   GameSettings,
   SaveMetadata,
@@ -13,6 +15,7 @@ const DB_NAME = "colony-game";
 const DB_VERSION = 1;
 const SAVES_STORE = "saves";
 const SETTINGS_KEY = "colony:settings";
+const CONFIG_KEY = "colony:config";
 
 /**
  * IndexedDB wrapper for game saves
@@ -218,6 +221,37 @@ class WebSettingsStorage implements SettingsStorageProvider {
   }
 }
 
+/**
+ * localStorage wrapper for configuration (dot-notation key-value pairs)
+ */
+class WebConfigStorage implements ConfigStorageProvider {
+  async loadConfig(): Promise<StorageResult<ConfigRecord>> {
+    try {
+      const stored = localStorage.getItem(CONFIG_KEY);
+      if (!stored) {
+        return { success: true, data: {} };
+      }
+      return { success: true, data: JSON.parse(stored) };
+    } catch {
+      return { success: true, data: {} };
+    }
+  }
+
+  async saveConfig(config: ConfigRecord): Promise<StorageResult<void>> {
+    try {
+      localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: String(error) };
+    }
+  }
+
+  async resetConfig(): Promise<StorageResult<void>> {
+    localStorage.removeItem(CONFIG_KEY);
+    return { success: true };
+  }
+}
+
 export async function createWebStorage(): Promise<StorageService> {
   const saveStorage = new WebSaveStorage();
   await saveStorage.init();
@@ -225,6 +259,7 @@ export async function createWebStorage(): Promise<StorageService> {
   return {
     saves: saveStorage,
     settings: new WebSettingsStorage(),
+    config: new WebConfigStorage(),
     platform: "web",
     isElectron: false,
   };

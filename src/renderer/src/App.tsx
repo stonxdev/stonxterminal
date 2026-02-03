@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { registerBuiltInControlBars } from "./components/control-bars";
 import { registerBuiltInStatusBars } from "./components/status-bars";
 import { registerBuiltInWidgets } from "./components/widgets";
+import { initializeConfig } from "./config";
 import { ColonyProvider } from "./context/ColonyContext";
 import { useIsMobilePhone } from "./hooks/useIsMobilePhone";
 import { registerBuiltInLayers, useLayerStore } from "./layers";
@@ -49,13 +50,15 @@ export const App: React.FC = () => {
   usePreventBrowserZoom();
   const isMobilePhone = useIsMobilePhone();
 
-  // Initialize widget, layer, control bar, and status bar systems
+  // Initialize widget, layer, control bar, status bar, and config systems
   useEffect(() => {
     registerBuiltInWidgets();
     registerBuiltInLayers();
     registerBuiltInControlBars();
     registerBuiltInStatusBars();
     useLayerStore.getState().initialize();
+    // Load configuration from storage (async, non-blocking)
+    initializeConfig();
   }, []);
 
   if (isMobilePhone) {

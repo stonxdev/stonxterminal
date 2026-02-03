@@ -90,11 +90,27 @@ export interface SettingsStorageProvider {
 }
 
 /**
+ * Configuration record with dot-notation keys.
+ * Example: { "pixi.maxFramerate": 60, "ui.theme": "dark" }
+ */
+export type ConfigRecord = Record<string, string | number | boolean | null>;
+
+/**
+ * Configuration storage provider interface
+ */
+export interface ConfigStorageProvider {
+  loadConfig(): Promise<StorageResult<ConfigRecord>>;
+  saveConfig(config: ConfigRecord): Promise<StorageResult<void>>;
+  resetConfig(): Promise<StorageResult<void>>;
+}
+
+/**
  * Combined storage service
  */
 export interface StorageService {
   saves: SaveStorageProvider;
   settings: SettingsStorageProvider;
+  config: ConfigStorageProvider;
 
   // Platform info
   readonly platform: "electron" | "web";

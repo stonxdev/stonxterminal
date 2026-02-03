@@ -1,4 +1,6 @@
-import { useMemo } from "react";
+import type { SetActiveTabPayload } from "@renderer/commands/definitions/widget.setActiveTab";
+import { useCommand } from "@renderer/commands/useCommand";
+import { useMemo, useState } from "react";
 import type { TabItem } from "../tabs";
 import { Tabs } from "../tabs";
 import type { WidgetSlotId } from "./types";
@@ -23,6 +25,7 @@ interface WidgetSlotProps {
  * - Always shows tabs even when there's only 1 widget
  * - Returns null when slot has zero widgets (Dock will hide the slot)
  * - Respects widget placement constraints (pinned widgets cannot be closed)
+ * - Listens for widget.setActiveTab commands to bring widgets to front
  */
 export function WidgetSlot({
   slotId,
@@ -31,6 +34,15 @@ export function WidgetSlot({
   keepMounted = false,
 }: WidgetSlotProps) {
   const widgetIds = useWidgetsForSlot(slotId);
+  const [activeTabId, setActiveTabId] = useState<string | undefined>(undefined);
+
+  // Subscribe to widget.setActiveTab command
+  useCommand<SetActiveTabPayload>("widget.setActiveTab", (payload) => {
+    // Check if this slot contains the requested widget
+    if (widgetIds.includes(payload.widgetId)) {
+      setActiveTabId(payload.widgetId);
+    }
+  });
 
   // Convert widget IDs to TabItems
   const tabs = useMemo(() => {
@@ -69,6 +81,8 @@ export function WidgetSlot({
   return (
     <Tabs
       tabs={tabs}
+      activeTabId={activeTabId}
+      onTabChange={setActiveTabId}
       variant={variant}
       className={className}
       keepMounted={keepMounted}

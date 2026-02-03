@@ -1,5 +1,7 @@
 import { DEFAULT_SETTINGS } from "./settings/defaults";
 import type {
+  ConfigRecord,
+  ConfigStorageProvider,
   GameSave,
   GameSettings,
   SaveMetadata,
@@ -11,6 +13,7 @@ import type {
 
 const SAVES_DIR = "saves";
 const SETTINGS_FILE = "settings.json";
+const CONFIG_FILE = "config.json";
 
 class ElectronSaveStorage implements SaveStorageProvider {
   private basePath: string;
@@ -204,6 +207,55 @@ class ElectronSettingsStorage implements SettingsStorageProvider {
   }
 }
 
+/**
+ * File system wrapper for configuration (dot-notation key-value pairs)
+ */
+class ElectronConfigStorage implements ConfigStorageProvider {
+  private basePath: string;
+  private configPathCache: string | null = null;
+
+  constructor(basePath: string) {
+    this.basePath = basePath;
+  }
+
+  private async getConfigPath(): Promise<string> {
+    if (!this.configPathCache) {
+      this.configPathCache = await window.api.joinPath(
+        this.basePath,
+        CONFIG_FILE,
+      );
+    }
+    return this.configPathCache;
+  }
+
+  async loadConfig(): Promise<StorageResult<ConfigRecord>> {
+    try {
+      const path = await this.getConfigPath();
+      const content = await window.api.readFileContent(path);
+      if (!content) {
+        return { success: true, data: {} };
+      }
+      return { success: true, data: JSON.parse(content) };
+    } catch {
+      return { success: true, data: {} };
+    }
+  }
+
+  async saveConfig(config: ConfigRecord): Promise<StorageResult<void>> {
+    try {
+      const path = await this.getConfigPath();
+      await window.api.writeFileContent(path, JSON.stringify(config, null, 2));
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: String(error) };
+    }
+  }
+
+  async resetConfig(): Promise<StorageResult<void>> {
+    return this.saveConfig({});
+  }
+}
+
 export async function createElectronStorage(): Promise<StorageService> {
   // Get app data path from Electron
   const basePath = await window.api.getAppDataPath();
@@ -214,6 +266,7 @@ export async function createElectronStorage(): Promise<StorageService> {
   return {
     saves: new ElectronSaveStorage(basePath),
     settings: new ElectronSettingsStorage(basePath),
+    config: new ElectronConfigStorage(basePath),
     platform: "electron",
     isElectron: true,
   };

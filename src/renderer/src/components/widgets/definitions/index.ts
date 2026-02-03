@@ -1,6 +1,7 @@
 export { charactersWidget } from "./CharactersWidget";
 export { layersWidget } from "./LayersWidget";
 export { performanceWidget } from "./PerformanceWidget";
+export { settingsWidget } from "./SettingsWidget";
 export { tileInspectorWidget } from "./TileInspectorWidget";
 export { worldWidget } from "./WorldWidget";
 

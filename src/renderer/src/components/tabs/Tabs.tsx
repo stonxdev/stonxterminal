@@ -98,7 +98,9 @@ export function Tabs({
               aria-hidden={tab.id !== activeTabId}
               className={cn(
                 "absolute inset-0 overflow-y-auto",
-                tab.id === activeTabId ? "visible" : "invisible",
+                tab.id === activeTabId
+                  ? "visible z-10"
+                  : "invisible z-0 pointer-events-none",
               )}
             >
               {tab.content}

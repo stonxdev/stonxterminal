@@ -11,6 +11,9 @@ export { layerSetVisibility } from "./layer.setVisibility";
 export { layerToggleVisibility } from "./layer.toggleVisibility";
 // Notification commands (events converted to commands)
 export * from "./notifications";
+// Widget commands
+export { widgetBringToFront } from "./widget.bringToFront";
+export { widgetSetActiveTab } from "./widget.setActiveTab";
 // Workbench commands
 export { workbenchRunCommand } from "./workbench.runCommand";
 export { workbenchSetTheme } from "./workbench.setTheme";
