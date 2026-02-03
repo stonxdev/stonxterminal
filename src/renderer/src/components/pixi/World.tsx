@@ -201,6 +201,38 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
 
   // Subscribe to selection, hover, character, and layer state changes
   useEffect(() => {
+    // Helper to update character and path renderers
+    const updateCharacterAndPath = (
+      characters: Map<string, import("@renderer/simulation/types").Character>,
+      selection: ReturnType<typeof useGameStore.getState>["selection"],
+      shouldRenderCharacters: boolean,
+    ) => {
+      const selectedCharacterId =
+        selection.type === "entity" && selection.entityType === "colonist"
+          ? selection.entityId
+          : null;
+
+      if (characterRendererRef.current) {
+        if (shouldRenderCharacters) {
+          characterRendererRef.current.update(
+            characters,
+            selectedCharacterId,
+            zLevel,
+          );
+        } else {
+          characterRendererRef.current.update(new Map(), null, zLevel);
+        }
+      }
+
+      if (pathRendererRef.current) {
+        const selectedCharacter =
+          selectedCharacterId && shouldRenderCharacters
+            ? characters.get(selectedCharacterId)
+            : null;
+        pathRendererRef.current.update(selectedCharacter ?? null);
+      }
+    };
+
     const unsubscribeGame = useGameStore.subscribe((state) => {
       // Update selection overlay
       if (selectionGraphicsRef.current) {
@@ -217,42 +249,16 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
         updateHoverOverlay(hoverGraphicsRef.current, state.hoverPosition);
       }
 
-      // Get layer visibility for character rendering
+      // Update characters and paths
       const layerVisibility = useLayerStore.getState().visibility;
       const shouldRenderCharacters = layerVisibility.get("characters") ?? true;
-
-      // Get selected character ID (if any)
-      const selectedCharacterId =
-        state.selection.type === "entity" &&
-        state.selection.entityType === "colonist"
-          ? state.selection.entityId
-          : null;
-
-      // Update character renderer (respecting layer visibility)
-      if (characterRendererRef.current) {
-        if (shouldRenderCharacters) {
-          characterRendererRef.current.update(
-            state.simulation.characters,
-            selectedCharacterId,
-            zLevel,
-          );
-        } else {
-          // Hide all characters by passing empty map
-          characterRendererRef.current.update(new Map(), null, zLevel);
-        }
-      }
-
-      // Update path renderer
-      if (pathRendererRef.current) {
-        const selectedCharacter =
-          selectedCharacterId && shouldRenderCharacters
-            ? state.simulation.characters.get(selectedCharacterId)
-            : null;
-        pathRendererRef.current.update(selectedCharacter ?? null);
-      }
+      updateCharacterAndPath(
+        state.simulation.characters,
+        state.selection,
+        shouldRenderCharacters,
+      );
     });
 
-    // Subscribe to layer visibility changes
     const unsubscribeLayers = useLayerStore.subscribe((state) => {
       // Update heat map renderer
       if (heatMapRendererRef.current && level) {
@@ -273,35 +279,14 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
           state.visibility.get("items") ?? true;
       }
 
-      // Update character visibility
-      const shouldRenderCharacters = state.visibility.get("characters") ?? true;
+      // Update characters and paths based on visibility
       const gameState = useGameStore.getState();
-      const selectedCharacterId =
-        gameState.selection.type === "entity" &&
-        gameState.selection.entityType === "colonist"
-          ? gameState.selection.entityId
-          : null;
-
-      if (characterRendererRef.current) {
-        if (shouldRenderCharacters) {
-          characterRendererRef.current.update(
-            gameState.simulation.characters,
-            selectedCharacterId,
-            zLevel,
-          );
-        } else {
-          characterRendererRef.current.update(new Map(), null, zLevel);
-        }
-      }
-
-      // Update path renderer visibility
-      if (pathRendererRef.current) {
-        const selectedCharacter =
-          selectedCharacterId && shouldRenderCharacters
-            ? gameState.simulation.characters.get(selectedCharacterId)
-            : null;
-        pathRendererRef.current.update(selectedCharacter ?? null);
-      }
+      const shouldRenderCharacters = state.visibility.get("characters") ?? true;
+      updateCharacterAndPath(
+        gameState.simulation.characters,
+        gameState.selection,
+        shouldRenderCharacters,
+      );
     });
 
     return () => {
@@ -335,7 +320,7 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
         antialias: false, // Pixel-perfect for tiles
         resolution: window.devicePixelRatio || 1,
         autoDensity: true,
-        resizeTo: container,
+        // Note: We handle resize manually via ResizeObserver + ticker for flicker-free dock panel resizing
       });
 
       if (!isActive) {
@@ -507,18 +492,13 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
       });
       resizeObserver.observe(container);
 
-      (
-        app as Application & {
-          _resizeObserver?: ResizeObserver;
-          _resizeHandler?: () => void;
-        }
-      )._resizeObserver = resizeObserver;
-      (
-        app as Application & {
-          _resizeObserver?: ResizeObserver;
-          _resizeHandler?: () => void;
-        }
-      )._resizeHandler = handleResize;
+      // Store references for cleanup
+      const appWithExtras = app as Application & {
+        _resizeObserver?: ResizeObserver;
+        _resizeHandler?: () => void;
+      };
+      appWithExtras._resizeObserver = resizeObserver;
+      appWithExtras._resizeHandler = handleResize;
 
       // Dispatch world.ready command to notify that viewport is fully initialized
       commandRegistry.dispatch("world.ready", { timestamp: Date.now() });
