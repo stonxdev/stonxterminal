@@ -2,7 +2,7 @@ import { createMoveCommand } from "../../simulation/types";
 import { defineCommand } from "../defineCommand";
 
 export interface MoveToPayload {
-  characterId: string | string[];
+  characterIds: string[];
   destination: { x: number; y: number; z: number };
 }
 
@@ -10,32 +10,19 @@ export const characterMoveTo = defineCommand<MoveToPayload>({
   id: "character.moveTo",
   name: "Move Character To",
   execute: (context, payload) => {
-    console.info("[character.moveTo] Execute called with payload:", payload);
-
-    if (!payload) {
+    if (!payload?.characterIds?.length) {
       console.warn(
-        "character.moveTo requires payload: { characterId, destination }",
+        "character.moveTo requires payload: { characterIds, destination }",
       );
       return;
     }
 
-    const { destination } = payload;
-
-    // Normalize to array for uniform handling
-    const characterIds = Array.isArray(payload.characterId)
-      ? payload.characterId
-      : [payload.characterId];
+    const { characterIds, destination } = payload;
 
     if (!context.game.isTilePassable(destination)) {
       console.warn("Cannot move to impassable tile:", destination);
       return;
     }
-
-    console.info(
-      "[character.moveTo] Issuing move command to",
-      characterIds.length,
-      "character(s)",
-    );
 
     for (const characterId of characterIds) {
       const character = context.game.getCharacter(characterId);
@@ -46,7 +33,6 @@ export const characterMoveTo = defineCommand<MoveToPayload>({
 
       const command = createMoveCommand(destination);
       context.game.issueCharacterCommand(characterId, command);
-      console.info("[character.moveTo] Command issued to:", character.id);
     }
   },
 });

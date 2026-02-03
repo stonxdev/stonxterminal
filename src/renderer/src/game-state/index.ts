@@ -57,7 +57,6 @@ export {
 
 // Store
 export { useGameStore } from "./store";
-
 // Types
 export type {
   EntitySelection,
@@ -76,3 +75,5 @@ export type {
   TileSelection,
   WorldGenerationConfig,
 } from "./types";
+// Utils
+export { getSelectedColonistIds } from "./utils";

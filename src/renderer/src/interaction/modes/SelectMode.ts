@@ -4,6 +4,7 @@
 
 import { commandRegistry } from "../../commands";
 import { useGameStore } from "../../game-state/store";
+import { getSelectedColonistIds } from "../../game-state/utils";
 import type { InteractionContext, InteractionModeHandler } from "../types";
 
 /** Maximum distance (in pixels) to still count as a click vs drag */
@@ -114,34 +115,19 @@ export class SelectModeHandler implements InteractionModeHandler {
    * Supports both single and multi-entity selection
    */
   private handleRightClick(ctx: InteractionContext): void {
-    const state = useGameStore.getState();
-    const { selection } = state;
+    const characterIds = getSelectedColonistIds(
+      useGameStore.getState().selection,
+    );
+    if (characterIds.length === 0) return;
 
-    const destination = {
-      x: ctx.worldPosition.x,
-      y: ctx.worldPosition.y,
-      z: ctx.zLevel,
-    };
-
-    // Single character selected
-    if (selection.type === "entity" && selection.entityType === "colonist") {
-      commandRegistry.dispatch("character.moveTo", {
-        characterId: selection.entityId,
-        destination,
-      });
-      return;
-    }
-
-    // Multiple characters selected
-    if (
-      selection.type === "multi-entity" &&
-      selection.entityType === "colonist"
-    ) {
-      commandRegistry.dispatch("character.moveTo", {
-        characterId: Array.from(selection.entityIds),
-        destination,
-      });
-    }
+    commandRegistry.dispatch("character.moveTo", {
+      characterIds,
+      destination: {
+        x: ctx.worldPosition.x,
+        y: ctx.worldPosition.y,
+        z: ctx.zLevel,
+      },
+    });
   }
 
   onHover(ctx: InteractionContext): void {

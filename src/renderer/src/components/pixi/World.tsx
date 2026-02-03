@@ -18,7 +18,7 @@ import {
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import "pixi.js/unsafe-eval";
-import { useGameStore } from "@renderer/game-state";
+import { getSelectedColonistIds, useGameStore } from "@renderer/game-state";
 import { usePixiInteraction } from "@renderer/interaction";
 import { useLayerStore } from "@renderer/layers";
 import type { Position2D } from "@renderer/world/types";
@@ -207,18 +207,7 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
       selection: ReturnType<typeof useGameStore.getState>["selection"],
       shouldRenderCharacters: boolean,
     ) => {
-      // Compute selected IDs set (supports both single and multi-selection)
-      let selectedIds: Set<string>;
-      if (selection.type === "entity" && selection.entityType === "colonist") {
-        selectedIds = new Set([selection.entityId]);
-      } else if (
-        selection.type === "multi-entity" &&
-        selection.entityType === "colonist"
-      ) {
-        selectedIds = selection.entityIds;
-      } else {
-        selectedIds = new Set();
-      }
+      const selectedIds = new Set(getSelectedColonistIds(selection));
 
       if (characterRendererRef.current) {
         if (shouldRenderCharacters) {
@@ -436,21 +425,9 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
           (c) => ({ name: c.name, pos: c.position }),
         ),
       });
-      // Compute initial selected IDs (supports both single and multi-selection)
-      let initialSelectedIds: Set<string>;
-      if (
-        initialState.selection.type === "entity" &&
-        initialState.selection.entityType === "colonist"
-      ) {
-        initialSelectedIds = new Set([initialState.selection.entityId]);
-      } else if (
-        initialState.selection.type === "multi-entity" &&
-        initialState.selection.entityType === "colonist"
-      ) {
-        initialSelectedIds = initialState.selection.entityIds;
-      } else {
-        initialSelectedIds = new Set();
-      }
+      const initialSelectedIds = new Set(
+        getSelectedColonistIds(initialState.selection),
+      );
       characterRenderer.update(
         initialState.simulation.characters,
         initialSelectedIds,

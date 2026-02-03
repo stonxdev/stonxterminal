@@ -6,7 +6,7 @@ import type { MenuItem } from "../../menu/types";
 import { defineCommand } from "../defineCommand";
 
 export interface CharacterSelectPayload {
-  characterId?: string | string[];
+  characterIds?: string[];
 }
 
 export const characterSelect = defineCommand<CharacterSelectPayload>({
@@ -14,14 +14,14 @@ export const characterSelect = defineCommand<CharacterSelectPayload>({
   name: "Select Character",
   icon: Users,
   execute: (context, payload) => {
-    // If character ID(s) provided, select directly
-    if (payload?.characterId) {
-      if (Array.isArray(payload.characterId)) {
-        // Multi-select via store
-        useGameStore.getState().selectMultiple("colonist", payload.characterId);
+    // If character IDs provided, select directly
+    if (payload?.characterIds?.length) {
+      if (payload.characterIds.length === 1) {
+        context.game.selectCharacter(payload.characterIds[0]);
       } else {
-        // Single select
-        context.game.selectCharacter(payload.characterId);
+        useGameStore
+          .getState()
+          .selectMultiple("colonist", payload.characterIds);
       }
       return;
     }

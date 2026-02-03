@@ -6,7 +6,7 @@ import type { MenuItem } from "../../menu/types";
 import { defineCommand } from "../defineCommand";
 
 export interface CharacterFocusPayload {
-  characterId?: string | string[];
+  characterIds?: string[];
 }
 
 export const characterFocus = defineCommand<CharacterFocusPayload>({
@@ -14,24 +14,18 @@ export const characterFocus = defineCommand<CharacterFocusPayload>({
   name: "Focus Character",
   icon: Focus,
   execute: (context, payload) => {
-    console.info("[character.focus] Executing with payload:", payload);
-
-    // If character ID(s) provided, focus directly
-    if (payload?.characterId) {
-      const ids = Array.isArray(payload.characterId)
-        ? payload.characterId
-        : [payload.characterId];
+    // If character IDs provided, focus directly
+    if (payload?.characterIds?.length) {
+      const ids = payload.characterIds;
 
       if (ids.length === 1) {
-        // Single character - existing behavior
-        console.info("[character.focus] Focusing single character:", ids[0]);
-        context.commands.dispatch("character.select", { characterId: ids[0] });
+        // Single character - zoom in and focus
+        context.commands.dispatch("character.select", { characterIds: ids });
         context.game.focusCharacter(ids[0]);
         context.commands.dispatch("world.setZoom", { scale: 2 });
       } else {
         // Multiple characters - focus on centroid
-        console.info("[character.focus] Focusing", ids.length, "characters");
-        context.commands.dispatch("character.select", { characterId: ids });
+        context.commands.dispatch("character.select", { characterIds: ids });
 
         const chars = ids
           .map((id) => context.game.getCharacter(id))
@@ -52,7 +46,6 @@ export const characterFocus = defineCommand<CharacterFocusPayload>({
           context.commands.dispatch("world.setZoom", { scale: 1.5 });
         }
       }
-      console.info("[character.focus] Done focusing");
       return;
     }
 
@@ -81,7 +74,7 @@ export const characterFocus = defineCommand<CharacterFocusPayload>({
       onExecute: () => {
         context.modal.closeModal();
         context.commands.dispatch("character.select", {
-          characterId: character.id,
+          characterIds: [character.id],
         });
         context.game.focusCharacter(character.id);
         context.commands.dispatch("world.setZoom", { scale: 2 });

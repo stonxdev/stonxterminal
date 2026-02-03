@@ -164,25 +164,23 @@ export const Dock: React.FC<DockProps> = ({
         <div className="flex flex-1 min-h-0">
           {hasLeft && (
             <div
-              className="flex flex-col relative bg-background border-r border-border"
+              className="grid relative bg-background border-r border-border"
               style={{
                 width: leftWidth,
                 pointerEvents: "auto",
+                gridTemplateRows:
+                  leftTop && leftBottom
+                    ? `${1 - leftBottomRatio}fr ${leftBottomRatio}fr`
+                    : "1fr",
               }}
             >
               {leftTop && (
-                <div
-                  className="bg-background relative overflow-hidden"
-                  style={{ flex: `${1 - leftBottomRatio} 1 0`, minHeight: 0 }}
-                >
-                  <div className="absolute inset-0">{leftTop}</div>
+                <div className="relative overflow-hidden min-h-0">
+                  {leftTop}
                 </div>
               )}
               {leftBottom && (
-                <div
-                  className="bg-background relative overflow-hidden"
-                  style={{ flex: `${leftBottomRatio} 1 0`, minHeight: 0 }}
-                >
+                <div className="relative overflow-hidden min-h-0">
                   {leftTop && (
                     <VerticalResizeHandle
                       onResizeStart={leftBottomResize.onResizeStart}
@@ -190,7 +188,7 @@ export const Dock: React.FC<DockProps> = ({
                       align="top"
                     />
                   )}
-                  <div className="absolute inset-0">{leftBottom}</div>
+                  {leftBottom}
                 </div>
               )}
               <HorizontalResizeHandle
@@ -210,7 +208,7 @@ export const Dock: React.FC<DockProps> = ({
             </div>
             {centerBottom && (
               <div
-                className="bg-background relative overflow-hidden border-t border-border"
+                className="grid relative overflow-hidden border-t border-border"
                 style={{
                   height: centerBottomHeight,
                   pointerEvents: "auto",
@@ -221,32 +219,30 @@ export const Dock: React.FC<DockProps> = ({
                   isDragging={centerBottomResize.isDragging}
                   align="top"
                 />
-                <div className="absolute inset-0">{centerBottom}</div>
+                <div className="overflow-hidden min-h-0">{centerBottom}</div>
               </div>
             )}
           </div>
 
           {hasRight && (
             <div
-              className="flex flex-col relative bg-background border-l border-border"
+              className="grid relative bg-background border-l border-border"
               style={{
                 width: rightWidth,
                 pointerEvents: "auto",
+                gridTemplateRows:
+                  rightTop && rightBottom
+                    ? `${1 - rightBottomRatio}fr ${rightBottomRatio}fr`
+                    : "1fr",
               }}
             >
               {rightTop && (
-                <div
-                  className="bg-background relative overflow-hidden"
-                  style={{ flex: `${1 - rightBottomRatio} 1 0`, minHeight: 0 }}
-                >
-                  <div className="absolute inset-0">{rightTop}</div>
+                <div className="relative overflow-hidden min-h-0">
+                  {rightTop}
                 </div>
               )}
               {rightBottom && (
-                <div
-                  className="bg-background relative overflow-hidden"
-                  style={{ flex: `${rightBottomRatio} 1 0`, minHeight: 0 }}
-                >
+                <div className="relative overflow-hidden min-h-0">
                   {rightTop && (
                     <VerticalResizeHandle
                       onResizeStart={rightBottomResize.onResizeStart}
@@ -254,7 +250,7 @@ export const Dock: React.FC<DockProps> = ({
                       align="top"
                     />
                   )}
-                  <div className="absolute inset-0">{rightBottom}</div>
+                  {rightBottom}
                 </div>
               )}
               <HorizontalResizeHandle
