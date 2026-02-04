@@ -2,19 +2,6 @@ import { useCallback, useState } from "react";
 
 type GetConstraints = () => { min: number; max: number };
 
-type ResizeEvent = React.MouseEvent | React.TouchEvent;
-
-const getCoordinates = (
-  e: ResizeEvent | MouseEvent | TouchEvent,
-  isHorizontal: boolean,
-): number => {
-  if ("touches" in e) {
-    const touch = e.touches[0] || (e as TouchEvent).changedTouches?.[0];
-    return touch ? (isHorizontal ? touch.clientY : touch.clientX) : 0;
-  }
-  return isHorizontal ? e.clientY : e.clientX;
-};
-
 export const useResize = (
   onResize: (newSize: number) => void,
   getStartSize: () => number,
@@ -25,14 +12,16 @@ export const useResize = (
   const [isDragging, setIsDragging] = useState(false);
 
   const handleResizeStart = useCallback(
-    (e: ResizeEvent) => {
+    (e: React.MouseEvent) => {
       e.preventDefault();
       setIsDragging(true);
-      const startCoordinate = getCoordinates(e, isHorizontal);
+      const startCoordinate = isHorizontal ? e.clientY : e.clientX;
       const startSize = getStartSize();
 
-      const handleMove = (moveEvent: MouseEvent | TouchEvent) => {
-        const currentCoordinate = getCoordinates(moveEvent, isHorizontal);
+      const handleMove = (moveEvent: MouseEvent) => {
+        const currentCoordinate = isHorizontal
+          ? moveEvent.clientY
+          : moveEvent.clientX;
         const delta = currentCoordinate - startCoordinate;
         const newSize = startSize + (isReverse ? -delta : delta);
         const { min, max } = getConstraints();
@@ -43,16 +32,10 @@ export const useResize = (
         setIsDragging(false);
         document.removeEventListener("mousemove", handleMove);
         document.removeEventListener("mouseup", handleEnd);
-        document.removeEventListener("touchmove", handleMove);
-        document.removeEventListener("touchend", handleEnd);
-        document.removeEventListener("touchcancel", handleEnd);
       };
 
       document.addEventListener("mousemove", handleMove);
       document.addEventListener("mouseup", handleEnd);
-      document.addEventListener("touchmove", handleMove, { passive: false });
-      document.addEventListener("touchend", handleEnd);
-      document.addEventListener("touchcancel", handleEnd);
     },
     [onResize, getStartSize, getConstraints, isReverse, isHorizontal],
   );

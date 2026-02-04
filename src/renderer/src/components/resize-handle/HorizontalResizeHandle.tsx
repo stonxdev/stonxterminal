@@ -3,14 +3,10 @@ import type React from "react";
 import { useState } from "react";
 
 interface HorizontalResizeHandleProps {
-  onResizeStart: (e: React.MouseEvent | React.TouchEvent) => void;
+  onResizeStart: (e: React.MouseEvent) => void;
   isDragging: boolean;
   align: "left" | "right";
 }
-
-const forceMobileHandles =
-  localStorage.getItem("__forceMobileHandles") === "true";
-const isTouchDevice = typeof window !== "undefined" && "ontouchstart" in window;
 
 export const HorizontalResizeHandle: React.FC<HorizontalResizeHandleProps> = ({
   onResizeStart,
@@ -18,24 +14,23 @@ export const HorizontalResizeHandle: React.FC<HorizontalResizeHandleProps> = ({
   align,
 }) => {
   const [isHovering, setIsHovering] = useState(false);
-  const useMobileStyle = forceMobileHandles || isTouchDevice;
-  const showGrip = useMobileStyle || isHovering || isDragging;
+  const showGrip = isHovering || isDragging;
 
   return (
     <button
       data-component="ResizeHandle"
       type="button"
       tabIndex={0}
-      style={{ pointerEvents: "auto", touchAction: "none" }}
+      style={{ pointerEvents: "auto" }}
       className={cn(
         "absolute top-0 bottom-0 z-10 flex items-center justify-center",
-        useMobileStyle ? "w-4" : "w-1.5",
+        "w-1.5",
         "cursor-col-resize",
         align === "left" ? "left-0" : "right-0",
         "transition-all duration-200",
         isDragging
           ? "bg-blue-500/50"
-          : isHovering || useMobileStyle
+          : isHovering
             ? "bg-border"
             : "bg-transparent",
         "hover:bg-border",
@@ -43,7 +38,6 @@ export const HorizontalResizeHandle: React.FC<HorizontalResizeHandleProps> = ({
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
       onMouseDown={onResizeStart}
-      onTouchStart={onResizeStart}
     >
       {showGrip && (
         <div className="flex flex-col gap-0.5">
