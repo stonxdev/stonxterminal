@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { DEFAULT_WIDGET_LAYOUT } from "./register-widgets";
 import type { WidgetId, WidgetLayoutConfig, WidgetSlotId } from "./types";
+import { MAIN_SLOTS } from "./types";
 import { widgetRegistry } from "./widget-registry";
 
 // =============================================================================
@@ -9,7 +10,7 @@ import { widgetRegistry } from "./widget-registry";
 
 /**
  * Check if a widget can be added to a specific slot.
- * Returns false if the widget has allowedSlots that don't include the target slot.
+ * Returns false if the widget has size/allowedSlots constraints that don't include the target slot.
  */
 export function canAddWidgetToSlot(
   widgetId: WidgetId,
@@ -17,6 +18,11 @@ export function canAddWidgetToSlot(
 ): boolean {
   const definition = widgetRegistry.get(widgetId);
   if (!definition) return false;
+
+  // Wide widgets can only go in main slots
+  if (definition.size === "wide" && !MAIN_SLOTS.includes(slotId)) {
+    return false;
+  }
 
   // Check allowedSlots constraint
   if (definition.placement?.allowedSlots) {

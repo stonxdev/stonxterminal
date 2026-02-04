@@ -13,6 +13,24 @@ export type WidgetSlotId =
   | "right-bottom";
 
 /**
+ * Widget size determines placement constraints.
+ * - "normal": Can be placed in any slot, can open in modal
+ * - "wide": Only main slots (center, center-bottom), cannot open in modal
+ */
+export type WidgetSize = "normal" | "wide";
+
+/** Main slots where wide widgets can be placed */
+export const MAIN_SLOTS: WidgetSlotId[] = ["center", "center-bottom"];
+
+/** Sidebar slots (wide widgets cannot go here) */
+export const SIDEBAR_SLOTS: WidgetSlotId[] = [
+  "left-top",
+  "left-bottom",
+  "right-top",
+  "right-bottom",
+];
+
+/**
  * Widget identifier using dash-case convention.
  * Examples: "tile-inspector", "entity-list", "console"
  */
@@ -56,8 +74,12 @@ export interface WidgetDefinition {
   placement?: WidgetPlacement;
   /** Default slot for pinned widgets */
   defaultSlot?: WidgetSlotId;
-  /** Whether this widget can be opened in a modal. Defaults to true. */
-  canOpenInModal?: boolean;
+  /**
+   * Widget size. Defaults to "normal".
+   * - "normal": Can be placed in any slot, can open in modal
+   * - "wide": Only main slots (center, center-bottom), cannot open in modal
+   */
+  size?: WidgetSize;
 }
 
 /**

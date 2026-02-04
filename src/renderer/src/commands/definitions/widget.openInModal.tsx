@@ -24,7 +24,7 @@ export type OpenInModalPayload = Infer<typeof openInModalSchema>;
  * Behavior:
  * - If widgetId is provided: Open that widget in a large modal
  * - If widgetId not provided: Show a picker modal with eligible widgets
- * - Widgets with canOpenInModal: false are excluded
+ * - Wide widgets (size: "wide") are excluded
  */
 export const widgetOpenInModal = defineCommand<OpenInModalPayload>({
   id: "widget.openInModal",
@@ -32,7 +32,7 @@ export const widgetOpenInModal = defineCommand<OpenInModalPayload>({
   icon: Maximize2,
   execute: (context, payload) => {
     const getEligibleWidgets = () =>
-      widgetRegistry.getAll().filter((w) => w.canOpenInModal !== false);
+      widgetRegistry.getAll().filter((w) => w.size !== "wide");
 
     if (payload?.widgetId) {
       const widget = widgetRegistry.get(payload.widgetId);
@@ -42,7 +42,7 @@ export const widgetOpenInModal = defineCommand<OpenInModalPayload>({
         return;
       }
 
-      if (widget.canOpenInModal === false) {
+      if (widget.size === "wide") {
         console.warn(`Widget "${payload.widgetId}" cannot be opened in modal`);
         return;
       }

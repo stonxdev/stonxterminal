@@ -24,5 +24,5 @@ export const settingsWidget: WidgetDefinition = {
     allowedSlots: ["center"],
   },
   defaultSlot: "center",
-  canOpenInModal: false,
+  size: "wide",
 };
