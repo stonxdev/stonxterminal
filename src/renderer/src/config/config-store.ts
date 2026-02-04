@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { getStorageService } from "../services/storage";
+import { ConfigOverridesSchema } from "./config-schema";
 import { DEFAULT_CONFIG } from "./defaults";
 import type { ConfigRecord, ConfigValue } from "./types";
 
@@ -117,14 +118,27 @@ export const useConfigStore = create<ConfigStore>((set, get) => ({
   setOverridesText: (text: string) => {
     try {
       const parsed = JSON.parse(text);
+
+      // Validate with Zod schema
+      const result = ConfigOverridesSchema.safeParse(parsed);
+
+      if (!result.success) {
+        // Format Zod errors nicely
+        const errorMessage = result.error.issues
+          .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
+          .join("; ");
+        set({ overridesText: text, parseError: errorMessage });
+        return;
+      }
+
       set((state) => ({
         overridesText: text,
-        overrides: parsed,
-        computed: computeConfig(state.defaults, parsed),
+        overrides: result.data,
+        computed: computeConfig(state.defaults, result.data),
         parseError: null,
       }));
     } catch (e) {
-      // Invalid JSON - keep text but don't update overrides
+      // JSON syntax error
       set({ overridesText: text, parseError: String(e) });
     }
   },
@@ -145,12 +159,12 @@ export const useConfigStore = create<ConfigStore>((set, get) => ({
       const result = await storage.config.loadConfig();
 
       if (result.success && result.data) {
-        const { text, lastValidJson, isTextValid } = result.data;
+        const { text, lastValidJson, parseError } = result.data;
         set((state) => ({
           overridesText: text,
           overrides: lastValidJson,
           computed: computeConfig(state.defaults, lastValidJson),
-          parseError: isTextValid ? null : "Invalid JSON",
+          parseError,
           isLoaded: true,
           loadError: null,
         }));

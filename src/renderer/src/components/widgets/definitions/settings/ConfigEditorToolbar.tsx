@@ -46,7 +46,7 @@ export function ConfigEditorToolbar({
       </Button>
       {parseError ? (
         <span className="text-xs text-red-500 ml-2 truncate" title={parseError}>
-          Invalid JSON (using defaults)
+          Invalid JSON (changes won't apply)
         </span>
       ) : (
         isDirty && (

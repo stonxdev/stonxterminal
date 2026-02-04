@@ -1,3 +1,4 @@
+import { parseStoredConfig } from "./config-helpers";
 import { DEFAULT_SETTINGS } from "./settings/defaults";
 import type {
   ConfigLoadResult,
@@ -234,63 +235,12 @@ class ElectronConfigStorage implements ConfigStorageProvider {
     try {
       const path = await this.getConfigPath();
       const content = await window.api.readFileContent(path);
-
-      if (!content) {
-        // No file - return empty defaults
-        return {
-          success: true,
-          data: { text: "{}", lastValidJson: {}, isTextValid: true },
-        };
-      }
-
-      // Try to parse the stored data
-      try {
-        const stored = JSON.parse(content);
-
-        // Check if it's the new format (has text and lastValidJson)
-        if (
-          typeof stored === "object" &&
-          stored !== null &&
-          "text" in stored &&
-          "lastValidJson" in stored
-        ) {
-          // New format - check if text is currently valid
-          let isTextValid = false;
-          try {
-            const parsed = JSON.parse(stored.text);
-            isTextValid =
-              JSON.stringify(parsed) === JSON.stringify(stored.lastValidJson);
-          } catch {
-            isTextValid = false;
-          }
-          return {
-            success: true,
-            data: {
-              text: stored.text,
-              lastValidJson: stored.lastValidJson,
-              isTextValid,
-            },
-          };
-        }
-
-        // Old format (just a plain config object) - migrate
-        const text = JSON.stringify(stored, null, 2);
-        return {
-          success: true,
-          data: { text, lastValidJson: stored, isTextValid: true },
-        };
-      } catch {
-        // File content is invalid JSON - return empty defaults
-        return {
-          success: true,
-          data: { text: "{}", lastValidJson: {}, isTextValid: true },
-        };
-      }
+      return { success: true, data: parseStoredConfig(content ?? null) };
     } catch {
       // File read error - return empty default
       return {
         success: true,
-        data: { text: "{}", lastValidJson: {}, isTextValid: true },
+        data: { text: "{}", lastValidJson: {}, parseError: null },
       };
     }
   }

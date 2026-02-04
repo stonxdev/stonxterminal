@@ -63,6 +63,7 @@ export function ConfigEditor({
         lineNumbers: "on",
         folding: true,
         wordWrap: "on",
+        fixedOverflowWidgets: true, // Allow tooltips to overflow editor boundaries
       });
 
       editorRef.current = editor;

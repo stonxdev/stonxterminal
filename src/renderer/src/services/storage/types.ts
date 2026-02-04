@@ -127,8 +127,8 @@ export interface ConfigLoadResult {
   text: string;
   /** Last valid JSON config */
   lastValidJson: ConfigRecord;
-  /** Whether current text is valid JSON (matches lastValidJson) */
-  isTextValid: boolean;
+  /** Parse error if text is invalid JSON (null if valid) */
+  parseError: string | null;
 }
 
 /**

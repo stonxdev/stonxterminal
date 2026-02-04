@@ -1,4 +1,5 @@
 import loader from "@monaco-editor/loader";
+import { getConfigJsonSchema } from "@renderer/config/config-json-schema";
 import * as monaco from "monaco-editor";
 import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
 import cssWorker from "monaco-editor/esm/vs/language/css/css.worker?worker";
@@ -29,17 +30,21 @@ self.MonacoEnvironment = {
 
 export async function initializeJsonSchema(): Promise<void> {
   try {
-    // Use the globally imported 'monaco' object
+    // Get the JSON Schema generated from Zod
+    const schema = getConfigJsonSchema();
+
+    // Configure JSON validation with the config schema
     monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
       validate: true,
-      allowComments: true,
+      allowComments: false,
       schemas: [
         {
-          uri: "project-schema.json", // A unique URI for the schema itself
-          fileMatch: ["*"], // Match all JSON files
+          uri: "config-schema.json",
+          fileMatch: ["*"],
+          schema: schema,
         },
       ],
-      enableSchemaRequest: true,
+      enableSchemaRequest: false, // We provide the schema directly
     });
 
     // Configure completion settings for better intellisense
