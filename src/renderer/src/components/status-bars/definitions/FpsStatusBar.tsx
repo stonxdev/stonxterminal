@@ -13,7 +13,14 @@ import type { StatusBarItemDefinition, StatusBarItemProps } from "../types";
  */
 function FpsStatusBarComponent(_props: StatusBarItemProps) {
   const fps = usePerformanceStore((state) => state.fps);
-  return <StatusBarButton text={`${fps} FPS`} icon={Activity} />;
+  return (
+    <StatusBarButton
+      text={`${fps} FPS`}
+      icon={Activity}
+      commandId="widget.openInModal"
+      commandArgs={{ widgetId: "performance" }}
+    />
+  );
 }
 
 // =============================================================================
