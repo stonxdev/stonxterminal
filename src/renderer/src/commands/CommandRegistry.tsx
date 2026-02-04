@@ -213,10 +213,11 @@ class CommandRegistryImpl implements CommandRegistry {
 
   /**
    * Get only executable commands (those with an `execute` function).
+   * Excludes hidden commands (those not meant for user invocation).
    */
   getExecutableCommands(): CommandDefinition[] {
     return Array.from(this.commands.values()).filter(
-      (command) => command.execute !== undefined,
+      (command) => command.execute !== undefined && !command.hidden,
     );
   }
 

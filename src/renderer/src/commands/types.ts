@@ -99,6 +99,12 @@ export interface CommandDefinition<TPayload = void> {
     context: ColonyContextData,
     payload?: TPayload,
   ) => void | Promise<void>;
+
+  /**
+   * If true, this command won't appear in the command palette.
+   * Use for commands that require parameters and can't be user-invoked directly.
+   */
+  hidden?: boolean;
 }
 
 /**

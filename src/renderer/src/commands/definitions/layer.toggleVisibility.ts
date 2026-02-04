@@ -15,6 +15,7 @@ export const layerToggleVisibility =
     id: "layer.toggleVisibility",
     name: "Toggle Layer Visibility",
     icon: ToggleLeft,
+    hidden: true,
     execute: (_context, payload) => {
       if (!payload?.layerId) {
         console.warn("layer.toggleVisibility requires payload: { layerId }");

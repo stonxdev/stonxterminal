@@ -1,6 +1,6 @@
 {
   "name": "colony",
-  "version": "0.10.32",
+  "version": "0.10.33",
   "description": "A journaling app with AI-assisted psychological insights",
   "main": "./out/main/index.js",
   "author": "Andre Pena",
