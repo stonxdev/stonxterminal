@@ -1,16 +1,7 @@
-// Types
+// Zod Schema
 
-export { configJsonSchema, getConfigJsonSchema } from "./config-json-schema";
 export type { ConfigOverrides } from "./config-schema";
-
-// Zod Schemas
-export {
-  ConfigOverridesSchema,
-  ControlBarLayoutSchema,
-  PixiMaxFramerateSchema,
-  StatusBarLayoutSchema,
-  WidgetLayoutSchema,
-} from "./config-schema";
+export { ConfigOverridesSchema, getConfigJsonSchema } from "./config-schema";
 // Store
 export { initializeConfig, useConfigStore } from "./config-store";
 // Defaults

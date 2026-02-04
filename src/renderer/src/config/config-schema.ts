@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { zodToJsonSchema } from "zod-to-json-schema";
 
 /**
  * Zod schemas for configuration validation.
@@ -8,22 +9,16 @@ import { z } from "zod";
  */
 
 // =============================================================================
-// INDIVIDUAL PROPERTY SCHEMAS
+// INDIVIDUAL PROPERTY SCHEMAS (internal use only)
 // =============================================================================
 
-/**
- * Maximum framerate for the Pixi.js renderer.
- */
-export const PixiMaxFramerateSchema = z
+const PixiMaxFramerateSchema = z
   .number()
   .min(30)
   .max(144)
   .describe("Maximum framerate for the Pixi.js renderer (30-144)");
 
-/**
- * Widget layout - maps slot IDs to arrays of widget IDs.
- */
-export const WidgetLayoutSchema = z
+const WidgetLayoutSchema = z
   .object({
     "left-top": z.array(z.string()).optional(),
     "left-bottom": z.array(z.string()).optional(),
@@ -34,20 +29,14 @@ export const WidgetLayoutSchema = z
   })
   .describe("Widget slot assignments");
 
-/**
- * Status bar layout - maps alignment (left/right) to arrays of status bar IDs.
- */
-export const StatusBarLayoutSchema = z
+const StatusBarLayoutSchema = z
   .object({
     left: z.array(z.string()).optional(),
     right: z.array(z.string()).optional(),
   })
   .describe("Status bar alignment assignments");
 
-/**
- * Control bar layout - maps position to arrays of control bar IDs.
- */
-export const ControlBarLayoutSchema = z
+const ControlBarLayoutSchema = z
   .object({
     "left-top": z.array(z.string()).optional(),
     "left-bottom": z.array(z.string()).optional(),
@@ -82,3 +71,18 @@ export const ConfigOverridesSchema = z
  * TypeScript type for config overrides, inferred from the Zod schema.
  */
 export type ConfigOverrides = z.infer<typeof ConfigOverridesSchema>;
+
+// =============================================================================
+// JSON SCHEMA (for Monaco Editor)
+// =============================================================================
+
+/**
+ * JSON Schema generated from the Zod schema.
+ * Used by Monaco Editor for autocomplete and validation.
+ */
+export function getConfigJsonSchema(): object {
+  return zodToJsonSchema(ConfigOverridesSchema, {
+    name: "ConfigOverrides",
+    $refStrategy: "none", // Inline all refs for Monaco compatibility
+  });
+}

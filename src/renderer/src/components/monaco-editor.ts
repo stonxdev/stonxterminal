@@ -1,5 +1,5 @@
 import loader from "@monaco-editor/loader";
-import { getConfigJsonSchema } from "@renderer/config/config-json-schema";
+import { getConfigJsonSchema } from "@renderer/config/config-schema";
 import * as monaco from "monaco-editor";
 import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
 import cssWorker from "monaco-editor/esm/vs/language/css/css.worker?worker";
