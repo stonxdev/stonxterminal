@@ -9,6 +9,7 @@ export interface MoveToPayload {
 export const characterMoveTo = defineCommand<MoveToPayload>({
   id: "character.moveTo",
   name: "Move Character To",
+  hidden: true,
   execute: (context, payload) => {
     if (!payload?.characterIds?.length) {
       console.warn(

@@ -17,7 +17,7 @@ export const TreeNavigator = ({
   searchInputRef,
   "data-testid": testId,
 }: TreeNavigatorProps) => {
-  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [selectedIndex, setSelectedIndex] = useState(items.length > 0 ? 0 : -1);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
@@ -134,11 +134,14 @@ export const TreeNavigator = ({
     }
   }, [selectedIndex, flatItems]);
 
+  // Reset selection to first item when items change (e.g., during search filtering)
   useEffect(() => {
-    if (selectedIndex >= itemsLength && itemsLength > 0) {
+    if (itemsLength > 0) {
+      setSelectedIndex(0);
+    } else {
       setSelectedIndex(-1);
     }
-  }, [selectedIndex, itemsLength]);
+  }, [itemsLength]);
 
   if (!items.length) {
     return (
