@@ -1,8 +1,14 @@
 /**
- * Primitive configuration values supported by the config system.
- * Matches VS Code's settings model.
+ * Configuration values supported by the config system.
+ * Supports primitives, arrays, and nested objects.
  */
-export type ConfigValue = string | number | boolean | null;
+export type ConfigValue =
+  | string
+  | number
+  | boolean
+  | null
+  | ConfigValue[]
+  | { [key: string]: ConfigValue };
 
 /**
  * Configuration record with dot-notation keys.
@@ -15,7 +21,7 @@ export type ConfigRecord = Record<string, ConfigValue>;
  * Used for validation and UI generation.
  */
 export interface ConfigPropertySchema {
-  type: "string" | "number" | "boolean";
+  type: "string" | "number" | "boolean" | "object" | "array";
   default: ConfigValue;
   description?: string;
   minimum?: number;

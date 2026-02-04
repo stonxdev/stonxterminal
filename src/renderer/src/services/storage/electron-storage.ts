@@ -1,6 +1,7 @@
 import { DEFAULT_SETTINGS } from "./settings/defaults";
 import type {
-  ConfigRecord,
+  ConfigLoadResult,
+  ConfigStorageData,
   ConfigStorageProvider,
   GameSave,
   GameSettings,
@@ -208,7 +209,8 @@ class ElectronSettingsStorage implements SettingsStorageProvider {
 }
 
 /**
- * File system wrapper for configuration (dot-notation key-value pairs)
+ * File system wrapper for configuration (dot-notation key-value pairs).
+ * Saves both raw text and last valid JSON to preserve user edits.
  */
 class ElectronConfigStorage implements ConfigStorageProvider {
   private basePath: string;
@@ -228,23 +230,77 @@ class ElectronConfigStorage implements ConfigStorageProvider {
     return this.configPathCache;
   }
 
-  async loadConfig(): Promise<StorageResult<ConfigRecord>> {
+  async loadConfig(): Promise<StorageResult<ConfigLoadResult>> {
     try {
       const path = await this.getConfigPath();
       const content = await window.api.readFileContent(path);
+
       if (!content) {
-        return { success: true, data: {} };
+        // No file - return empty defaults
+        return {
+          success: true,
+          data: { text: "{}", lastValidJson: {}, isTextValid: true },
+        };
       }
-      return { success: true, data: JSON.parse(content) };
+
+      // Try to parse the stored data
+      try {
+        const stored = JSON.parse(content);
+
+        // Check if it's the new format (has text and lastValidJson)
+        if (
+          typeof stored === "object" &&
+          stored !== null &&
+          "text" in stored &&
+          "lastValidJson" in stored
+        ) {
+          // New format - check if text is currently valid
+          let isTextValid = false;
+          try {
+            const parsed = JSON.parse(stored.text);
+            isTextValid =
+              JSON.stringify(parsed) === JSON.stringify(stored.lastValidJson);
+          } catch {
+            isTextValid = false;
+          }
+          return {
+            success: true,
+            data: {
+              text: stored.text,
+              lastValidJson: stored.lastValidJson,
+              isTextValid,
+            },
+          };
+        }
+
+        // Old format (just a plain config object) - migrate
+        const text = JSON.stringify(stored, null, 2);
+        return {
+          success: true,
+          data: { text, lastValidJson: stored, isTextValid: true },
+        };
+      } catch {
+        // File content is invalid JSON - return empty defaults
+        return {
+          success: true,
+          data: { text: "{}", lastValidJson: {}, isTextValid: true },
+        };
+      }
     } catch {
-      return { success: true, data: {} };
+      // File read error - return empty default
+      return {
+        success: true,
+        data: { text: "{}", lastValidJson: {}, isTextValid: true },
+      };
     }
   }
 
-  async saveConfig(config: ConfigRecord): Promise<StorageResult<void>> {
+  async saveConfig(data: ConfigStorageData): Promise<StorageResult<void>> {
     try {
       const path = await this.getConfigPath();
-      await window.api.writeFileContent(path, JSON.stringify(config, null, 2));
+      // Save wrapper object with both text and lastValidJson
+      const content = JSON.stringify(data, null, 2);
+      await window.api.writeFileContent(path, content);
       return { success: true };
     } catch (error) {
       return { success: false, error: String(error) };
@@ -252,7 +308,7 @@ class ElectronConfigStorage implements ConfigStorageProvider {
   }
 
   async resetConfig(): Promise<StorageResult<void>> {
-    return this.saveConfig({});
+    return this.saveConfig({ text: "{}", lastValidJson: {} });
   }
 }
 

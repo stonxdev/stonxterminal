@@ -12,6 +12,36 @@ export const CONFIG_SCHEMA: ConfigSchema = {
     minimum: 30,
     maximum: 144,
   },
+  "layout.widgets": {
+    type: "object",
+    default: {
+      "left-top": [],
+      "left-bottom": [],
+      center: ["world", "settings"],
+      "center-bottom": [],
+      "right-top": ["tile-inspector"],
+      "right-bottom": ["layers", "characters", "performance"],
+    },
+    description: "Widget slot assignments",
+  },
+  "layout.statusBars": {
+    type: "object",
+    default: {
+      left: ["version", "run-command", "theme"],
+      right: ["fps"],
+    },
+    description: "Status bar alignment assignments",
+  },
+  "layout.controlBars": {
+    type: "object",
+    default: {
+      "left-top": [],
+      "left-bottom": [],
+      "right-top": ["time-control", "zoom-control"],
+      "right-bottom": [],
+    },
+    description: "Control bar slot assignments",
+  },
 };
 
 /**

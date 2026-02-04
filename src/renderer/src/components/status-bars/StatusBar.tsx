@@ -2,13 +2,18 @@
 // STATUS BAR COMPONENT
 // =============================================================================
 
+import { useStatusBarLayoutConfig } from "@renderer/config";
 import { statusBarRegistry } from "./status-bar-registry";
 
 /**
  * Status bar container that renders all registered status bar items.
  * Items are grouped by alignment (left/right) and sorted by priority.
+ * Subscribes to config to re-render when status bar config changes.
  */
 export function StatusBar() {
+  // Subscribe to config changes to trigger re-renders
+  useStatusBarLayoutConfig();
+
   const leftItems = statusBarRegistry.getByAlignment("left");
   const rightItems = statusBarRegistry.getByAlignment("right");
 

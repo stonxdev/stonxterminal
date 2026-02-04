@@ -5,26 +5,37 @@ import { useEffect, useRef } from "react";
 interface ConfigEditorProps {
   value: string;
   onChange?: (value: string) => void;
+  onSave?: () => void;
   readOnly?: boolean;
 }
 
 export function ConfigEditor({
   value,
   onChange,
+  onSave,
   readOnly = false,
 }: ConfigEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const isUpdatingRef = useRef(false);
-  // Store initial values and callbacks in refs to avoid re-initialization
-  const initialValueRef = useRef(value);
+  // Store the latest value to apply when Monaco finishes initializing
+  const latestValueRef = useRef(value);
   const initialReadOnlyRef = useRef(readOnly);
   const onChangeRef = useRef(onChange);
+  const onSaveRef = useRef(onSave);
 
-  // Keep onChange ref up to date
+  // Keep refs up to date
   useEffect(() => {
     onChangeRef.current = onChange;
   }, [onChange]);
+
+  useEffect(() => {
+    onSaveRef.current = onSave;
+  }, [onSave]);
+
+  useEffect(() => {
+    latestValueRef.current = value;
+  }, [value]);
 
   // Initialize Monaco editor (only once on mount)
   useEffect(() => {
@@ -36,8 +47,9 @@ export function ConfigEditor({
     initializeMonaco().then((monacoInstance) => {
       if (disposed || !containerRef.current || editorRef.current) return;
 
+      // Use the latest value (might have changed while Monaco was loading)
       const editor = monacoInstance.editor.create(containerRef.current, {
-        value: initialValueRef.current,
+        value: latestValueRef.current,
         language: "json",
         theme: "vs-dark",
         readOnly: initialReadOnlyRef.current,
@@ -59,6 +71,18 @@ export function ConfigEditor({
       editor.onDidChangeModelContent(() => {
         if (isUpdatingRef.current) return;
         onChangeRef.current?.(editor.getValue());
+      });
+
+      // Add Ctrl/Cmd+S keybinding for save
+      editor.addAction({
+        id: "save-config",
+        label: "Save Config",
+        keybindings: [
+          monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.KeyS,
+        ],
+        run: () => {
+          onSaveRef.current?.();
+        },
       });
     });
 

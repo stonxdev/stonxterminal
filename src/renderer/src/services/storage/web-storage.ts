@@ -1,6 +1,7 @@
 import { DEFAULT_SETTINGS } from "./settings/defaults";
 import type {
-  ConfigRecord,
+  ConfigLoadResult,
+  ConfigStorageData,
   ConfigStorageProvider,
   GameSave,
   GameSettings,
@@ -222,24 +223,79 @@ class WebSettingsStorage implements SettingsStorageProvider {
 }
 
 /**
- * localStorage wrapper for configuration (dot-notation key-value pairs)
+ * localStorage wrapper for configuration (dot-notation key-value pairs).
+ * Saves both raw text and last valid JSON to preserve user edits.
  */
 class WebConfigStorage implements ConfigStorageProvider {
-  async loadConfig(): Promise<StorageResult<ConfigRecord>> {
+  async loadConfig(): Promise<StorageResult<ConfigLoadResult>> {
     try {
-      const stored = localStorage.getItem(CONFIG_KEY);
-      if (!stored) {
-        return { success: true, data: {} };
+      const content = localStorage.getItem(CONFIG_KEY);
+
+      if (!content) {
+        // No stored config - return empty defaults
+        return {
+          success: true,
+          data: { text: "{}", lastValidJson: {}, isTextValid: true },
+        };
       }
-      return { success: true, data: JSON.parse(stored) };
+
+      // Try to parse the stored data
+      try {
+        const stored = JSON.parse(content);
+
+        // Check if it's the new format (has text and lastValidJson)
+        if (
+          typeof stored === "object" &&
+          stored !== null &&
+          "text" in stored &&
+          "lastValidJson" in stored
+        ) {
+          // New format - check if text is currently valid
+          let isTextValid = false;
+          try {
+            const parsed = JSON.parse(stored.text);
+            isTextValid =
+              JSON.stringify(parsed) === JSON.stringify(stored.lastValidJson);
+          } catch {
+            isTextValid = false;
+          }
+          return {
+            success: true,
+            data: {
+              text: stored.text,
+              lastValidJson: stored.lastValidJson,
+              isTextValid,
+            },
+          };
+        }
+
+        // Old format (just a plain config object) - migrate
+        const text = JSON.stringify(stored, null, 2);
+        return {
+          success: true,
+          data: { text, lastValidJson: stored, isTextValid: true },
+        };
+      } catch {
+        // Content is invalid JSON - return empty defaults
+        return {
+          success: true,
+          data: { text: "{}", lastValidJson: {}, isTextValid: true },
+        };
+      }
     } catch {
-      return { success: true, data: {} };
+      // localStorage error - return empty default
+      return {
+        success: true,
+        data: { text: "{}", lastValidJson: {}, isTextValid: true },
+      };
     }
   }
 
-  async saveConfig(config: ConfigRecord): Promise<StorageResult<void>> {
+  async saveConfig(data: ConfigStorageData): Promise<StorageResult<void>> {
     try {
-      localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+      // Save wrapper object with both text and lastValidJson
+      const content = JSON.stringify(data);
+      localStorage.setItem(CONFIG_KEY, content);
       return { success: true };
     } catch (error) {
       return { success: false, error: String(error) };

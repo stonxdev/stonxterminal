@@ -2,6 +2,7 @@
 // CONTROL BAR SLOT COMPONENT
 // =============================================================================
 
+import { useControlBarLayoutConfig } from "@renderer/config";
 import { controlBarRegistry } from "./control-bar-registry";
 import type { ControlBarPosition } from "./types";
 
@@ -17,10 +18,14 @@ const positionClasses: Record<ControlBarPosition, string> = {
 };
 
 /**
- * Container for control bars at a specific position
- * Renders all registered control bars for the given position in a horizontal row
+ * Container for control bars at a specific position.
+ * Renders all registered control bars for the given position in a horizontal row.
+ * Subscribes to config to re-render when control bar config changes.
  */
 export function ControlBarSlot({ position }: ControlBarSlotProps) {
+  // Subscribe to config changes to trigger re-renders
+  useControlBarLayoutConfig();
+
   const bars = controlBarRegistry.getByPosition(position);
 
   if (bars.length === 0) {

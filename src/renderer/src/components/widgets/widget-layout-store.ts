@@ -1,5 +1,5 @@
+import { useConfigStore, type WidgetLayoutConfigValue } from "@renderer/config";
 import { create } from "zustand";
-import { DEFAULT_WIDGET_LAYOUT } from "./register-widgets";
 import type { WidgetId, WidgetLayoutConfig, WidgetSlotId } from "./types";
 import { MAIN_SLOTS } from "./types";
 import { widgetRegistry } from "./widget-registry";
@@ -55,6 +55,27 @@ export function canMoveWidgetToSlot(
 }
 
 // =============================================================================
+// CONFIG INTEGRATION
+// =============================================================================
+
+/**
+ * Get the initial layout from config store.
+ */
+function getInitialLayout(): WidgetLayoutConfig {
+  const slots = useConfigStore.getState().computed[
+    "layout.widgets"
+  ] as WidgetLayoutConfigValue;
+  return { slots };
+}
+
+/**
+ * Persist layout to config store.
+ */
+function persistLayout(slots: WidgetLayoutConfigValue): void {
+  useConfigStore.getState().set("layout.widgets", slots);
+}
+
+// =============================================================================
 // TYPES
 // =============================================================================
 
@@ -83,7 +104,7 @@ type WidgetLayoutStore = WidgetLayoutState & WidgetLayoutActions;
 // =============================================================================
 
 export const useWidgetLayoutStore = create<WidgetLayoutStore>()((set, get) => ({
-  layout: DEFAULT_WIDGET_LAYOUT,
+  layout: getInitialLayout(),
 
   addWidgetToSlot: (widgetId, slotId) => {
     // Check if widget can be added to this slot
@@ -111,13 +132,17 @@ export const useWidgetLayoutStore = create<WidgetLayoutStore>()((set, get) => ({
       const newSlots = { ...state.layout.slots };
       if (!definition?.placement?.pinned) {
         for (const slot of Object.keys(newSlots) as WidgetSlotId[]) {
-          newSlots[slot] = newSlots[slot].filter((id) => id !== widgetId);
+          newSlots[slot] = (newSlots[slot] ?? []).filter(
+            (id) => id !== widgetId,
+          );
         }
       }
       // Add to new slot if not already there
-      if (!newSlots[slotId].includes(widgetId)) {
-        newSlots[slotId] = [...newSlots[slotId], widgetId];
+      const currentSlot = newSlots[slotId] ?? [];
+      if (!currentSlot.includes(widgetId)) {
+        newSlots[slotId] = [...currentSlot, widgetId];
       }
+      persistLayout(newSlots);
       return { layout: { slots: newSlots } };
     });
     return true;
@@ -135,8 +160,9 @@ export const useWidgetLayoutStore = create<WidgetLayoutStore>()((set, get) => ({
     set((state) => {
       const newSlots = { ...state.layout.slots };
       for (const slot of Object.keys(newSlots) as WidgetSlotId[]) {
-        newSlots[slot] = newSlots[slot].filter((id) => id !== widgetId);
+        newSlots[slot] = (newSlots[slot] ?? []).filter((id) => id !== widgetId);
       }
+      persistLayout(newSlots);
       return { layout: { slots: newSlots } };
     });
     return true;
@@ -155,18 +181,23 @@ export const useWidgetLayoutStore = create<WidgetLayoutStore>()((set, get) => ({
   },
 
   reorderWidgetsInSlot: (slotId, widgetIds) => {
-    set((state) => ({
-      layout: {
-        slots: {
-          ...state.layout.slots,
-          [slotId]: widgetIds,
-        },
-      },
-    }));
+    set((state) => {
+      const newSlots = {
+        ...state.layout.slots,
+        [slotId]: widgetIds,
+      };
+      persistLayout(newSlots);
+      return { layout: { slots: newSlots } };
+    });
   },
 
   resetToDefaults: () => {
-    set({ layout: DEFAULT_WIDGET_LAYOUT });
+    // Remove the override to revert to defaults
+    useConfigStore.getState().remove("layout.widgets");
+    const defaultSlots = useConfigStore.getState().computed[
+      "layout.widgets"
+    ] as WidgetLayoutConfigValue;
+    set({ layout: { slots: defaultSlots } });
   },
 }));
 
@@ -178,7 +209,7 @@ export const useWidgetLayoutStore = create<WidgetLayoutStore>()((set, get) => ({
  * Get widget IDs for a specific slot.
  */
 export const useWidgetsForSlot = (slotId: WidgetSlotId): WidgetId[] => {
-  return useWidgetLayoutStore((state) => state.layout.slots[slotId]);
+  return useWidgetLayoutStore((state) => state.layout.slots[slotId] ?? []);
 };
 
 /**
@@ -186,6 +217,30 @@ export const useWidgetsForSlot = (slotId: WidgetSlotId): WidgetId[] => {
  */
 export const useIsSlotEmpty = (slotId: WidgetSlotId): boolean => {
   return useWidgetLayoutStore(
-    (state) => state.layout.slots[slotId].length === 0,
+    (state) => (state.layout.slots[slotId]?.length ?? 0) === 0,
   );
 };
+
+// =============================================================================
+// CONFIG SYNC
+// =============================================================================
+
+/**
+ * Subscribe to config changes to sync external updates (e.g., from SettingsWidget).
+ * This runs once when the module is loaded.
+ */
+let lastConfigLayout: WidgetLayoutConfigValue | null = null;
+useConfigStore.subscribe((state) => {
+  const configLayout = state.computed[
+    "layout.widgets"
+  ] as WidgetLayoutConfigValue;
+  // Only update if config actually changed (avoid infinite loops)
+  if (configLayout && configLayout !== lastConfigLayout) {
+    const currentLayout = useWidgetLayoutStore.getState().layout.slots;
+    // Deep compare to avoid unnecessary updates
+    if (JSON.stringify(configLayout) !== JSON.stringify(currentLayout)) {
+      lastConfigLayout = configLayout;
+      useWidgetLayoutStore.setState({ layout: { slots: configLayout } });
+    }
+  }
+});

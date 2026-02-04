@@ -10,10 +10,14 @@ import type { ConfigRecord, ConfigValue } from "./types";
 interface ConfigState {
   /** Built-in default configuration values (immutable at runtime) */
   defaults: ConfigRecord;
-  /** User's custom configuration overrides (persisted) */
+  /** User's custom configuration overrides (persisted, only valid JSON) */
   overrides: ConfigRecord;
   /** Merged result: defaults + overrides */
   computed: ConfigRecord;
+  /** Raw text from editor (may be invalid JSON) */
+  overridesText: string;
+  /** Parse error if overridesText is invalid JSON */
+  parseError: string | null;
   /** Whether initial load has completed */
   isLoaded: boolean;
   /** Loading error if any */
@@ -29,11 +33,13 @@ interface ConfigActions {
   remove: (key: string) => void;
   /** Replace all overrides at once */
   setOverrides: (overrides: ConfigRecord) => void;
+  /** Update overrides text - parses and updates overrides if valid */
+  setOverridesText: (text: string) => void;
   /** Reset all overrides to empty */
   resetOverrides: () => void;
   /** Load overrides from storage */
   load: () => Promise<void>;
-  /** Save current overrides to storage */
+  /** Save current overrides text to storage */
   save: () => Promise<void>;
 }
 
@@ -61,6 +67,8 @@ export const useConfigStore = create<ConfigStore>((set, get) => ({
   defaults: DEFAULT_CONFIG,
   overrides: {},
   computed: DEFAULT_CONFIG,
+  overridesText: "{}",
+  parseError: null,
   isLoaded: false,
   loadError: null,
 
@@ -74,7 +82,9 @@ export const useConfigStore = create<ConfigStore>((set, get) => ({
       const newOverrides = { ...state.overrides, [key]: value };
       return {
         overrides: newOverrides,
+        overridesText: JSON.stringify(newOverrides, null, 2),
         computed: computeConfig(state.defaults, newOverrides),
+        parseError: null,
       };
     });
     // Auto-save after changes
@@ -87,7 +97,9 @@ export const useConfigStore = create<ConfigStore>((set, get) => ({
       delete newOverrides[key];
       return {
         overrides: newOverrides,
+        overridesText: JSON.stringify(newOverrides, null, 2),
         computed: computeConfig(state.defaults, newOverrides),
+        parseError: null,
       };
     });
     get().save();
@@ -96,14 +108,33 @@ export const useConfigStore = create<ConfigStore>((set, get) => ({
   setOverrides: (overrides: ConfigRecord) => {
     set((state) => ({
       overrides,
+      overridesText: JSON.stringify(overrides, null, 2),
       computed: computeConfig(state.defaults, overrides),
+      parseError: null,
     }));
+  },
+
+  setOverridesText: (text: string) => {
+    try {
+      const parsed = JSON.parse(text);
+      set((state) => ({
+        overridesText: text,
+        overrides: parsed,
+        computed: computeConfig(state.defaults, parsed),
+        parseError: null,
+      }));
+    } catch (e) {
+      // Invalid JSON - keep text but don't update overrides
+      set({ overridesText: text, parseError: String(e) });
+    }
   },
 
   resetOverrides: () => {
     set((state) => ({
       overrides: {},
+      overridesText: "{}",
       computed: { ...state.defaults },
+      parseError: null,
     }));
     get().save();
   },
@@ -114,10 +145,12 @@ export const useConfigStore = create<ConfigStore>((set, get) => ({
       const result = await storage.config.loadConfig();
 
       if (result.success && result.data) {
-        const loadedOverrides = result.data;
+        const { text, lastValidJson, isTextValid } = result.data;
         set((state) => ({
-          overrides: loadedOverrides,
-          computed: computeConfig(state.defaults, loadedOverrides),
+          overridesText: text,
+          overrides: lastValidJson,
+          computed: computeConfig(state.defaults, lastValidJson),
+          parseError: isTextValid ? null : "Invalid JSON",
           isLoaded: true,
           loadError: null,
         }));
@@ -132,8 +165,12 @@ export const useConfigStore = create<ConfigStore>((set, get) => ({
   save: async () => {
     try {
       const storage = await getStorageService();
-      const { overrides } = get();
-      await storage.config.saveConfig(overrides);
+      const { overridesText, overrides } = get();
+      // Save both raw text and last valid JSON
+      await storage.config.saveConfig({
+        text: overridesText,
+        lastValidJson: overrides,
+      });
     } catch (error) {
       console.error("Failed to save config:", error);
     }

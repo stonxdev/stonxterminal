@@ -2,25 +2,18 @@
 // CONTROL BAR REGISTRY
 // =============================================================================
 
-import type {
-  ControlBarDefinition,
-  ControlBarLayoutConfig,
-  ControlBarPosition,
-} from "./types";
+import {
+  type ControlBarLayoutConfigValue,
+  useConfigStore,
+} from "@renderer/config";
+import type { ControlBarDefinition, ControlBarPosition } from "./types";
 
 /**
- * Registry for managing control bar definitions
+ * Registry for managing control bar definitions.
+ * Layout configuration is read from the config store.
  */
 class ControlBarRegistry {
   private bars: Map<string, ControlBarDefinition> = new Map();
-  private layout: ControlBarLayoutConfig = {
-    slots: {
-      "left-top": [],
-      "left-bottom": [],
-      "right-top": [],
-      "right-bottom": [],
-    },
-  };
 
   /**
    * Register a control bar definition
@@ -32,13 +25,6 @@ class ControlBarRegistry {
       );
     }
     this.bars.set(definition.id, definition);
-  }
-
-  /**
-   * Set the layout configuration
-   */
-  setLayout(layout: ControlBarLayoutConfig): void {
-    this.layout = layout;
   }
 
   /**
@@ -56,10 +42,14 @@ class ControlBarRegistry {
   }
 
   /**
-   * Get all control bars at a specific position (from layout config)
+   * Get all control bars at a specific position (from config)
    */
   getByPosition(position: ControlBarPosition): ControlBarDefinition[] {
-    const barIds = this.layout.slots[position] ?? [];
+    const config = useConfigStore.getState().computed[
+      "layout.controlBars"
+    ] as unknown as ControlBarLayoutConfigValue | undefined;
+
+    const barIds = config?.[position] ?? [];
     const bars: ControlBarDefinition[] = [];
     for (const id of barIds) {
       const bar = this.bars.get(id);

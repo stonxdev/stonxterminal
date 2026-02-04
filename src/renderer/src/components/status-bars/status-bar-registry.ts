@@ -2,6 +2,10 @@
 // STATUS BAR REGISTRY
 // =============================================================================
 
+import {
+  type StatusBarLayoutConfigValue,
+  useConfigStore,
+} from "@renderer/config";
 import type { StatusBarAlignment, StatusBarItemDefinition } from "./types";
 
 /**
@@ -37,12 +41,24 @@ class StatusBarRegistryImpl {
   }
 
   /**
-   * Get all status bar items for a specific alignment, sorted by priority
+   * Get all status bar items for a specific alignment (from config).
+   * Returns items in the order specified in config.
    */
   getByAlignment(alignment: StatusBarAlignment): StatusBarItemDefinition[] {
-    const items = Array.from(this.items.values())
-      .filter((item) => (item.alignment ?? "left") === alignment)
-      .sort((a, b) => (a.priority ?? 100) - (b.priority ?? 100));
+    const config = useConfigStore.getState().computed[
+      "layout.statusBars"
+    ] as unknown as StatusBarLayoutConfigValue | undefined;
+
+    const itemIds = config?.[alignment] ?? [];
+    const items: StatusBarItemDefinition[] = [];
+
+    for (const id of itemIds) {
+      const item = this.items.get(id);
+      if (item) {
+        items.push(item);
+      }
+    }
+
     return items;
   }
 

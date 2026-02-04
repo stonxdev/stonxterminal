@@ -1,5 +1,5 @@
 import { RouterProvider } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { registerBuiltInControlBars } from "./components/control-bars";
 import { registerBuiltInStatusBars } from "./components/status-bars";
 import { registerBuiltInWidgets } from "./components/widgets";
@@ -49,20 +49,33 @@ function usePreventBrowserZoom() {
 export const App: React.FC = () => {
   usePreventBrowserZoom();
   const isMobilePhone = useIsMobilePhone();
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Initialize widget, layer, control bar, status bar, and config systems
+  // Initialize config first, then registries that depend on it
   useEffect(() => {
-    registerBuiltInWidgets();
-    registerBuiltInLayers();
-    registerBuiltInControlBars();
-    registerBuiltInStatusBars();
-    useLayerStore.getState().initialize();
-    // Load configuration from storage (async, non-blocking)
-    initializeConfig();
+    async function initialize() {
+      // Load configuration from storage first (registries depend on it)
+      await initializeConfig();
+
+      // Now register widgets/bars/layers (they read from config)
+      registerBuiltInWidgets();
+      registerBuiltInLayers();
+      registerBuiltInControlBars();
+      registerBuiltInStatusBars();
+      useLayerStore.getState().initialize();
+
+      setIsInitialized(true);
+    }
+    initialize();
   }, []);
 
   if (isMobilePhone) {
     return <MobileNotSupportedScreen />;
+  }
+
+  // Wait for initialization before rendering the app
+  if (!isInitialized) {
+    return null;
   }
 
   return (

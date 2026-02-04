@@ -90,17 +90,57 @@ export interface SettingsStorageProvider {
 }
 
 /**
+ * Configuration value that can be stored.
+ * Supports primitives, arrays, and nested objects.
+ */
+export type ConfigValue =
+  | string
+  | number
+  | boolean
+  | null
+  | ConfigValue[]
+  | { [key: string]: ConfigValue };
+
+/**
  * Configuration record with dot-notation keys.
  * Example: { "pixi.maxFramerate": 60, "ui.theme": "dark" }
  */
-export type ConfigRecord = Record<string, string | number | boolean | null>;
+export type ConfigRecord = Record<string, ConfigValue>;
 
 /**
- * Configuration storage provider interface
+ * Stored config format - includes both raw text and last valid JSON.
+ * This allows the UI to show user's edits (even if invalid) while
+ * the app uses the last known valid config.
+ */
+export interface ConfigStorageData {
+  /** Raw text from editor (may be invalid JSON) */
+  text: string;
+  /** Last valid JSON config (used for actual settings) */
+  lastValidJson: ConfigRecord;
+}
+
+/**
+ * Result of loading config.
+ */
+export interface ConfigLoadResult {
+  /** Raw text from storage */
+  text: string;
+  /** Last valid JSON config */
+  lastValidJson: ConfigRecord;
+  /** Whether current text is valid JSON (matches lastValidJson) */
+  isTextValid: boolean;
+}
+
+/**
+ * Configuration storage provider interface.
+ * Saves both raw text and last valid JSON to preserve edits.
  */
 export interface ConfigStorageProvider {
-  loadConfig(): Promise<StorageResult<ConfigRecord>>;
-  saveConfig(config: ConfigRecord): Promise<StorageResult<void>>;
+  /** Load config - returns text and last valid JSON */
+  loadConfig(): Promise<StorageResult<ConfigLoadResult>>;
+  /** Save both text and last valid JSON */
+  saveConfig(data: ConfigStorageData): Promise<StorageResult<void>>;
+  /** Reset config to empty */
   resetConfig(): Promise<StorageResult<void>>;
 }
 

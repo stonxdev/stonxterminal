@@ -6,6 +6,7 @@ interface ConfigEditorToolbarProps {
   onRestore?: () => void;
   isDirty?: boolean;
   isReadOnly: boolean;
+  parseError?: string | null;
 }
 
 export function ConfigEditorToolbar({
@@ -13,6 +14,7 @@ export function ConfigEditorToolbar({
   onRestore,
   isDirty = false,
   isReadOnly,
+  parseError,
 }: ConfigEditorToolbarProps) {
   if (isReadOnly) {
     return (
@@ -42,8 +44,14 @@ export function ConfigEditorToolbar({
         <RotateCcw className="w-3 h-3" />
         Restore
       </Button>
-      {isDirty && (
-        <span className="text-xs text-yellow-500 ml-2">Unsaved changes</span>
+      {parseError ? (
+        <span className="text-xs text-red-500 ml-2 truncate" title={parseError}>
+          Invalid JSON (using defaults)
+        </span>
+      ) : (
+        isDirty && (
+          <span className="text-xs text-yellow-500 ml-2">Unsaved changes</span>
+        )
       )}
     </div>
   );
