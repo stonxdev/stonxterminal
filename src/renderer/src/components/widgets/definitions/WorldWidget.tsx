@@ -21,6 +21,7 @@ export const worldWidget: WidgetDefinition = {
   component: WorldWidget,
   placement: {
     pinned: true,
+    unique: true,
   },
   defaultSlot: "center",
   size: "wide",

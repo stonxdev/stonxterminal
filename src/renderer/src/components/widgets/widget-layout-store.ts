@@ -83,13 +83,56 @@ function ensurePinnedWidgets(
 }
 
 /**
+ * Enforce unique widget constraint: if a widget with `unique: true` appears
+ * in multiple slots, keep only the one in its `defaultSlot` (or the first occurrence).
+ */
+function enforceUniqueWidgets(
+  slots: WidgetLayoutConfigValue,
+): WidgetLayoutConfigValue {
+  const allWidgets = widgetRegistry.getAll();
+  let modified = false;
+  const result = { ...slots };
+
+  for (const widget of allWidgets) {
+    if (!widget.placement?.unique) continue;
+
+    // Find all slots containing this widget
+    const presentIn: WidgetSlotId[] = [];
+    for (const [slotId, widgetIds] of Object.entries(result)) {
+      if (widgetIds?.includes(widget.id)) {
+        presentIn.push(slotId as WidgetSlotId);
+      }
+    }
+
+    if (presentIn.length <= 1) continue;
+
+    // Keep in defaultSlot if present there, otherwise keep first occurrence
+    const keepSlot =
+      widget.defaultSlot && presentIn.includes(widget.defaultSlot)
+        ? widget.defaultSlot
+        : presentIn[0];
+
+    for (const slotId of presentIn) {
+      if (slotId !== keepSlot) {
+        result[slotId] = (result[slotId] ?? []).filter(
+          (id) => id !== widget.id,
+        );
+        modified = true;
+      }
+    }
+  }
+
+  return modified ? result : slots;
+}
+
+/**
  * Get the initial layout from config store.
  */
 function getInitialLayout(): WidgetLayoutConfig {
   const slots = useConfigStore.getState().computed[
     "layout.widgets"
   ] as WidgetLayoutConfigValue;
-  return { slots: ensurePinnedWidgets(slots) };
+  return { slots: enforceUniqueWidgets(ensurePinnedWidgets(slots)) };
 }
 
 /**
@@ -260,12 +303,12 @@ useConfigStore.subscribe((state) => {
   ] as WidgetLayoutConfigValue;
   // Only update if config actually changed (avoid infinite loops)
   if (configLayout && configLayout !== lastConfigLayout) {
-    const layoutWithPinned = ensurePinnedWidgets(configLayout);
+    const enforced = enforceUniqueWidgets(ensurePinnedWidgets(configLayout));
     const currentLayout = useWidgetLayoutStore.getState().layout.slots;
     // Deep compare to avoid unnecessary updates
-    if (JSON.stringify(layoutWithPinned) !== JSON.stringify(currentLayout)) {
+    if (JSON.stringify(enforced) !== JSON.stringify(currentLayout)) {
       lastConfigLayout = configLayout;
-      useWidgetLayoutStore.setState({ layout: { slots: layoutWithPinned } });
+      useWidgetLayoutStore.setState({ layout: { slots: enforced } });
     }
   }
 });

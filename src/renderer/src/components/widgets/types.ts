@@ -56,6 +56,8 @@ export interface WidgetPlacement {
   pinned?: boolean;
   /** If set, this widget can ONLY be placed in these slots (whitelist) */
   allowedSlots?: WidgetSlotId[];
+  /** If true, only one instance of this widget can exist across all slots */
+  unique?: boolean;
 }
 
 /**

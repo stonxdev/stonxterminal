@@ -19,7 +19,7 @@ import {
   type Texture,
 } from "pixi.js";
 import type React from "react";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "pixi.js/unsafe-eval";
 import { getSelectedColonistIds, useGameStore } from "@renderer/game-state";
 import { usePixiInteraction } from "@renderer/interaction";
@@ -171,7 +171,6 @@ interface WorldProps {
 }
 
 const World: React.FC<WorldProps> = ({ world, zLevel }) => {
-  const viewportKey = useId();
   const containerRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<Application | null>(null);
   const viewportRef = useRef<SimpleViewport | null>(null);
@@ -366,7 +365,7 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
       viewportRef.current = viewport;
 
       // Register viewport with store for command access
-      viewportStore.addViewport(viewportKey, viewport);
+      viewportStore.setViewport(viewport);
 
       // Attach wheel zoom and touch pinch handlers
       viewport.attachWheelZoom(app.canvas);
@@ -466,18 +465,8 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
       viewport.addChild(interactionLayer);
       setInteractionContainer(interactionLayer);
 
-      // Sync to an existing viewport, or center on the world if this is the first
-      const existingViewport = viewportStore.getViewport();
-      if (existingViewport && existingViewport !== viewport) {
-        const center = existingViewport.screenToWorld(
-          existingViewport.screenWidth / 2,
-          existingViewport.screenHeight / 2,
-        );
-        viewport.setZoom(existingViewport.getZoom());
-        viewport.panTo(center.x, center.y);
-      } else {
-        viewport.panTo(worldPixelWidth / 2, worldPixelHeight / 2);
-      }
+      // Center on the world
+      viewport.panTo(worldPixelWidth / 2, worldPixelHeight / 2);
 
       // Handle resize when container size changes (e.g., dock panel resize)
       // Queue resize to happen on Pixi's ticker to sync with render loop (prevents flickering)
@@ -575,7 +564,7 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
         app._configUnsubscribe?.();
       }
       if (viewportRef.current) {
-        viewportStore.removeViewport(viewportKey);
+        viewportStore.setViewport(null);
         viewportRef.current.destroy();
         viewportRef.current = null;
       }
@@ -585,7 +574,7 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
       }
       isInitializedRef.current = false;
     };
-  }, [level, worldPixelWidth, worldPixelHeight, zLevel, viewportKey]);
+  }, [level, worldPixelWidth, worldPixelHeight, zLevel]);
 
   return (
     <div
