@@ -48,6 +48,9 @@ export class SimpleViewport extends Container {
   /** Callback fired when zoom changes from user input (wheel/pinch) */
   public onZoomChange?: (scale: number) => void;
 
+  /** Callback fired when pan changes from user input (drag) */
+  public onPanChange?: (worldCenterX: number, worldCenterY: number) => void;
+
   /** Touch pinch state */
   private touchStartHandler: ((e: TouchEvent) => void) | null = null;
   private touchMoveHandler: ((e: TouchEvent) => void) | null = null;
@@ -263,6 +266,14 @@ export class SimpleViewport extends Container {
     this.updateHitArea();
 
     this.lastPointerPosition = { x: event.global.x, y: event.global.y };
+
+    if (this.onPanChange) {
+      const center = this.screenToWorld(
+        this.screenWidth / 2,
+        this.screenHeight / 2,
+      );
+      this.onPanChange(center.x, center.y);
+    }
   }
 
   private onDragEnd(): void {

@@ -251,6 +251,18 @@ function MiniMap() {
         ctx.drawImage(bitmapRef.current, 0, 0);
       }
 
+      // Draw characters
+      const { simulation, currentZLevel } = useGameStore.getState();
+      const dotSize = Math.max(1, 3 / zoomRef.current);
+      ctx.fillStyle = "#ff4444";
+      for (const character of simulation.characters.values()) {
+        if (character.position.z === currentZLevel) {
+          const tx = character.position.x + character.visualOffset.x;
+          const ty = character.position.y + character.visualOffset.y;
+          ctx.fillRect(tx - dotSize / 2, ty - dotSize / 2, dotSize, dotSize);
+        }
+      }
+
       // Draw viewport rectangle
       const viewport = viewportStore.getViewport();
       if (viewport) {
@@ -292,10 +304,9 @@ function MiniMap() {
         }
       }
 
-      if (dirtyRef.current) {
-        render();
-        dirtyRef.current = false;
-      }
+      // Always redraw — characters move every frame and the render is cheap
+      render();
+      dirtyRef.current = false;
 
       rafId = requestAnimationFrame(loop);
     };

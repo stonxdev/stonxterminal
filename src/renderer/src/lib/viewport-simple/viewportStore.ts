@@ -17,12 +17,20 @@ class ViewportStore {
         }
       }
     };
+    viewport.onPanChange = (worldCenterX, worldCenterY) => {
+      for (const [k, vp] of this.viewports) {
+        if (k !== key) {
+          vp.panTo(worldCenterX, worldCenterY);
+        }
+      }
+    };
   }
 
   removeViewport(key: string): void {
     const viewport = this.viewports.get(key);
     if (viewport) {
       viewport.onZoomChange = undefined;
+      viewport.onPanChange = undefined;
     }
     this.viewports.delete(key);
   }
