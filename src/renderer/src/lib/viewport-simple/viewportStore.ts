@@ -1,39 +1,60 @@
 import type { SimpleViewport } from "./SimpleViewport";
 
 /**
- * Simple store to hold the viewport reference.
- * This allows commands and other parts of the app to access the viewport.
+ * Store that holds multiple viewport references.
+ * Supports multiple World widget instances by broadcasting
+ * zoom/pan operations to all registered viewports.
  */
 class ViewportStore {
-  private viewport: SimpleViewport | null = null;
+  private viewports = new Map<string, SimpleViewport>();
 
-  setViewport(viewport: SimpleViewport | null): void {
-    this.viewport = viewport;
+  addViewport(key: string, viewport: SimpleViewport): void {
+    this.viewports.set(key, viewport);
+    viewport.onZoomChange = (scale) => {
+      for (const [k, vp] of this.viewports) {
+        if (k !== key) {
+          vp.setZoom(scale);
+        }
+      }
+    };
+  }
+
+  removeViewport(key: string): void {
+    const viewport = this.viewports.get(key);
+    if (viewport) {
+      viewport.onZoomChange = undefined;
+    }
+    this.viewports.delete(key);
   }
 
   getViewport(): SimpleViewport | null {
-    return this.viewport;
+    const first = this.viewports.values().next();
+    return first.done ? null : first.value;
   }
 
   /**
-   * Pan to a world position (center the viewport on it)
+   * Pan to a world position on all viewports
    */
   panTo(worldX: number, worldY: number): void {
-    this.viewport?.panTo(worldX, worldY);
+    for (const viewport of this.viewports.values()) {
+      viewport.panTo(worldX, worldY);
+    }
   }
 
   /**
-   * Set the zoom level
+   * Set the zoom level on all viewports
    */
   setZoom(scale: number): void {
-    this.viewport?.setZoom(scale);
+    for (const viewport of this.viewports.values()) {
+      viewport.setZoom(scale);
+    }
   }
 
   /**
-   * Get the current zoom level
+   * Get the current zoom level (from any viewport)
    */
   getZoom(): number {
-    return this.viewport?.getZoom() ?? 1;
+    return this.getViewport()?.getZoom() ?? 1;
   }
 }
 

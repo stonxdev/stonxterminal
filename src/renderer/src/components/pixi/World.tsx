@@ -19,7 +19,7 @@ import {
   type Texture,
 } from "pixi.js";
 import type React from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import "pixi.js/unsafe-eval";
 import { getSelectedColonistIds, useGameStore } from "@renderer/game-state";
 import { usePixiInteraction } from "@renderer/interaction";
@@ -171,6 +171,7 @@ interface WorldProps {
 }
 
 const World: React.FC<WorldProps> = ({ world, zLevel }) => {
+  const viewportKey = useId();
   const containerRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<Application | null>(null);
   const viewportRef = useRef<SimpleViewport | null>(null);
@@ -365,7 +366,7 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
       viewportRef.current = viewport;
 
       // Register viewport with store for command access
-      viewportStore.setViewport(viewport);
+      viewportStore.addViewport(viewportKey, viewport);
 
       // Attach wheel zoom and touch pinch handlers
       viewport.attachWheelZoom(app.canvas);
@@ -564,7 +565,7 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
         app._configUnsubscribe?.();
       }
       if (viewportRef.current) {
-        viewportStore.setViewport(null);
+        viewportStore.removeViewport(viewportKey);
         viewportRef.current.destroy();
         viewportRef.current = null;
       }
@@ -574,7 +575,7 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
       }
       isInitializedRef.current = false;
     };
-  }, [level, worldPixelWidth, worldPixelHeight, zLevel]);
+  }, [level, worldPixelWidth, worldPixelHeight, zLevel, viewportKey]);
 
   return (
     <div

@@ -45,6 +45,9 @@ export class SimpleViewport extends Container {
   private wheelHandler: ((e: WheelEvent) => void) | null = null;
   private domElement: HTMLElement | null = null;
 
+  /** Callback fired when zoom changes from user input (wheel/pinch) */
+  public onZoomChange?: (scale: number) => void;
+
   /** Touch pinch state */
   private touchStartHandler: ((e: TouchEvent) => void) | null = null;
   private touchMoveHandler: ((e: TouchEvent) => void) | null = null;
@@ -166,6 +169,7 @@ export class SimpleViewport extends Container {
       this.y += (worldPosAfter.y - worldPosBefore.y) * this.scale.y;
 
       this.updateHitArea();
+      this.onZoomChange?.(this.scale.x);
 
       // Update for next frame
       this.lastPinchDistance = currentDistance;
@@ -229,6 +233,7 @@ export class SimpleViewport extends Container {
     this.y += (worldPosAfter.y - worldPosBefore.y) * this.scale.y;
 
     this.updateHitArea();
+    this.onZoomChange?.(this.scale.x);
   }
 
   private setupDragListeners(): void {
