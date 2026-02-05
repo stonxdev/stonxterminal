@@ -41,6 +41,13 @@ class ViewportStore {
   }
 
   /**
+   * Get all registered viewports (for drawing multiple viewport rectangles on the mini-map)
+   */
+  getAllViewports(): IterableIterator<SimpleViewport> {
+    return this.viewports.values();
+  }
+
+  /**
    * Pan to a world position on all viewports
    */
   panTo(worldX: number, worldY: number): void {

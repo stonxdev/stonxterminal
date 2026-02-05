@@ -466,8 +466,18 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
       viewport.addChild(interactionLayer);
       setInteractionContainer(interactionLayer);
 
-      // Center on the world
-      viewport.panTo(worldPixelWidth / 2, worldPixelHeight / 2);
+      // Sync to an existing viewport, or center on the world if this is the first
+      const existingViewport = viewportStore.getViewport();
+      if (existingViewport && existingViewport !== viewport) {
+        const center = existingViewport.screenToWorld(
+          existingViewport.screenWidth / 2,
+          existingViewport.screenHeight / 2,
+        );
+        viewport.setZoom(existingViewport.getZoom());
+        viewport.panTo(center.x, center.y);
+      } else {
+        viewport.panTo(worldPixelWidth / 2, worldPixelHeight / 2);
+      }
 
       // Handle resize when container size changes (e.g., dock panel resize)
       // Queue resize to happen on Pixi's ticker to sync with render loop (prevents flickering)

@@ -263,17 +263,16 @@ function MiniMap() {
         }
       }
 
-      // Draw viewport rectangle
-      const viewport = viewportStore.getViewport();
-      if (viewport) {
-        const bounds = viewport.getVisibleBounds();
+      // Draw viewport rectangles (one per World instance)
+      ctx.lineWidth = 2 / zoomRef.current;
+      for (const vp of viewportStore.getAllViewports()) {
+        const bounds = vp.getVisibleBounds();
         const tileLeft = bounds.left / CELL_SIZE;
         const tileTop = bounds.top / CELL_SIZE;
         const tileRight = bounds.right / CELL_SIZE;
         const tileBottom = bounds.bottom / CELL_SIZE;
 
         ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
-        ctx.lineWidth = 2 / zoomRef.current;
         ctx.strokeRect(
           tileLeft,
           tileTop,
@@ -319,16 +318,16 @@ function MiniMap() {
       const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top;
 
-      // Check if mouse is over the viewport rectangle (the "lens")
-      const viewport = viewportStore.getViewport();
-      if (viewport) {
-        const bounds = viewport.getVisibleBounds();
-        const { tileX, tileY } = canvasToTile(
-          mouseX,
-          mouseY,
-          panRef.current,
-          zoomRef.current,
-        );
+      // Check if mouse is over any viewport rectangle (the "lens")
+      const { tileX, tileY } = canvasToTile(
+        mouseX,
+        mouseY,
+        panRef.current,
+        zoomRef.current,
+      );
+      let overLens = false;
+      for (const vp of viewportStore.getAllViewports()) {
+        const bounds = vp.getVisibleBounds();
         const tileLeft = bounds.left / CELL_SIZE;
         const tileTop = bounds.top / CELL_SIZE;
         const tileRight = bounds.right / CELL_SIZE;
@@ -340,13 +339,17 @@ function MiniMap() {
           tileY >= tileTop &&
           tileY <= tileBottom
         ) {
-          // Mouse is over the lens — zoom the main world viewport
-          const currentZoom = viewportStore.getZoom();
-          const direction = e.deltaY < 0 ? 1 : -1;
-          const newZoom = currentZoom * (1 + direction * 0.1);
-          viewportStore.setZoom(Math.max(0.1, Math.min(4, newZoom)));
-          return;
+          overLens = true;
+          break;
         }
+      }
+      if (overLens) {
+        // Mouse is over the lens — zoom the main world viewport
+        const currentZoom = viewportStore.getZoom();
+        const direction = e.deltaY < 0 ? 1 : -1;
+        const newZoom = currentZoom * (1 + direction * 0.1);
+        viewportStore.setZoom(Math.max(0.1, Math.min(4, newZoom)));
+        return;
       }
 
       // Mouse is outside the lens — zoom the mini-map itself
