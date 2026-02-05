@@ -2,6 +2,7 @@ import {
   charactersWidget,
   layersWidget,
   logsWidget,
+  miniMapWidget,
   performanceWidget,
   settingsWidget,
   tileInspectorWidget,
@@ -22,4 +23,5 @@ export function registerBuiltInWidgets(): void {
   widgetRegistry.register(performanceWidget);
   widgetRegistry.register(settingsWidget);
   widgetRegistry.register(tileInspectorWidget);
+  widgetRegistry.register(miniMapWidget);
 }

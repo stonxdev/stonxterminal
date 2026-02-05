@@ -16,6 +16,7 @@ export const WIDGET_IDS = [
   "performance",
   "settings",
   "tile-inspector",
+  "mini-map",
 ] as const;
 
 export const STATUS_BAR_IDS = [

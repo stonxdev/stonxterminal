@@ -1,0 +1,431 @@
+import { CELL_SIZE } from "@renderer/components/pixi/World";
+import { useGameStore } from "@renderer/game-state";
+import { viewportStore } from "@renderer/lib/viewport-simple";
+import type { StructureType, TerrainType, ZLevel } from "@renderer/world/types";
+import { Map as MapIcon } from "lucide-react";
+import { useEffect, useRef } from "react";
+import type { WidgetComponentProps, WidgetDefinition } from "../types";
+
+// =============================================================================
+// COLOR MAPS
+// =============================================================================
+
+const TERRAIN_COLORS: Record<TerrainType, [number, number, number, number]> = {
+  soil: [139, 119, 85, 255],
+  sand: [210, 190, 140, 255],
+  clay: [180, 130, 90, 255],
+  gravel: [160, 160, 155, 255],
+  rock: [128, 128, 128, 255],
+  granite: [100, 100, 105, 255],
+  limestone: [180, 180, 170, 255],
+  marble: [220, 220, 225, 255],
+  obsidian: [30, 30, 35, 255],
+  water_shallow: [70, 150, 200, 255],
+  water_deep: [20, 60, 150, 255],
+  lava: [230, 60, 20, 255],
+  void: [0, 0, 0, 255],
+};
+
+/** Only visually significant structures for the 1px-per-tile overview */
+const STRUCTURE_COLORS_RGBA: Partial<
+  Record<StructureType, [number, number, number, number]>
+> = {
+  wall_stone: [80, 80, 80, 255],
+  wall_wood: [139, 69, 19, 255],
+  wall_metal: [184, 184, 184, 255],
+  wall_brick: [178, 34, 34, 255],
+  door_wood: [205, 133, 63, 255],
+  door_metal: [160, 160, 160, 255],
+  door_auto: [144, 238, 144, 255],
+  tree_oak: [34, 139, 34, 255],
+  tree_pine: [0, 100, 0, 255],
+  bush: [50, 205, 50, 255],
+  boulder: [90, 90, 90, 255],
+};
+
+// =============================================================================
+// TERRAIN IMAGE GENERATION
+// =============================================================================
+
+function generateTerrainImage(level: ZLevel): ImageData {
+  const { width, height, tiles } = level;
+  const imageData = new ImageData(width, height);
+  const data = imageData.data;
+
+  for (let i = 0; i < tiles.length; i++) {
+    const tile = tiles[i];
+    const offset = i * 4;
+
+    const color = TERRAIN_COLORS[tile.terrain.type];
+    data[offset] = color[0];
+    data[offset + 1] = color[1];
+    data[offset + 2] = color[2];
+    data[offset + 3] = color[3];
+
+    if (tile.structure && tile.structure.type !== "none") {
+      const sc = STRUCTURE_COLORS_RGBA[tile.structure.type];
+      if (sc) {
+        data[offset] = sc[0];
+        data[offset + 1] = sc[1];
+        data[offset + 2] = sc[2];
+        data[offset + 3] = sc[3];
+      }
+    }
+  }
+
+  return imageData;
+}
+
+// =============================================================================
+// MINI-MAP ZOOM/PAN CONSTANTS
+// =============================================================================
+
+const MIN_ZOOM = 0.5;
+const MAX_ZOOM = 8.0;
+const ZOOM_SPEED = 0.15;
+
+// =============================================================================
+// MINI-MAP HELPERS
+// =============================================================================
+
+interface MiniMapTransform {
+  zoom: number;
+  x: number;
+  y: number;
+}
+
+function fitToCanvas(
+  worldWidth: number,
+  worldHeight: number,
+  canvasWidth: number,
+  canvasHeight: number,
+): MiniMapTransform | null {
+  if (worldWidth === 0 || worldHeight === 0) return null;
+  const scaleX = canvasWidth / worldWidth;
+  const scaleY = canvasHeight / worldHeight;
+  const zoom = Math.min(scaleX, scaleY) * 0.95;
+  return {
+    zoom,
+    x: (canvasWidth - worldWidth * zoom) / 2,
+    y: (canvasHeight - worldHeight * zoom) / 2,
+  };
+}
+
+function canvasToTile(
+  canvasX: number,
+  canvasY: number,
+  pan: { x: number; y: number },
+  zoom: number,
+) {
+  return {
+    tileX: (canvasX - pan.x) / zoom,
+    tileY: (canvasY - pan.y) / zoom,
+  };
+}
+
+// =============================================================================
+// MINI-MAP COMPONENT
+// =============================================================================
+
+function MiniMap() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const bitmapRef = useRef<ImageBitmap | null>(null);
+  const worldSizeRef = useRef({ width: 0, height: 0 });
+  const dirtyRef = useRef(true);
+  const isDraggingRef = useRef(false);
+
+  // Mini-map's own independent zoom/pan (useRef to avoid React re-renders)
+  const zoomRef = useRef(1);
+  const panRef = useRef({ x: 0, y: 0 });
+
+  // Previous viewport bounds for dirty checking
+  const prevBoundsRef = useRef({ left: 0, top: 0, right: 0, bottom: 0 });
+
+  // Canvas logical size (CSS pixels, not backing store)
+  const canvasSizeRef = useRef({ width: 0, height: 0 });
+
+  // Regenerate terrain bitmap when world/z-level changes
+  useEffect(() => {
+    const update = () => {
+      const { world, currentZLevel } = useGameStore.getState();
+      if (!world) return;
+      const level = world.levels.get(currentZLevel);
+      if (!level) return;
+
+      const imageData = generateTerrainImage(level);
+      worldSizeRef.current = { width: level.width, height: level.height };
+
+      createImageBitmap(imageData).then((bitmap) => {
+        bitmapRef.current?.close();
+        bitmapRef.current = bitmap;
+        dirtyRef.current = true;
+
+        // Re-fit if canvas is available
+        const { width, height } = canvasSizeRef.current;
+        if (width > 0 && height > 0) {
+          const fit = fitToCanvas(level.width, level.height, width, height);
+          if (fit) {
+            zoomRef.current = fit.zoom;
+            panRef.current = { x: fit.x, y: fit.y };
+            dirtyRef.current = true;
+          }
+        }
+      });
+    };
+
+    update();
+
+    // Subscribe to world/z-level changes
+    let prevWorld = useGameStore.getState().world;
+    let prevZ = useGameStore.getState().currentZLevel;
+    const unsub = useGameStore.subscribe((state) => {
+      if (state.world !== prevWorld || state.currentZLevel !== prevZ) {
+        prevWorld = state.world;
+        prevZ = state.currentZLevel;
+        update();
+      }
+    });
+
+    return () => {
+      unsub();
+      bitmapRef.current?.close();
+      bitmapRef.current = null;
+    };
+  }, []);
+
+  // Setup canvas, rAF loop, ResizeObserver, and event listeners
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const container = containerRef.current;
+    if (!canvas || !container) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    // --- Resize Observer ---
+    const observer = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      if (width === 0 || height === 0) return;
+      const dpr = window.devicePixelRatio;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      canvasSizeRef.current = { width, height };
+
+      const fit = fitToCanvas(
+        worldSizeRef.current.width,
+        worldSizeRef.current.height,
+        width,
+        height,
+      );
+      if (fit) {
+        zoomRef.current = fit.zoom;
+        panRef.current = { x: fit.x, y: fit.y };
+        dirtyRef.current = true;
+      }
+    });
+    observer.observe(container);
+
+    // --- Render function ---
+    const render = () => {
+      const dpr = window.devicePixelRatio;
+      const w = canvasSizeRef.current.width;
+      const h = canvasSizeRef.current.height;
+      if (w === 0 || h === 0) return;
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = "#1a1a2e";
+      ctx.fillRect(0, 0, w, h);
+
+      // Apply mini-map transform
+      ctx.save();
+      ctx.translate(panRef.current.x, panRef.current.y);
+      ctx.scale(zoomRef.current, zoomRef.current);
+      ctx.imageSmoothingEnabled = false;
+
+      // Draw cached terrain bitmap
+      if (bitmapRef.current) {
+        ctx.drawImage(bitmapRef.current, 0, 0);
+      }
+
+      // Draw viewport rectangle
+      const viewport = viewportStore.getViewport();
+      if (viewport) {
+        const bounds = viewport.getVisibleBounds();
+        const tileLeft = bounds.left / CELL_SIZE;
+        const tileTop = bounds.top / CELL_SIZE;
+        const tileRight = bounds.right / CELL_SIZE;
+        const tileBottom = bounds.bottom / CELL_SIZE;
+
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+        ctx.lineWidth = 2 / zoomRef.current;
+        ctx.strokeRect(
+          tileLeft,
+          tileTop,
+          tileRight - tileLeft,
+          tileBottom - tileTop,
+        );
+      }
+
+      ctx.restore();
+    };
+
+    // --- rAF loop with dirty-flag gating ---
+    let rafId: number;
+    const loop = () => {
+      // Check if viewport bounds changed
+      const viewport = viewportStore.getViewport();
+      if (viewport) {
+        const bounds = viewport.getVisibleBounds();
+        const prev = prevBoundsRef.current;
+        if (
+          bounds.left !== prev.left ||
+          bounds.top !== prev.top ||
+          bounds.right !== prev.right ||
+          bounds.bottom !== prev.bottom
+        ) {
+          prevBoundsRef.current = { ...bounds };
+          dirtyRef.current = true;
+        }
+      }
+
+      if (dirtyRef.current) {
+        render();
+        dirtyRef.current = false;
+      }
+
+      rafId = requestAnimationFrame(loop);
+    };
+    rafId = requestAnimationFrame(loop);
+
+    // --- Wheel zoom ---
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      // Check if mouse is over the viewport rectangle (the "lens")
+      const viewport = viewportStore.getViewport();
+      if (viewport) {
+        const bounds = viewport.getVisibleBounds();
+        const { tileX, tileY } = canvasToTile(
+          mouseX,
+          mouseY,
+          panRef.current,
+          zoomRef.current,
+        );
+        const tileLeft = bounds.left / CELL_SIZE;
+        const tileTop = bounds.top / CELL_SIZE;
+        const tileRight = bounds.right / CELL_SIZE;
+        const tileBottom = bounds.bottom / CELL_SIZE;
+
+        if (
+          tileX >= tileLeft &&
+          tileX <= tileRight &&
+          tileY >= tileTop &&
+          tileY <= tileBottom
+        ) {
+          // Mouse is over the lens — zoom the main world viewport
+          const currentZoom = viewportStore.getZoom();
+          const direction = e.deltaY < 0 ? 1 : -1;
+          const newZoom = currentZoom * (1 + direction * 0.1);
+          viewportStore.setZoom(Math.max(0.1, Math.min(4, newZoom)));
+          return;
+        }
+      }
+
+      // Mouse is outside the lens — zoom the mini-map itself
+      const worldXBefore = (mouseX - panRef.current.x) / zoomRef.current;
+      const worldYBefore = (mouseY - panRef.current.y) / zoomRef.current;
+
+      const direction = e.deltaY < 0 ? 1 : -1;
+      const factor = 1 + direction * ZOOM_SPEED;
+      zoomRef.current = Math.max(
+        MIN_ZOOM,
+        Math.min(MAX_ZOOM, zoomRef.current * factor),
+      );
+
+      // Adjust pan so world point stays under cursor
+      panRef.current.x = mouseX - worldXBefore * zoomRef.current;
+      panRef.current.y = mouseY - worldYBefore * zoomRef.current;
+
+      dirtyRef.current = true;
+    };
+    canvas.addEventListener("wheel", onWheel, { passive: false });
+
+    // --- Click/drag to pan main viewport ---
+    const panMainViewport = (e: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      const canvasX = e.clientX - rect.left;
+      const canvasY = e.clientY - rect.top;
+      const { tileX, tileY } = canvasToTile(
+        canvasX,
+        canvasY,
+        panRef.current,
+        zoomRef.current,
+      );
+      viewportStore.panTo(tileX * CELL_SIZE, tileY * CELL_SIZE);
+    };
+
+    const onMouseDown = (e: MouseEvent) => {
+      isDraggingRef.current = true;
+      panMainViewport(e);
+    };
+    const onMouseMove = (e: MouseEvent) => {
+      if (isDraggingRef.current) {
+        panMainViewport(e);
+      }
+    };
+    const onMouseUp = () => {
+      isDraggingRef.current = false;
+    };
+
+    canvas.addEventListener("mousedown", onMouseDown);
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      observer.disconnect();
+      canvas.removeEventListener("wheel", onWheel);
+      canvas.removeEventListener("mousedown", onMouseDown);
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+  }, []);
+
+  return (
+    <div ref={containerRef} className="w-full h-full">
+      <canvas ref={canvasRef} className="block w-full h-full" />
+    </div>
+  );
+}
+
+// =============================================================================
+// WIDGET DEFINITION
+// =============================================================================
+
+function MiniMapWidget(_props: WidgetComponentProps) {
+  const world = useGameStore((s) => s.world);
+  if (!world) {
+    return (
+      <div className="flex items-center justify-center w-full h-full text-muted-foreground text-sm">
+        No world loaded
+      </div>
+    );
+  }
+  return <MiniMap />;
+}
+
+export const miniMapWidget: WidgetDefinition = {
+  id: "mini-map",
+  label: "Mini-Map",
+  icon: MapIcon,
+  component: MiniMapWidget,
+  defaultSlot: "right-top",
+  size: "normal",
+};
