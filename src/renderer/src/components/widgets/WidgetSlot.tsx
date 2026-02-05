@@ -61,15 +61,13 @@ export function WidgetSlot({
 
       const Component = definition.component;
 
-      // Pinned widgets are never closable, regardless of the closable property
       const isPinned = definition.placement?.pinned ?? false;
-      const isClosable = isPinned ? false : (definition.closable ?? false);
 
       result.push({
         id: widgetId,
         label: definition.label,
         icon: definition.icon,
-        closable: isClosable,
+        closable: !isPinned,
         content: <Component widgetId={widgetId} slotId={slotId} />,
       });
     }

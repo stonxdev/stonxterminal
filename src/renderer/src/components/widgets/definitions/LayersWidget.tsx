@@ -58,5 +58,4 @@ export const layersWidget: WidgetDefinition = {
   label: "Layers",
   icon: Layers,
   component: LayersWidget,
-  closable: false,
 };

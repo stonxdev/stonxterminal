@@ -199,5 +199,4 @@ export const logsWidget: WidgetDefinition = {
   label: "Logs",
   icon: ScrollText,
   component: LogsWidget,
-  closable: true,
 };

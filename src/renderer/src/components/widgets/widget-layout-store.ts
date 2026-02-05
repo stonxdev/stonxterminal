@@ -59,13 +59,37 @@ export function canMoveWidgetToSlot(
 // =============================================================================
 
 /**
+ * Ensure pinned widgets are always present in their default slots.
+ * If a pinned widget is missing from the layout, it gets added back to its default slot.
+ */
+function ensurePinnedWidgets(
+  slots: WidgetLayoutConfigValue,
+): WidgetLayoutConfigValue {
+  const allWidgets = widgetRegistry.getAll();
+  let modified = false;
+  const result = { ...slots };
+
+  for (const widget of allWidgets) {
+    if (widget.placement?.pinned && widget.defaultSlot) {
+      const slotWidgets = result[widget.defaultSlot] ?? [];
+      if (!slotWidgets.includes(widget.id)) {
+        result[widget.defaultSlot] = [widget.id, ...slotWidgets];
+        modified = true;
+      }
+    }
+  }
+
+  return modified ? result : slots;
+}
+
+/**
  * Get the initial layout from config store.
  */
 function getInitialLayout(): WidgetLayoutConfig {
   const slots = useConfigStore.getState().computed[
     "layout.widgets"
   ] as WidgetLayoutConfigValue;
-  return { slots };
+  return { slots: ensurePinnedWidgets(slots) };
 }
 
 /**
@@ -236,11 +260,12 @@ useConfigStore.subscribe((state) => {
   ] as WidgetLayoutConfigValue;
   // Only update if config actually changed (avoid infinite loops)
   if (configLayout && configLayout !== lastConfigLayout) {
+    const layoutWithPinned = ensurePinnedWidgets(configLayout);
     const currentLayout = useWidgetLayoutStore.getState().layout.slots;
     // Deep compare to avoid unnecessary updates
-    if (JSON.stringify(configLayout) !== JSON.stringify(currentLayout)) {
+    if (JSON.stringify(layoutWithPinned) !== JSON.stringify(currentLayout)) {
       lastConfigLayout = configLayout;
-      useWidgetLayoutStore.setState({ layout: { slots: configLayout } });
+      useWidgetLayoutStore.setState({ layout: { slots: layoutWithPinned } });
     }
   }
 });

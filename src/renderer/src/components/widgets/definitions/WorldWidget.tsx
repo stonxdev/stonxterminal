@@ -19,7 +19,6 @@ export const worldWidget: WidgetDefinition = {
   label: "World",
   icon: MapIcon,
   component: WorldWidget,
-  closable: false,
   placement: {
     pinned: true,
   },

@@ -19,8 +19,8 @@ export const settingsWidget: WidgetDefinition = {
   label: "Settings",
   icon: Settings,
   component: SettingsWidget,
-  closable: true,
   placement: {
+    pinned: true,
     allowedSlots: ["center"],
   },
   defaultSlot: "center",

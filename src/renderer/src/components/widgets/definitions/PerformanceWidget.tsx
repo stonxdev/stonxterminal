@@ -79,5 +79,4 @@ export const performanceWidget: WidgetDefinition = {
   label: "Performance",
   icon: Activity,
   component: PerformanceWidget,
-  closable: true,
 };

@@ -70,8 +70,6 @@ export interface WidgetDefinition {
   icon?: LucideIcon;
   /** The React component to render */
   component: ComponentType<WidgetComponentProps>;
-  /** Whether this widget can be closed (removed from slot). Ignored if placement.pinned is true. */
-  closable?: boolean;
   /** Placement constraints for this widget */
   placement?: WidgetPlacement;
   /** Default slot for pinned widgets */

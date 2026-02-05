@@ -62,7 +62,7 @@ export function Tab({ tab, isActive, variant, onSelect, onClose }: TabProps) {
           onClick={handleClose}
           className={cn(
             "h-4 w-4 shrink-0 rounded flex items-center justify-center cursor-pointer",
-            "opacity-0 group-hover:opacity-100 hover:bg-accent",
+            "opacity-40 hover:opacity-100 hover:bg-accent",
             isActive && "opacity-60",
           )}
           aria-label={`Close ${label}`}

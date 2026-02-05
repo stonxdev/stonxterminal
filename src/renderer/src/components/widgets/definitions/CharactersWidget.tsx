@@ -42,5 +42,4 @@ export const charactersWidget: WidgetDefinition = {
   label: "Characters",
   icon: Users,
   component: CharactersWidget,
-  closable: false,
 };
