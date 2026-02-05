@@ -2,7 +2,10 @@
 // STATUS BAR TYPE DEFINITIONS
 // =============================================================================
 
+import type { StatusBarId } from "@renderer/config/registry-ids";
 import type { ComponentType } from "react";
+
+export type { StatusBarId };
 
 /**
  * Alignment for status bar items within the container
@@ -22,7 +25,7 @@ export interface StatusBarItemProps {
  */
 export interface StatusBarItemDefinition {
   /** Unique identifier for the status bar item (dash-case, e.g., "version") */
-  id: string;
+  id: StatusBarId;
   /** The React component to render */
   component: ComponentType<StatusBarItemProps>;
   /** Alignment within the status bar (default: "left") */

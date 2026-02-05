@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
+import { CONTROL_BAR_IDS, STATUS_BAR_IDS, WIDGET_IDS } from "./registry-ids";
 
 /**
  * Zod schemas for configuration validation.
@@ -7,6 +8,14 @@ import { zodToJsonSchema } from "zod-to-json-schema";
  * 1. Runtime validation when parsing user config
  * 2. Generating JSON Schema for Monaco Editor autocomplete
  */
+
+// =============================================================================
+// ID SCHEMAS (derived from registry-ids.ts)
+// =============================================================================
+
+const WidgetIdSchema = z.enum(WIDGET_IDS);
+const StatusBarIdSchema = z.enum(STATUS_BAR_IDS);
+const ControlBarIdSchema = z.enum(CONTROL_BAR_IDS);
 
 // =============================================================================
 // INDIVIDUAL PROPERTY SCHEMAS (internal use only)
@@ -20,28 +29,28 @@ const PixiMaxFramerateSchema = z
 
 const WidgetLayoutSchema = z
   .object({
-    "left-top": z.array(z.string()).optional(),
-    "left-bottom": z.array(z.string()).optional(),
-    center: z.array(z.string()).optional(),
-    "center-bottom": z.array(z.string()).optional(),
-    "right-top": z.array(z.string()).optional(),
-    "right-bottom": z.array(z.string()).optional(),
+    "left-top": z.array(WidgetIdSchema).optional(),
+    "left-bottom": z.array(WidgetIdSchema).optional(),
+    center: z.array(WidgetIdSchema).optional(),
+    "center-bottom": z.array(WidgetIdSchema).optional(),
+    "right-top": z.array(WidgetIdSchema).optional(),
+    "right-bottom": z.array(WidgetIdSchema).optional(),
   })
   .describe("Widget slot assignments");
 
 const StatusBarLayoutSchema = z
   .object({
-    left: z.array(z.string()).optional(),
-    right: z.array(z.string()).optional(),
+    left: z.array(StatusBarIdSchema).optional(),
+    right: z.array(StatusBarIdSchema).optional(),
   })
   .describe("Status bar alignment assignments");
 
 const ControlBarLayoutSchema = z
   .object({
-    "left-top": z.array(z.string()).optional(),
-    "left-bottom": z.array(z.string()).optional(),
-    "right-top": z.array(z.string()).optional(),
-    "right-bottom": z.array(z.string()).optional(),
+    "left-top": z.array(ControlBarIdSchema).optional(),
+    "left-bottom": z.array(ControlBarIdSchema).optional(),
+    "right-top": z.array(ControlBarIdSchema).optional(),
+    "right-bottom": z.array(ControlBarIdSchema).optional(),
   })
   .describe("Control bar slot assignments");
 

@@ -3,8 +3,8 @@ import { useCommand } from "@renderer/commands/useCommand";
 import { useMemo, useState } from "react";
 import type { TabItem } from "../tabs";
 import { Tabs } from "../tabs";
-import type { WidgetSlotId } from "./types";
-import { useWidgetsForSlot } from "./widget-layout-store";
+import type { WidgetId, WidgetSlotId } from "./types";
+import { useWidgetLayoutStore, useWidgetsForSlot } from "./widget-layout-store";
 import { widgetRegistry } from "./widget-registry";
 
 interface WidgetSlotProps {
@@ -34,12 +34,16 @@ export function WidgetSlot({
   keepMounted = false,
 }: WidgetSlotProps) {
   const widgetIds = useWidgetsForSlot(slotId);
+  const removeWidgetFromSlot = useWidgetLayoutStore(
+    (s) => s.removeWidgetFromSlot,
+  );
   const [activeTabId, setActiveTabId] = useState<string | undefined>(undefined);
 
   // Subscribe to widget.setActiveTab command
   useCommand<SetActiveTabPayload>("widget.setActiveTab", (payload) => {
     // Check if this slot contains the requested widget
-    if (widgetIds.includes(payload.widgetId)) {
+    // Cast needed because payload comes from external source as string
+    if ((widgetIds as string[]).includes(payload.widgetId)) {
       setActiveTabId(payload.widgetId);
     }
   });
@@ -83,6 +87,7 @@ export function WidgetSlot({
       tabs={tabs}
       activeTabId={activeTabId}
       onTabChange={setActiveTabId}
+      onTabClose={(tabId) => removeWidgetFromSlot(tabId as WidgetId)}
       variant={variant}
       className={className}
       keepMounted={keepMounted}

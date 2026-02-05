@@ -1,3 +1,4 @@
+import { logger } from "../../lib/logger";
 import type {
   BiomeType,
   StructureType,
@@ -600,6 +601,11 @@ export function generateWorld(
   const seed = options?.seed ?? Math.floor(Math.random() * 2147483647);
   const biome = options?.biome ?? "temperate_forest";
 
+  logger.info(
+    `Generating world "${name}" (${width}x${height}, biome: ${biome}, seed: ${seed})`,
+    ["worldgen"],
+  );
+
   // Create world with procedurally generated surface
   const world: World = {
     metadata: {
@@ -626,5 +632,6 @@ export function generateWorld(
   const surfaceLevel = generateZLevel(0, width, height, seed, biome);
   world.levels.set(0, surfaceLevel);
 
+  logger.info(`World generation complete: ${name}`, ["worldgen"]);
   return world;
 }

@@ -1,5 +1,6 @@
 import { commandRegistry } from "@renderer/commands";
 import { useConfigStore } from "@renderer/config";
+import { logger } from "@renderer/lib/logger";
 import { usePerformanceStore } from "@renderer/lib/performance-store";
 import { SimpleViewport, viewportStore } from "@renderer/lib/viewport-simple";
 import type {
@@ -70,15 +71,16 @@ async function preloadTerrainTextures(): Promise<void> {
       texture.source.scaleMode = "nearest"; // Pixel-perfect scaling
       terrainTextures.set(terrainType, texture);
     } catch (error) {
-      console.error(
-        `[World] Failed to load terrain texture for ${terrainType}:`,
-        error,
+      logger.error(
+        `Failed to load terrain texture for ${terrainType}: ${String(error)}`,
+        ["pixi"],
       );
     }
   }
 
-  console.info(
-    `[World] Loaded ${terrainTextures.size}/${terrainTypes.length} terrain textures`,
+  logger.info(
+    `Loaded ${terrainTextures.size}/${terrainTypes.length} terrain textures`,
+    ["pixi"],
   );
 }
 
@@ -121,15 +123,16 @@ async function preloadStructureTextures(): Promise<void> {
       texture.source.scaleMode = "nearest"; // Pixel-perfect scaling
       structureTextures.set(structureType, texture);
     } catch (error) {
-      console.error(
-        `[World] Failed to load structure texture for ${structureType}:`,
-        error,
+      logger.error(
+        `Failed to load structure texture for ${structureType}: ${String(error)}`,
+        ["pixi"],
       );
     }
   }
 
-  console.info(
-    `[World] Loaded ${structureTextures.size}/${structureTypes.length} structure textures`,
+  logger.info(
+    `Loaded ${structureTextures.size}/${structureTypes.length} structure textures`,
+    ["pixi"],
   );
 }
 
@@ -375,7 +378,9 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
       await preloadStructureTextures();
 
       // Render the world (terrain and features as separate layers)
-      console.info("[World] Rendering world tiles...");
+      logger.info(`Rendering world tiles (${level.width}x${level.height})`, [
+        "pixi",
+      ]);
       const { treesContainer, structuresGraphics, itemsGraphics } = renderWorld(
         viewport,
         level,
@@ -392,10 +397,7 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
         initialLayerVisibility.get("structures") ?? true;
       itemsGraphics.visible = initialLayerVisibility.get("items") ?? true;
 
-      console.info(
-        "[World] World rendered, viewport children:",
-        viewport.children.length,
-      );
+      logger.info("Pixi.js viewport initialized", ["pixi"]);
 
       // Create heat map overlay container (between world and hover)
       const heatMapContainer = new Container();
@@ -434,13 +436,10 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
 
       // Initial render of characters (subscription only fires on changes)
       const initialState = useGameStore.getState();
-      console.info("[World] Initial render - characters in store:", {
-        count: initialState.simulation.characters.size,
-        zLevel,
-        characters: Array.from(initialState.simulation.characters.values()).map(
-          (c) => ({ name: c.name, pos: c.position }),
-        ),
-      });
+      logger.debug(
+        `Initial character render: ${initialState.simulation.characters.size} characters at z=${zLevel}`,
+        ["pixi"],
+      );
       const initialSelectedIds = new Set(
         getSelectedColonistIds(initialState.selection),
       );

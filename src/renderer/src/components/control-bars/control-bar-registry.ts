@@ -6,6 +6,7 @@ import {
   type ControlBarLayoutConfigValue,
   useConfigStore,
 } from "@renderer/config";
+import { logger } from "@renderer/lib/logger";
 import type { ControlBarDefinition, ControlBarPosition } from "./types";
 
 /**
@@ -20,9 +21,12 @@ class ControlBarRegistry {
    */
   register(definition: ControlBarDefinition): void {
     if (this.bars.has(definition.id)) {
-      console.warn(
-        `ControlBarRegistry: Overwriting existing bar with id "${definition.id}"`,
+      logger.warn(
+        `Control bar "${definition.id}" already registered, overwriting`,
+        ["controlbar"],
       );
+    } else {
+      logger.debug(`Registered control bar: ${definition.id}`, ["controlbar"]);
     }
     this.bars.set(definition.id, definition);
   }

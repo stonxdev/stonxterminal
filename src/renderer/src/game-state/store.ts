@@ -4,6 +4,7 @@
 
 import { create } from "zustand";
 import { commandRegistry } from "../commands";
+import { logger } from "../lib/logger";
 import {
   entityStore,
   findPath,
@@ -78,6 +79,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
   // ===========================================================================
 
   setWorld: (world: World, config?: WorldGenerationConfig) => {
+    logger.info(
+      `Loading world: ${world.metadata.name} (${world.dimensions.width}x${world.dimensions.height})`,
+      ["game", "world"],
+    );
+
     // Clear existing entities when setting a new world
     entityStore.clear();
 
@@ -403,7 +409,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   // ===========================================================================
 
   play: () => {
-    console.info("[store.play] Starting simulation loop");
+    logger.info("Starting simulation", ["simulation"]);
     simulationLoop.start();
     set((state) => ({
       simulation: { ...state.simulation, isPlaying: true },
@@ -411,7 +417,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   pause: () => {
-    console.info("[store.pause] Stopping simulation loop");
+    logger.info("Pausing simulation", ["simulation"]);
     simulationLoop.stop();
     set((state) => ({
       simulation: { ...state.simulation, isPlaying: false },
@@ -428,6 +434,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   setSpeed: (speed: SimulationSpeed) => {
+    logger.info(`Simulation speed changed to ${speed}x`, ["simulation"]);
     simulationLoop.setSpeed(speed);
     set((state) => ({
       simulation: { ...state.simulation, speed },
@@ -487,26 +494,25 @@ export const useGameStore = create<GameStore>((set, get) => ({
   // ===========================================================================
 
   issueCommand: (characterId: EntityId, command: Command) => {
-    console.info("[store.issueCommand] Called with:", { characterId, command });
+    logger.debug(`Issuing ${command.type} command to ${characterId}`, [
+      "commands",
+    ]);
 
     const character = entityStore.get(characterId);
     if (!character) {
-      console.warn("[store.issueCommand] Character not found in entityStore");
+      logger.warn(`Character ${characterId} not found`, ["commands"]);
       return;
     }
 
     const { world, currentZLevel } = get();
     if (!world) {
-      console.warn("[store.issueCommand] World not initialized");
+      logger.warn("Cannot issue command: world not initialized", ["commands"]);
       return;
     }
 
     const level = world.levels.get(currentZLevel);
     if (!level) {
-      console.warn(
-        "[store.issueCommand] Level not found for z:",
-        currentZLevel,
-      );
+      logger.warn(`Level not found for z: ${currentZLevel}`, ["commands"]);
       return;
     }
 
@@ -517,38 +523,29 @@ export const useGameStore = create<GameStore>((set, get) => ({
       if (!moveCmd.path) {
         const start: Position3D = { ...character.position };
         const goal: Position3D = { ...moveCmd.destination, z: currentZLevel };
-        console.info(
-          "[store.issueCommand] Finding path from",
-          start,
-          "to",
-          goal,
-        );
         const result = findPath(level, start, goal);
 
         if (!result.found) {
-          console.warn("[store.issueCommand] No path found to destination");
+          logger.warn(
+            `No path found for ${character.name} to (${goal.x},${goal.y})`,
+            ["pathfinding"],
+          );
           return;
         }
 
-        console.info(
-          "[store.issueCommand] Path found with",
-          result.path.length,
-          "waypoints",
+        logger.debug(
+          `Path found: ${result.path.length} waypoints, ${result.nodesExplored} nodes in ${result.timeMs.toFixed(1)}ms`,
+          ["pathfinding"],
         );
         moveCmd.path = result.path;
       }
 
       // Issue move via movement system
-      console.info("[store.issueCommand] Issuing move to movement system");
       movementSystem.issueMove(characterId, moveCmd);
 
       // Update state
       const updated = entityStore.get(characterId);
       if (updated) {
-        console.info(
-          "[store.issueCommand] Updating store state, isMoving:",
-          updated.movement.isMoving,
-        );
         set((state) => {
           const newCharacters = new Map(state.simulation.characters);
           newCharacters.set(characterId, updated);

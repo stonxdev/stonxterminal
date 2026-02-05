@@ -2,7 +2,10 @@
 // CONTROL BAR TYPE DEFINITIONS
 // =============================================================================
 
+import type { ControlBarId } from "@renderer/config/registry-ids";
 import type { ComponentType } from "react";
+
+export type { ControlBarId };
 
 /**
  * Positions where control bars can be placed
@@ -26,7 +29,7 @@ export interface ControlBarProps {
  */
 export interface ControlBarDefinition {
   /** Unique identifier for the control bar */
-  id: string;
+  id: ControlBarId;
   /** The React component to render */
   component: ComponentType<ControlBarProps>;
 }
@@ -35,5 +38,5 @@ export interface ControlBarDefinition {
  * Layout configuration for control bar positions
  */
 export interface ControlBarLayoutConfig {
-  slots: Record<ControlBarPosition, string[]>;
+  slots: Record<ControlBarPosition, ControlBarId[]>;
 }

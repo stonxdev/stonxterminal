@@ -49,6 +49,9 @@ export const light: ColonyTheme = {
     chart4: "oklch(0.828 0.189 84.429)",
     chart5: "oklch(0.769 0.188 70.08)",
 
+    // Log colors
+    logWarn: "oklch(0.55 0.17 55)",
+
     // Sidebar colors
     sidebar: "oklch(0.985 0 0)",
     sidebarForeground: "oklch(0.145 0 0)",

@@ -1,3 +1,4 @@
+import { logger } from "../../lib/logger";
 import type { WidgetDefinition, WidgetId } from "./types";
 
 /**
@@ -12,25 +13,30 @@ class WidgetRegistryImpl {
    */
   register(definition: WidgetDefinition): void {
     if (this.widgets.has(definition.id)) {
-      console.warn(
-        `Widget "${definition.id}" is already registered, overwriting.`,
+      logger.warn(
+        `Widget "${definition.id}" is already registered, overwriting`,
+        ["widget"],
       );
+    } else {
+      logger.debug(`Registered widget: ${definition.id}`, ["widget"]);
     }
     this.widgets.set(definition.id, definition);
   }
 
   /**
    * Get a widget definition by ID.
+   * Accepts string for lookups from external sources.
    */
-  get(id: WidgetId): WidgetDefinition | undefined {
-    return this.widgets.get(id);
+  get(id: string): WidgetDefinition | undefined {
+    return this.widgets.get(id as WidgetId);
   }
 
   /**
    * Check if a widget exists.
+   * Accepts string for lookups from external sources.
    */
-  has(id: WidgetId): boolean {
-    return this.widgets.has(id);
+  has(id: string): boolean {
+    return this.widgets.has(id as WidgetId);
   }
 
   /**

@@ -6,6 +6,7 @@ import {
   type StatusBarLayoutConfigValue,
   useConfigStore,
 } from "@renderer/config";
+import { logger } from "@renderer/lib/logger";
 import type { StatusBarAlignment, StatusBarItemDefinition } from "./types";
 
 /**
@@ -19,9 +20,12 @@ class StatusBarRegistryImpl {
    */
   register(definition: StatusBarItemDefinition): void {
     if (this.items.has(definition.id)) {
-      console.warn(
-        `StatusBarRegistry: Overwriting existing item with id "${definition.id}"`,
+      logger.warn(
+        `Status bar "${definition.id}" already registered, overwriting`,
+        ["statusbar"],
       );
+    } else {
+      logger.debug(`Registered status bar: ${definition.id}`, ["statusbar"]);
     }
     this.items.set(definition.id, definition);
   }

@@ -50,6 +50,9 @@ export const terminal: ColonyTheme = {
     chart4: "oklch(0.70 0.16 140)", // slight hue shift
     chart5: "oklch(0.80 0.19 132)", // slight hue shift
 
+    // Log colors
+    logWarn: "oklch(0.75 0.18 85)", // amber warning in green terminal
+
     // Sidebar colors
     sidebar: "oklch(0.05 0 0)", // pure black
     sidebarForeground: "oklch(0.80 0.15 136)", // bright green

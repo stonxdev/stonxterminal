@@ -1,3 +1,4 @@
+import type { WidgetId } from "@renderer/config/registry-ids";
 import type { LucideIcon } from "lucide-react";
 import type { ComponentType } from "react";
 
@@ -33,8 +34,9 @@ export const SIDEBAR_SLOTS: WidgetSlotId[] = [
 /**
  * Widget identifier using dash-case convention.
  * Examples: "tile-inspector", "entity-list", "console"
+ * Defined in registry-ids.ts as single source of truth.
  */
-export type WidgetId = string;
+export type { WidgetId };
 
 /**
  * Props passed to every widget component.

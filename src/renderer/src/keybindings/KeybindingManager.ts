@@ -1,5 +1,6 @@
 import { commandRegistry } from "../commands";
 import type { Keybinding } from "../commands/types";
+import { logger } from "../lib/logger";
 import {
   matchesKeySequence,
   normalizeEventKey,
@@ -216,9 +217,9 @@ class KeybindingManager {
     try {
       await commandRegistry.dispatch(keybinding.command, keybinding.payload);
     } catch (error) {
-      console.error(
-        `Failed to execute command "${keybinding.command}":`,
-        error,
+      logger.error(
+        `Failed to execute keybinding for "${keybinding.command}": ${String(error)}`,
+        ["keybindings"],
       );
     }
   }

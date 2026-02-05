@@ -28,6 +28,7 @@ import {
 import { useGameStore } from "../game-state";
 import { defaultKeybindings } from "../keybindings/defaultKeybindings";
 import { registerKeybindings } from "../keybindings/registerKeybindings";
+import { logger } from "../lib/logger";
 import { viewportStore } from "../lib/viewport-simple";
 import type { Command, EntityId } from "../simulation/types";
 import { injectThemeVariables } from "../theming/runtime-theme-generator";
@@ -50,6 +51,7 @@ const ColonyContextInner: FC<{ children: ReactNode }> = ({ children }) => {
 
   // Set active theme and update DOM
   const setActiveThemeId = useCallback((themeId: AvailableThemeId) => {
+    logger.debug(`Theme changed to: ${themeId}`, ["theme"]);
     setActiveThemeIdState(themeId);
     // Update the data-theme attribute on the document element
     document.documentElement.setAttribute("data-theme", themeId);

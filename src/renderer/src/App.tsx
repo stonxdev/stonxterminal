@@ -7,6 +7,7 @@ import { initializeConfig } from "./config";
 import { ColonyProvider } from "./context/ColonyContext";
 import { useIsMobilePhone } from "./hooks/useIsMobilePhone";
 import { registerBuiltInLayers, useLayerStore } from "./layers";
+import { logger } from "./lib/logger";
 import { router } from "./router";
 import { MobileNotSupportedScreen } from "./screens/MobileNotSupportedScreen";
 
@@ -54,8 +55,13 @@ export const App: React.FC = () => {
   // Initialize config first, then registries that depend on it
   useEffect(() => {
     async function initialize() {
+      logger.info("Starting application initialization", ["lifecycle"]);
+
       // Load configuration from storage first (registries depend on it)
       await initializeConfig();
+      logger.info("Config initialized, registering built-in components", [
+        "lifecycle",
+      ]);
 
       // Now register widgets/bars/layers (they read from config)
       registerBuiltInWidgets();
@@ -64,6 +70,7 @@ export const App: React.FC = () => {
       registerBuiltInStatusBars();
       useLayerStore.getState().initialize();
 
+      logger.info("Application initialization complete", ["lifecycle"]);
       setIsInitialized(true);
     }
     initialize();

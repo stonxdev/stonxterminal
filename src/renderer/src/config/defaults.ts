@@ -18,7 +18,7 @@ export const CONFIG_SCHEMA: ConfigSchema = {
       "left-top": [],
       "left-bottom": [],
       center: ["world", "settings"],
-      "center-bottom": [],
+      "center-bottom": ["logs"],
       "right-top": ["tile-inspector"],
       "right-bottom": ["layers", "characters", "performance"],
     },

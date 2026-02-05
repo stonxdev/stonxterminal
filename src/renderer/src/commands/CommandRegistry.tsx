@@ -3,6 +3,7 @@
 // =============================================================================
 
 import { SchemaFormModal } from "../components/form";
+import { logger } from "../lib/logger";
 import type {
   AnyCommandHandler,
   ColonyContextData,
@@ -99,10 +100,9 @@ class CommandRegistryImpl implements CommandRegistry {
     if (command.payloadSchema && payload !== undefined) {
       const result = command.payloadSchema.toZod().safeParse(payload);
       if (!result.success) {
-        console.error(
-          `Invalid payload for command "${commandId}":`,
-          result.error,
-        );
+        logger.error(`Invalid payload for command "${commandId}"`, [
+          "commands",
+        ]);
         return;
       }
       payload = result.data;
@@ -119,7 +119,10 @@ class CommandRegistryImpl implements CommandRegistry {
       try {
         await command.execute(this.context, payload);
       } catch (error) {
-        console.error(`Error executing command "${commandId}":`, error);
+        logger.error(
+          `Error executing command "${commandId}": ${String(error)}`,
+          ["commands"],
+        );
         return; // Don't notify subscribers if execution failed
       }
     }
@@ -144,10 +147,9 @@ class CommandRegistryImpl implements CommandRegistry {
         try {
           handler(payload);
         } catch (error) {
-          console.error(
-            `[CommandRegistry] Error in handler for ${commandId}:`,
-            error,
-          );
+          logger.error(`Error in handler for ${commandId}: ${String(error)}`, [
+            "commands",
+          ]);
         }
       }
     }
@@ -157,7 +159,9 @@ class CommandRegistryImpl implements CommandRegistry {
       try {
         handler(commandId, payload);
       } catch (error) {
-        console.error("[CommandRegistry] Error in wildcard handler:", error);
+        logger.error(`Error in wildcard handler: ${String(error)}`, [
+          "commands",
+        ]);
       }
     }
   }

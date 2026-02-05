@@ -1,6 +1,7 @@
 import {
   charactersWidget,
   layersWidget,
+  logsWidget,
   performanceWidget,
   settingsWidget,
   tileInspectorWidget,
@@ -17,6 +18,7 @@ export function registerBuiltInWidgets(): void {
   widgetRegistry.register(worldWidget);
   widgetRegistry.register(charactersWidget);
   widgetRegistry.register(layersWidget);
+  widgetRegistry.register(logsWidget);
   widgetRegistry.register(performanceWidget);
   widgetRegistry.register(settingsWidget);
   widgetRegistry.register(tileInspectorWidget);

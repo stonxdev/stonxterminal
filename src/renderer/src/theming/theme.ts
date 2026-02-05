@@ -50,6 +50,9 @@ export type ColonyThemeColors = {
   chart4: string;
   chart5: string;
 
+  // Log colors
+  logWarn: string;
+
   // Sidebar colors
   sidebar: string;
   sidebarForeground: string;

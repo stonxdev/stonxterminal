@@ -1,5 +1,6 @@
-// Zod Schema
+// Registry IDs (single source of truth for widget/status bar/control bar IDs)
 
+// Zod Schema
 export type { ConfigOverrides } from "./config-schema";
 export { ConfigOverridesSchema, getConfigJsonSchema } from "./config-schema";
 // Store
@@ -11,6 +12,16 @@ export type {
   StatusBarLayoutConfigValue,
   WidgetLayoutConfigValue,
 } from "./layout-types";
+export type {
+  ControlBarId,
+  StatusBarId,
+  WidgetId,
+} from "./registry-ids";
+export {
+  CONTROL_BAR_IDS,
+  STATUS_BAR_IDS,
+  WIDGET_IDS,
+} from "./registry-ids";
 export type {
   ConfigPropertySchema,
   ConfigRecord,

@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { logger } from "../lib/logger";
 import { getStorageService } from "../services/storage";
 import { ConfigOverridesSchema } from "./config-schema";
 import { DEFAULT_CONFIG } from "./defaults";
@@ -79,6 +80,7 @@ export const useConfigStore = create<ConfigStore>((set, get) => ({
   },
 
   set: (key: string, value: ConfigValue) => {
+    logger.debug(`Config changed: ${key}`, ["config"]);
     set((state) => {
       const newOverrides = { ...state.overrides, [key]: value };
       return {
@@ -127,6 +129,7 @@ export const useConfigStore = create<ConfigStore>((set, get) => ({
         const errorMessage = result.error.issues
           .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
           .join("; ");
+        logger.warn(`Config validation failed: ${errorMessage}`, ["config"]);
         set({ overridesText: text, parseError: errorMessage });
         return;
       }
@@ -154,6 +157,7 @@ export const useConfigStore = create<ConfigStore>((set, get) => ({
   },
 
   load: async () => {
+    logger.info("Loading configuration from storage", ["config"]);
     try {
       const storage = await getStorageService();
       const result = await storage.config.loadConfig();
@@ -169,9 +173,11 @@ export const useConfigStore = create<ConfigStore>((set, get) => ({
           loadError: null,
         }));
       } else {
+        logger.error(`Failed to load config: ${result.error}`, ["config"]);
         set({ isLoaded: true, loadError: result.error ?? null });
       }
     } catch (error) {
+      logger.error(`Config load exception: ${String(error)}`, ["config"]);
       set({ isLoaded: true, loadError: String(error) });
     }
   },
@@ -186,7 +192,7 @@ export const useConfigStore = create<ConfigStore>((set, get) => ({
         lastValidJson: overrides,
       });
     } catch (error) {
-      console.error("Failed to save config:", error);
+      logger.error(`Failed to save config: ${String(error)}`, ["config"]);
     }
   },
 }));

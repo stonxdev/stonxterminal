@@ -1,3 +1,4 @@
+import { logger } from "../lib/logger";
 import type { ColonyTheme } from "./theme";
 
 /**
@@ -49,7 +50,7 @@ export function injectThemeVariables(themes: ColonyTheme[]): void {
   const css = generateThemesCSS(themes);
 
   if (!css.trim()) {
-    console.warn("No theme CSS generated");
+    logger.warn("No theme CSS generated", ["theme"]);
     return;
   }
 
@@ -68,5 +69,5 @@ export function injectThemeVariables(themes: ColonyTheme[]): void {
   // Insert into document head
   document.head.appendChild(style);
 
-  console.log(`Injected ${themes.length} theme(s) into DOM`);
+  logger.info(`Injected ${themes.length} theme(s) into DOM`, ["theme"]);
 }
