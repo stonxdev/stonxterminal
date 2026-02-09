@@ -11,6 +11,8 @@ import {
   MovementSystem,
   simulationLoop,
 } from "../simulation";
+import { JobProcessor } from "../simulation/jobs";
+import type { Job } from "../simulation/jobs/types";
 import type {
   Character,
   Command,
@@ -39,6 +41,7 @@ const initialSimulationState: SimulationStateSlice = {
   speed: 1,
   currentTick: 0,
   characters: new Map(),
+  jobProgress: new Map(),
 };
 
 const initialState = {
@@ -62,7 +65,7 @@ const initialState = {
 };
 
 // =============================================================================
-// MOVEMENT SYSTEM SETUP
+// MOVEMENT SYSTEM & JOB PROCESSOR SETUP
 // =============================================================================
 
 const movementSystem = new MovementSystem(entityStore);
@@ -570,28 +573,57 @@ export const useGameStore = create<GameStore>((set, get) => ({
       });
     }
   },
+
+  // ===========================================================================
+  // JOB MANAGEMENT
+  // ===========================================================================
+
+  assignJob: (job: Job) => {
+    jobProcessor.assignJob(job);
+  },
+
+  cancelJob: (characterId: EntityId) => {
+    jobProcessor.cancelJob(characterId);
+  },
 }));
+
+// =============================================================================
+// JOB PROCESSOR SETUP
+// =============================================================================
+
+const jobProcessor = new JobProcessor(
+  entityStore,
+  movementSystem,
+  () => useGameStore.getState().world,
+  (position, zLevel, changes) =>
+    useGameStore.getState().updateTile(position, zLevel, changes),
+);
 
 // =============================================================================
 // SIMULATION LOOP SETUP
 // =============================================================================
 
-// Set up tick callback to update movement
+// Set up tick callback to update jobs and movement
 simulationLoop.setTickCallback((deltaTime, tick) => {
-  // Update movement system
+  // Update job processor (advances work steps, initiates moves)
+  jobProcessor.update(deltaTime);
+
+  // Update movement system (advances characters along paths)
   movementSystem.update(deltaTime);
 
-  // Sync entity store to game state
+  // Sync entity store and job progress to game state
   const characters = new Map<EntityId, Character>();
   for (const [id, character] of entityStore) {
     characters.set(id, character);
   }
+  const jobProgress = jobProcessor.getActiveJobProgress();
 
   useGameStore.setState((state) => ({
     simulation: {
       ...state.simulation,
       currentTick: tick,
       characters,
+      jobProgress,
     },
   }));
 });

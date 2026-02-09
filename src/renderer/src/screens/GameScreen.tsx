@@ -11,6 +11,7 @@ import {
   useWorldActions,
 } from "../game-state";
 import { createCharacter } from "../simulation/types";
+import { useGameColorStore } from "../theming/game-color-store";
 import { generateWorld } from "../world/factories/procedural-generator";
 import { SeededRandom } from "../world/factories/world-factory";
 import type { BiomeType, ZLevel } from "../world/types";
@@ -24,8 +25,6 @@ const DEFAULT_WORLD_CONFIG = {
   biome: "temperate_forest" as BiomeType,
 };
 
-// Demo colonist colors
-const COLONIST_COLORS = [0x4a90d9, 0xd94a4a, 0x4ad94a];
 const COLONIST_NAMES = ["Alice", "Bob", "Charlie"];
 
 /**
@@ -125,13 +124,15 @@ export const GameScreen: React.FC = () => {
     if (spawnPositions.length === 0) return;
 
     // Create demo colonists
+    const { colonistPalette, colonistFallback } =
+      useGameColorStore.getState().resolved.characters;
     let firstCharacterId: string | null = null;
     spawnPositions.forEach((pos, index) => {
       const character = createCharacter({
         name: COLONIST_NAMES[index] ?? `Colonist ${index + 1}`,
         type: "colonist",
         position: { x: pos.x, y: pos.y, z: currentZLevel },
-        color: COLONIST_COLORS[index] ?? 0x888888,
+        color: colonistPalette[index] ?? colonistFallback,
       });
       addCharacter(character);
       if (index === 0) {

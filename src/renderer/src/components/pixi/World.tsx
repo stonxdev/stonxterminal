@@ -4,8 +4,10 @@ import { logger } from "@renderer/lib/logger";
 import { usePerformanceStore } from "@renderer/lib/performance-store";
 import { SimpleViewport, viewportStore } from "@renderer/lib/viewport-simple";
 import type {
+  ItemType,
   StructureType,
   TerrainType,
+  Tile,
   World as WorldData,
   ZLevel,
 } from "@renderer/world/types";
@@ -24,8 +26,19 @@ import "pixi.js/unsafe-eval";
 import { getSelectedColonistIds, useGameStore } from "@renderer/game-state";
 import { usePixiInteraction } from "@renderer/interaction";
 import { useLayerStore } from "@renderer/layers";
+import type { JobProgressInfo } from "@renderer/simulation/jobs/types";
+import type { EntityId } from "@renderer/simulation/types";
+import {
+  type ResolvedGameColors,
+  useGameColorStore,
+} from "@renderer/theming/game-color-store";
 import type { Position2D } from "@renderer/world/types";
-import { CharacterRenderer, HeatMapRenderer, PathRenderer } from "./renderers";
+import {
+  CharacterRenderer,
+  HeatMapRenderer,
+  JobProgressRenderer,
+  PathRenderer,
+} from "./renderers";
 
 // =============================================================================
 // CONFIGURATION
@@ -136,28 +149,68 @@ async function preloadStructureTextures(): Promise<void> {
   );
 }
 
-/** Colors for structure types */
-const STRUCTURE_COLORS: Record<StructureType, number> = {
-  none: 0x000000,
-  wall_stone: 0x505050,
-  wall_wood: 0x8b4513,
-  wall_metal: 0xb8b8b8,
-  wall_brick: 0xb22222,
-  door_wood: 0xcd853f,
-  door_metal: 0xa0a0a0,
-  door_auto: 0x90ee90,
-  bed: 0x8b0000,
-  chair: 0xdaa520,
-  table: 0xd2691e,
-  workbench: 0x808000,
-  chest: 0x654321,
-  shelf: 0xbc8f8f,
-  stockpile_zone: 0x00000000,
-  tree_oak: 0x228b22,
-  tree_pine: 0x006400,
-  bush: 0x32cd32,
-  boulder: 0x5a5a5a,
+// =============================================================================
+// ITEM SPRITES
+// =============================================================================
+
+/** Item types that have sprite textures */
+type SpriteItemType =
+  | "wood"
+  | "stone"
+  | "iron"
+  | "gold"
+  | "silver"
+  | "coal"
+  | "cloth"
+  | "leather"
+  | "meat"
+  | "berries";
+
+/** Sprite paths for item types that use sprites */
+const ITEM_SPRITE_PATHS: Record<SpriteItemType, string> = {
+  wood: "/sprites/resources/wood/wood.png",
+  stone: "/sprites/resources/stone/stone.png",
+  iron: "/sprites/resources/iron/iron.png",
+  gold: "/sprites/resources/gold/gold.png",
+  silver: "/sprites/resources/silver/silver.png",
+  coal: "/sprites/resources/coal/coal.png",
+  cloth: "/sprites/resources/cloth/cloth.png",
+  leather: "/sprites/resources/leather/leather.png",
+  meat: "/sprites/resources/meat/meat.png",
+  berries: "/sprites/resources/berries/berries.png",
 };
+
+/** Cached item textures */
+const itemTextures: Map<SpriteItemType, Texture> = new Map();
+
+/** Check if an item type has a sprite */
+function hasItemSprite(type: ItemType): type is SpriteItemType {
+  return type in ITEM_SPRITE_PATHS;
+}
+
+/** Preload all item textures */
+async function preloadItemTextures(): Promise<void> {
+  if (itemTextures.size > 0) return; // Already loaded
+
+  const itemTypes = Object.keys(ITEM_SPRITE_PATHS) as SpriteItemType[];
+
+  for (const itemType of itemTypes) {
+    try {
+      const texture = await Assets.load<Texture>(ITEM_SPRITE_PATHS[itemType]);
+      texture.source.scaleMode = "nearest"; // Pixel-perfect scaling
+      itemTextures.set(itemType, texture);
+    } catch (error) {
+      logger.error(
+        `Failed to load item texture for ${itemType}: ${String(error)}`,
+        ["pixi"],
+      );
+    }
+  }
+
+  logger.info(`Loaded ${itemTextures.size}/${itemTypes.length} item textures`, [
+    "pixi",
+  ]);
+}
 
 // =============================================================================
 // COMPONENT
@@ -185,10 +238,16 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
   const structuresGraphicsRef = useRef<Graphics | null>(null);
   const itemsGraphicsRef = useRef<Graphics | null>(null);
 
-  // Character, path, and heat map renderers
+  // Per-tile display object tracking for reactive tile updates
+  const treeSpritesRef = useRef<Map<string, Sprite>>(new Map());
+  const itemDisplaysRef = useRef<Map<string, Sprite>>(new Map());
+  const tileUpdateUnsubRef = useRef<(() => void) | null>(null);
+
+  // Character, path, heat map, and job progress renderers
   const characterRendererRef = useRef<CharacterRenderer | null>(null);
   const pathRendererRef = useRef<PathRenderer | null>(null);
   const heatMapRendererRef = useRef<HeatMapRenderer | null>(null);
+  const jobProgressRendererRef = useRef<JobProgressRenderer | null>(null);
 
   // Interaction container for click handling
   const [interactionContainer, setInteractionContainer] =
@@ -206,17 +265,23 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
 
   // Subscribe to selection, hover, character, and layer state changes
   useEffect(() => {
-    // Helper to update character and path renderers
+    // Helper to update character, path, and job progress renderers
     const updateCharacterAndPath = (
       characters: Map<string, import("@renderer/simulation/types").Character>,
       selection: ReturnType<typeof useGameStore.getState>["selection"],
       shouldRenderCharacters: boolean,
+      jobProgress?: Map<EntityId, JobProgressInfo>,
     ) => {
       const selectedIds = new Set(getSelectedColonistIds(selection));
 
       if (characterRendererRef.current) {
         if (shouldRenderCharacters) {
-          characterRendererRef.current.update(characters, selectedIds, zLevel);
+          characterRendererRef.current.update(
+            characters,
+            selectedIds,
+            zLevel,
+            jobProgress,
+          );
         } else {
           characterRendererRef.current.update(new Map(), new Set(), zLevel);
         }
@@ -230,9 +295,15 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
             : null;
         pathRendererRef.current.update(selectedCharacter ?? null);
       }
+
+      if (jobProgressRendererRef.current && jobProgress) {
+        jobProgressRendererRef.current.update(jobProgress);
+      }
     };
 
     const unsubscribeGame = useGameStore.subscribe((state) => {
+      const currentColors = useGameColorStore.getState().resolved;
+
       // Update selection overlay
       if (selectionGraphicsRef.current) {
         updateSelectionOverlay(
@@ -240,21 +311,27 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
           state.selection.type === "tile" ? state.selection.position : null,
           state.selection.type === "tile" ? state.selection.zLevel : null,
           zLevel,
+          currentColors.selection.highlight,
         );
       }
 
       // Update hover overlay
       if (hoverGraphicsRef.current) {
-        updateHoverOverlay(hoverGraphicsRef.current, state.hoverPosition);
+        updateHoverOverlay(
+          hoverGraphicsRef.current,
+          state.hoverPosition,
+          currentColors.selection.hoverFill,
+        );
       }
 
-      // Update characters and paths
+      // Update characters, paths, and job progress
       const layerVisibility = useLayerStore.getState().visibility;
       const shouldRenderCharacters = layerVisibility.get("characters") ?? true;
       updateCharacterAndPath(
         state.simulation.characters,
         state.selection,
         shouldRenderCharacters,
+        state.simulation.jobProgress,
       );
     });
 
@@ -285,6 +362,7 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
         gameState.simulation.characters,
         gameState.selection,
         shouldRenderCharacters,
+        gameState.simulation.jobProgress,
       );
     });
 
@@ -310,12 +388,15 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
       const rect = container.getBoundingClientRect();
       if (rect.width === 0 || rect.height === 0) return;
 
+      // Get initial game colors from the store
+      const initialColors = useGameColorStore.getState().resolved;
+
       const app = new Application();
 
       await app.init({
         width: rect.width,
         height: rect.height,
-        backgroundColor: 0x1a1a2e,
+        backgroundColor: initialColors.world.background,
         antialias: false, // Pixel-perfect for tiles
         resolution: window.devicePixelRatio || 1,
         autoDensity: true,
@@ -349,6 +430,17 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
         }
       });
 
+      // Subscribe to game color changes for live theme updates
+      const unsubscribeColors = useGameColorStore.subscribe((state) => {
+        const colors = state.resolved;
+        if (appRef.current) {
+          appRef.current.renderer.background.color = colors.world.background;
+        }
+        characterRendererRef.current?.updateColors(colors);
+        pathRendererRef.current?.updateColors(colors);
+        jobProgressRendererRef.current?.updateColors(colors);
+      });
+
       appRef.current = app;
       isInitializedRef.current = true;
 
@@ -376,20 +468,28 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
       // Preload textures before rendering
       await preloadTerrainTextures();
       await preloadStructureTextures();
+      await preloadItemTextures();
 
       // Render the world (terrain and features as separate layers)
       logger.info(`Rendering world tiles (${level.width}x${level.height})`, [
         "pixi",
       ]);
-      const { treesContainer, structuresGraphics, itemsGraphics } = renderWorld(
-        viewport,
-        level,
-      );
+      const {
+        treesContainer,
+        structuresGraphics,
+        itemsGraphics,
+        treeSprites,
+        itemDisplays,
+      } = renderWorld(viewport, level, initialColors);
 
       // Store refs for visibility toggling
       treesContainerRef.current = treesContainer;
       structuresGraphicsRef.current = structuresGraphics;
       itemsGraphicsRef.current = itemsGraphics;
+
+      // Store per-tile sprite tracking refs
+      treeSpritesRef.current = treeSprites;
+      itemDisplaysRef.current = itemDisplays;
 
       // Set initial visibility based on layer state
       treesContainer.visible = initialLayerVisibility.get("trees") ?? true;
@@ -418,6 +518,16 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
       viewport.addChild(selectionGraphics);
       selectionGraphicsRef.current = selectionGraphics;
 
+      // Create job progress renderer (drawn below characters)
+      const jobProgressContainer = new Container();
+      viewport.addChild(jobProgressContainer);
+      const jobProgressRenderer = new JobProgressRenderer(
+        jobProgressContainer,
+        CELL_SIZE,
+        initialColors,
+      );
+      jobProgressRendererRef.current = jobProgressRenderer;
+
       // Preload character assets and create renderer
       await CharacterRenderer.preloadAssets();
       const characterContainer = new Container();
@@ -425,13 +535,18 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
       const characterRenderer = new CharacterRenderer(
         characterContainer,
         CELL_SIZE,
+        initialColors,
       );
       characterRendererRef.current = characterRenderer;
 
       // Create path renderer (drawn above characters)
       const pathContainer = new Container();
       viewport.addChild(pathContainer);
-      const pathRenderer = new PathRenderer(pathContainer, CELL_SIZE);
+      const pathRenderer = new PathRenderer(
+        pathContainer,
+        CELL_SIZE,
+        initialColors,
+      );
       pathRendererRef.current = pathRenderer;
 
       // Initial render of characters (subscription only fires on changes)
@@ -517,11 +632,69 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
         _resizeHandler?: () => void;
         _fpsHandler?: () => void;
         _configUnsubscribe?: () => void;
+        _colorsUnsubscribe?: () => void;
       };
       appWithExtras._resizeObserver = resizeObserver;
       appWithExtras._resizeHandler = handleResize;
       appWithExtras._fpsHandler = fpsCallback;
       appWithExtras._configUnsubscribe = unsubscribeConfig;
+      appWithExtras._colorsUnsubscribe = unsubscribeColors;
+
+      // Subscribe to tile updates for reactive rendering (tree removal, item spawning)
+      tileUpdateUnsubRef.current = commandRegistry.on(
+        "world.tileUpdated",
+        (payload: unknown) => {
+          const {
+            position,
+            zLevel: tileZ,
+            tile,
+          } = payload as {
+            position: Position2D;
+            zLevel: number;
+            tile: Tile;
+          };
+          if (tileZ !== zLevel) return;
+
+          const key = `${position.x},${position.y}`;
+          const px = position.x * CELL_SIZE;
+          const py = position.y * CELL_SIZE;
+
+          // Handle structure removal (tree chopped, boulder mined)
+          const existingTree = treeSpritesRef.current.get(key);
+          if (
+            existingTree &&
+            (!tile.structure || tile.structure.type === "none")
+          ) {
+            treesContainerRef.current?.removeChild(existingTree);
+            existingTree.destroy();
+            treeSpritesRef.current.delete(key);
+          }
+
+          // Handle item changes
+          const existingItem = itemDisplaysRef.current.get(key);
+          if (existingItem) {
+            itemsGraphicsRef.current?.removeChild(existingItem);
+            existingItem.destroy();
+            itemDisplaysRef.current.delete(key);
+          }
+
+          if (tile.items.length > 0) {
+            const firstItem = tile.items[0];
+            if (hasItemSprite(firstItem.type)) {
+              const texture = itemTextures.get(firstItem.type);
+              if (texture && itemsGraphicsRef.current) {
+                const sprite = new Sprite(texture);
+                sprite.x = px;
+                sprite.y = py;
+                sprite.width = CELL_SIZE;
+                sprite.height = CELL_SIZE;
+                itemsGraphicsRef.current.addChild(sprite);
+                itemDisplaysRef.current.set(key, sprite);
+              }
+            }
+          }
+        },
+      );
 
       // Dispatch world.ready command to notify that viewport is fully initialized
       commandRegistry.dispatch("world.ready", { timestamp: Date.now() });
@@ -547,12 +720,17 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
         heatMapRendererRef.current.destroy();
         heatMapRendererRef.current = null;
       }
+      if (jobProgressRendererRef.current) {
+        jobProgressRendererRef.current.destroy();
+        jobProgressRendererRef.current = null;
+      }
       if (appRef.current) {
         const app = appRef.current as Application & {
           _resizeObserver?: ResizeObserver;
           _resizeHandler?: () => void;
           _fpsHandler?: () => void;
           _configUnsubscribe?: () => void;
+          _colorsUnsubscribe?: () => void;
         };
         app._resizeObserver?.disconnect();
         if (app._resizeHandler) {
@@ -562,6 +740,7 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
           app.ticker.remove(app._fpsHandler);
         }
         app._configUnsubscribe?.();
+        app._colorsUnsubscribe?.();
       }
       if (viewportRef.current) {
         viewportStore.setViewport(null);
@@ -572,6 +751,10 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
         appRef.current.destroy(true, { children: true, texture: true });
         appRef.current = null;
       }
+      tileUpdateUnsubRef.current?.();
+      tileUpdateUnsubRef.current = null;
+      treeSpritesRef.current.clear();
+      itemDisplaysRef.current.clear();
       isInitializedRef.current = false;
     };
   }, [level, worldPixelWidth, worldPixelHeight, zLevel]);
@@ -596,12 +779,15 @@ interface RenderWorldResult {
   treesContainer: Container;
   structuresGraphics: Graphics;
   itemsGraphics: Graphics;
+  treeSprites: Map<string, Sprite>;
+  itemDisplays: Map<string, Sprite>;
 }
 
 /** Render the world tiles to the viewport with separate feature layers */
 function renderWorld(
   viewport: SimpleViewport,
   level: ZLevel,
+  colors: ResolvedGameColors,
 ): RenderWorldResult {
   // Terrain container for sprites
   const terrainContainer = new Container();
@@ -613,6 +799,10 @@ function renderWorld(
   const treesContainer = new Container();
   const structuresGraphics = new Graphics();
   const itemsGraphics = new Graphics();
+
+  // Per-tile display object tracking for reactive updates
+  const treeSprites = new Map<string, Sprite>();
+  const itemDisplays = new Map<string, Sprite>();
 
   // Render tiles
   for (let y = 0; y < level.height; y++) {
@@ -634,7 +824,7 @@ function renderWorld(
 
       // Draw structure overlay if present
       if (tile.structure && tile.structure.type !== "none") {
-        const structureColor = STRUCTURE_COLORS[tile.structure.type];
+        const structureColor = colors.structures.pixi[tile.structure.type];
         const structureType = tile.structure.type;
 
         // Check if this structure type has a sprite
@@ -648,6 +838,7 @@ function renderWorld(
             sprite.width = CELL_SIZE;
             sprite.height = CELL_SIZE;
             treesContainer.addChild(sprite);
+            treeSprites.set(`${x},${y}`, sprite);
           }
         } else {
           // Draw other structures as full tiles
@@ -656,16 +847,34 @@ function renderWorld(
         }
       }
 
-      // Draw item indicator if items present
+      // Draw items on the ground
       if (tile.items.length > 0) {
-        itemsGraphics.circle(px + CELL_SIZE - 6, py + 6, 4);
-        itemsGraphics.fill(0xffd700); // Gold dot for items
+        const firstItem = tile.items[0];
+        if (hasItemSprite(firstItem.type)) {
+          const texture = itemTextures.get(firstItem.type);
+          if (texture) {
+            const sprite = new Sprite(texture);
+            sprite.x = px;
+            sprite.y = py;
+            sprite.width = CELL_SIZE;
+            sprite.height = CELL_SIZE;
+            itemsGraphics.addChild(sprite);
+            itemDisplays.set(`${x},${y}`, sprite);
+          }
+        } else {
+          itemsGraphics.circle(px + CELL_SIZE - 6, py + 6, 4);
+          itemsGraphics.fill(colors.world.itemFallbackDot);
+        }
       }
     }
   }
 
   // Draw grid lines (subtle)
-  gridGraphics.setStrokeStyle({ width: 0.5, color: 0x333333, alpha: 0.3 });
+  gridGraphics.setStrokeStyle({
+    width: 0.5,
+    color: colors.world.gridLine,
+    alpha: 0.3,
+  });
   for (let x = 0; x <= level.width; x++) {
     gridGraphics.moveTo(x * CELL_SIZE, 0);
     gridGraphics.lineTo(x * CELL_SIZE, level.height * CELL_SIZE);
@@ -679,7 +888,7 @@ function renderWorld(
 
   // Draw world boundary
   gridGraphics.rect(0, 0, level.width * CELL_SIZE, level.height * CELL_SIZE);
-  gridGraphics.stroke({ width: 2, color: 0xffff00 });
+  gridGraphics.stroke({ width: 2, color: colors.world.worldBoundary });
 
   // Add all layers to viewport in correct z-order
   viewport.addChild(terrainContainer);
@@ -693,7 +902,7 @@ function renderWorld(
     text: `Z-Level: ${level.z} | ${level.width}x${level.height} | Biome: ${level.biome}`,
     style: {
       fontSize: 14,
-      fill: 0xffffff,
+      fill: colors.world.infoText,
       fontFamily: "monospace",
     },
   });
@@ -701,7 +910,13 @@ function renderWorld(
   label.y = 10;
   viewport.addChild(label);
 
-  return { treesContainer, structuresGraphics, itemsGraphics };
+  return {
+    treesContainer,
+    structuresGraphics,
+    itemsGraphics,
+    treeSprites,
+    itemDisplays,
+  };
 }
 
 /**
@@ -712,6 +927,7 @@ function updateSelectionOverlay(
   position: Position2D | null,
   selectionZLevel: number | null,
   currentZLevel: number,
+  highlightColor: number,
 ): void {
   graphics.clear();
 
@@ -724,14 +940,14 @@ function updateSelectionOverlay(
   const py = position.y * CELL_SIZE;
   const padding = 2;
 
-  // Draw selection border (bright cyan)
+  // Draw selection border
   graphics.rect(
     px + padding,
     py + padding,
     CELL_SIZE - padding * 2,
     CELL_SIZE - padding * 2,
   );
-  graphics.stroke({ width: 3, color: 0x00ffff });
+  graphics.stroke({ width: 3, color: highlightColor });
 
   // Draw corner accents
   const cornerSize = 8;
@@ -740,25 +956,25 @@ function updateSelectionOverlay(
   graphics.moveTo(px, py + cornerSize);
   graphics.lineTo(px, py);
   graphics.lineTo(px + cornerSize, py);
-  graphics.stroke({ width: 2, color: 0x00ffff });
+  graphics.stroke({ width: 2, color: highlightColor });
 
   // Top-right corner
   graphics.moveTo(px + CELL_SIZE - cornerSize, py);
   graphics.lineTo(px + CELL_SIZE, py);
   graphics.lineTo(px + CELL_SIZE, py + cornerSize);
-  graphics.stroke({ width: 2, color: 0x00ffff });
+  graphics.stroke({ width: 2, color: highlightColor });
 
   // Bottom-left corner
   graphics.moveTo(px, py + CELL_SIZE - cornerSize);
   graphics.lineTo(px, py + CELL_SIZE);
   graphics.lineTo(px + cornerSize, py + CELL_SIZE);
-  graphics.stroke({ width: 2, color: 0x00ffff });
+  graphics.stroke({ width: 2, color: highlightColor });
 
   // Bottom-right corner
   graphics.moveTo(px + CELL_SIZE - cornerSize, py + CELL_SIZE);
   graphics.lineTo(px + CELL_SIZE, py + CELL_SIZE);
   graphics.lineTo(px + CELL_SIZE, py + CELL_SIZE - cornerSize);
-  graphics.stroke({ width: 2, color: 0x00ffff });
+  graphics.stroke({ width: 2, color: highlightColor });
 }
 
 /**
@@ -767,6 +983,7 @@ function updateSelectionOverlay(
 function updateHoverOverlay(
   graphics: Graphics,
   position: Position2D | null,
+  hoverColor: number,
 ): void {
   graphics.clear();
 
@@ -779,11 +996,11 @@ function updateHoverOverlay(
 
   // Draw semi-transparent hover highlight
   graphics.rect(px, py, CELL_SIZE, CELL_SIZE);
-  graphics.fill({ color: 0xffffff, alpha: 0.15 });
+  graphics.fill({ color: hoverColor, alpha: 0.15 });
 
   // Draw subtle border
   graphics.rect(px, py, CELL_SIZE, CELL_SIZE);
-  graphics.stroke({ width: 1, color: 0xffffff, alpha: 0.4 });
+  graphics.stroke({ width: 1, color: hoverColor, alpha: 0.4 });
 }
 
 export default World;

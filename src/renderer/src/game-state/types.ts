@@ -2,6 +2,7 @@
 // GAME STATE TYPES
 // =============================================================================
 
+import type { Job, JobProgressInfo } from "../simulation/jobs/types";
 import type {
   Character,
   Command,
@@ -211,6 +212,8 @@ export interface SimulationStateSlice {
   currentTick: number;
   /** Characters indexed by ID */
   characters: Map<EntityId, Character>;
+  /** Active job progress snapshots for rendering */
+  jobProgress: Map<EntityId, JobProgressInfo>;
 }
 
 /**
@@ -233,4 +236,8 @@ export interface SimulationStateActions {
   // Commands
   issueCommand: (characterId: EntityId, command: Command) => void;
   cancelCommand: (characterId: EntityId) => void;
+
+  // Jobs
+  assignJob: (job: Job) => void;
+  cancelJob: (characterId: EntityId) => void;
 }

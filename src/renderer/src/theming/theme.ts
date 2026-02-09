@@ -1,8 +1,73 @@
+import type { StructureType, TerrainType } from "../world/types";
+
+// =============================================================================
+// COLOR SCALE (hex-string variant for theme definitions)
+// =============================================================================
+
+/** Color scale using hex strings — the canonical format stored in themes. */
+export interface ColorScaleHex {
+  type: "gradient" | "discrete" | "diverging";
+  stops: { value: number; color: string }[];
+  midpoint?: number;
+}
+
+// =============================================================================
+// GAME COLORS — all in-game colors in "#RRGGBB" hex format
+// =============================================================================
+
+export interface GameColors {
+  world: {
+    background: string;
+    gridLine: string;
+    worldBoundary: string;
+    infoText: string;
+    itemFallbackDot: string;
+  };
+  selection: {
+    highlight: string;
+    hoverFill: string;
+    pathLine: string;
+  };
+  characters: {
+    colonistPalette: string[];
+    colonistFallback: string;
+    minimapDot: string;
+  };
+  jobs: {
+    chop: string;
+    mine: string;
+    move: string;
+    defaultJob: string;
+    indicatorBorder: string;
+  };
+  progressBar: {
+    background: string;
+    fill: string;
+    border: string;
+  };
+  structures: Record<StructureType, string>;
+  terrain: Record<TerrainType, string>;
+  minimap: {
+    background: string;
+    viewportRect: string;
+  };
+  heatmaps: {
+    temperature: ColorScaleHex;
+    moisture: ColorScaleHex;
+    movementCost: ColorScaleHex;
+  };
+}
+
+// =============================================================================
+// COLONY THEME
+// =============================================================================
+
 export interface ColonyTheme {
   id: string;
   name: string;
   type: "light" | "dark";
   colors: ColonyThemeColors;
+  gameColors: GameColors;
 }
 
 export type ColonyThemeColors = {

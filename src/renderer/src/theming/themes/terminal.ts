@@ -1,9 +1,11 @@
+import { defaultGameColors } from "../default-game-colors";
 import type { ColonyTheme } from "../theme";
 
 export const terminal: ColonyTheme = {
   name: "Terminal",
   type: "dark",
   id: "terminal",
+  gameColors: defaultGameColors,
   colors: {
     // Base colors - Matrix black background with green text
     background: "oklch(0.05 0 0)", // #000000 pure black

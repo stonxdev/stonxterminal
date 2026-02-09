@@ -13,7 +13,8 @@ The palette maps single characters to colors. For example:
 - `.` = transparent
 - `0` = #000000 (Black)
 - `W` = #FFFFFF (White)
-- `M` = #32CD32 (Lime green)
+- `C` = #7A5A10 (Dirt)
+- `J` = #32CD32 (Lime)
 - etc.
 
 View the palette file for the complete list of available colors and their character codes.
@@ -26,15 +27,19 @@ Each sprite lives in its own folder under `src/renderer/public/sprites/`:
 src/renderer/public/sprites/
   palette/
     palette.txt          # Universal color palette (shared by all sprites)
+    palette.gpl          # GIMP palette format (for use in image editors)
   characters/
     male-1/
       source.txt         # ASCII pixel grid (source of truth)
       male-1.png         # Generated PNG output
-      male-1.aseprite    # Optional: Aseprite file for manual edits
   terrain/
     soil/
       source.txt
       soil.png
+  structures/
+    boulder/
+      source.txt
+      boulder.png
 ```
 
 ## Source File Format
@@ -47,11 +52,11 @@ The `source.txt` file contains **only the pixel grid** (no palette section - col
 # 32x32 sprite
 ................................
 ................................
-...........MMMMMM...............
-..........MNNNNNNM..............
-.........MNNLLLLNNM.............
-........MNNNLLLLNNNM............
-.......MNNNNLLLLNNNNM...........
+...........HHHHHH...............
+..........HIIIIIIH..............
+.........HIIJJJJIIH.............
+........HIIIJJJJIIIH............
+.......HIIIIJJJJIIIIH...........
 ................................
 ```
 
@@ -87,17 +92,18 @@ Options:
 
 ### png-to-pixel
 
-Convert PNG to source.txt (validates colors against palette):
+Convert PNG to source.txt. Colors not in the palette are automatically remapped to the nearest palette color (by RGB distance):
 
 ```bash
-# Single sprite
+# Single sprite (folder or PNG file path)
 npm run cli -- png-to-pixel src/renderer/public/sprites/terrain/soil
+npm run cli -- png-to-pixel src/renderer/public/sprites/terrain/soil/soil.png
 
 # All sprites
 npm run cli -- png-to-pixel --all
 ```
 
-**Important:** The PNG must only contain colors that exist in the universal palette. If any color is not found, the command will fail and list the missing colors.
+Non-palette colors are remapped to the nearest match and reported in the console output. If a `source.txt` already exists and the pixel grid is unchanged, the file is skipped.
 
 Options:
 | Option | Description |
@@ -117,12 +123,10 @@ Options:
 
 ### Importing an existing PNG
 
-1. Ensure the PNG only uses colors from the universal palette
+1. Place the PNG in its sprite folder
 2. Run `npm run cli -- png-to-pixel <folder-path>`
 3. The command generates `source.txt` from the PNG
-4. If colors are missing from the palette, either:
-   - Add them to `palette/palette.txt`, or
-   - Adjust the PNG to use existing palette colors
+4. Any non-palette colors are automatically remapped to the nearest palette color — review the console output for remappings
 
 ### Editing sprites
 
@@ -147,5 +151,5 @@ Example:
 . = transparent    Void
 0 = #000000        Black
 W = #FFFFFF        White
-M = #32CD32        Lime
+J = #32CD32        Lime
 ```

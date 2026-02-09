@@ -6,14 +6,12 @@
 import { type Container, Graphics } from "pixi.js";
 import { getCharacterCenterPosition } from "../../../simulation/movement";
 import type { Character } from "../../../simulation/types";
+import type { ResolvedGameColors } from "../../../theming/game-color-store";
 import type { Position3D } from "../../../world/types";
 
 // =============================================================================
 // CONSTANTS
 // =============================================================================
-
-/** Path line color */
-const PATH_COLOR = 0x00ffff;
 
 /** Path line alpha */
 const PATH_ALPHA = 0.6;
@@ -37,11 +35,24 @@ const DESTINATION_SIZE = 8;
 export class PathRenderer {
   private graphics: Graphics;
   private cellSize: number;
+  private colors: ResolvedGameColors;
 
-  constructor(parentContainer: Container, cellSize: number) {
+  constructor(
+    parentContainer: Container,
+    cellSize: number,
+    colors: ResolvedGameColors,
+  ) {
     this.graphics = new Graphics();
     this.cellSize = cellSize;
+    this.colors = colors;
     parentContainer.addChild(this.graphics);
+  }
+
+  /**
+   * Update the colors used by this renderer.
+   */
+  updateColors(colors: ResolvedGameColors): void {
+    this.colors = colors;
   }
 
   /**
@@ -73,6 +84,8 @@ export class PathRenderer {
     let prevX = start.x;
     let prevY = start.y;
 
+    const pathColor = this.colors.selection.pathLine;
+
     for (let i = pathIndex + 1; i < path.length; i++) {
       const waypoint = path[i];
       const waypointX = waypoint.x * this.cellSize + this.cellSize / 2;
@@ -84,7 +97,7 @@ export class PathRenderer {
       // Draw small waypoint marker (except for destination)
       if (i < path.length - 1) {
         this.graphics.circle(waypointX, waypointY, 3);
-        this.graphics.fill({ color: PATH_COLOR, alpha: PATH_ALPHA * 0.5 });
+        this.graphics.fill({ color: pathColor, alpha: PATH_ALPHA * 0.5 });
       }
 
       prevX = waypointX;
@@ -114,6 +127,8 @@ export class PathRenderer {
     const totalPattern = DASH_LENGTH + GAP_LENGTH;
     let currentDistance = 0;
 
+    const pathColor = this.colors.selection.pathLine;
+
     while (currentDistance < distance) {
       const dashStart = currentDistance;
       const dashEnd = Math.min(currentDistance + DASH_LENGTH, distance);
@@ -127,7 +142,7 @@ export class PathRenderer {
       this.graphics.lineTo(endX, endY);
       this.graphics.stroke({
         width: 2,
-        color: PATH_COLOR,
+        color: pathColor,
         alpha: PATH_ALPHA,
       });
 
@@ -143,20 +158,22 @@ export class PathRenderer {
     const y = position.y * this.cellSize + this.cellSize / 2;
     const size = DESTINATION_SIZE;
 
+    const pathColor = this.colors.selection.pathLine;
+
     // Draw X marker
     this.graphics.moveTo(x - size, y - size);
     this.graphics.lineTo(x + size, y + size);
-    this.graphics.stroke({ width: 3, color: PATH_COLOR, alpha: PATH_ALPHA });
+    this.graphics.stroke({ width: 3, color: pathColor, alpha: PATH_ALPHA });
 
     this.graphics.moveTo(x + size, y - size);
     this.graphics.lineTo(x - size, y + size);
-    this.graphics.stroke({ width: 3, color: PATH_COLOR, alpha: PATH_ALPHA });
+    this.graphics.stroke({ width: 3, color: pathColor, alpha: PATH_ALPHA });
 
     // Draw circle around X
     this.graphics.circle(x, y, size + 4);
     this.graphics.stroke({
       width: 2,
-      color: PATH_COLOR,
+      color: pathColor,
       alpha: PATH_ALPHA * 0.5,
     });
   }

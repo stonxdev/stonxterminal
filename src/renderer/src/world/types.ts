@@ -183,24 +183,39 @@ export type ItemCategory =
   | "tool"
   | "artifact";
 
-/** Item types (extensible - these are examples) */
+/** Item types */
 export type ItemType =
   // Resources
-  | "wood_log"
-  | "stone_block"
-  | "metal_ore"
-  | "metal_bar"
-  | "cloth_bundle"
+  | "wood"
+  | "stone"
+  | "iron"
+  | "gold"
+  | "silver"
+  | "coal"
+  | "cloth"
+  | "leather"
   // Food
+  | "meat"
+  | "berries"
+  | "vegetable"
   | "meal_simple"
   | "meal_fine"
-  | "raw_meat"
-  | "vegetable"
-  | "berry"
   // Tools
   | "pickaxe"
   | "axe"
   | "hammer";
+
+/** Properties defining item behavior */
+export interface ItemProperties {
+  readonly type: ItemType;
+  readonly category: ItemCategory;
+  readonly label: string;
+  readonly stackSize: number;
+  readonly baseValue: number; // Trade value
+  readonly weight: number; // Affects hauling speed
+  readonly flammability: number; // 0-1
+  readonly nutrition: number; // 0-1, 0 for non-food
+}
 
 /** Unique identifier for entity references */
 export type EntityId = string;

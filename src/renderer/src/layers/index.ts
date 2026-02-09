@@ -3,11 +3,10 @@
 // Color scales
 export {
   getColorFromScale,
+  getResolvedScale,
+  type HeatmapScaleId,
   lerpColor,
-  MOISTURE_SCALE,
-  MOVEMENT_COST_SCALE,
   normalizeValue,
-  TEMPERATURE_SCALE,
 } from "./color-scales";
 // Layer definitions
 export {

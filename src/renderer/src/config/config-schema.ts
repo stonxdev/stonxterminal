@@ -1,3 +1,4 @@
+import { defaultGameColors } from "@renderer/theming/default-game-colors";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { CONTROL_BAR_IDS, STATUS_BAR_IDS, WIDGET_IDS } from "./registry-ids";
@@ -63,12 +64,19 @@ const ControlBarLayoutSchema = z
  * This defines all valid configuration keys and their types.
  * Using .strict() to disallow unknown keys.
  */
+const GameColorOverridesSchema = z
+  .record(z.string(), z.string())
+  .describe(
+    'Game color overrides as dot-path keys to hex values (e.g. { "world.background": "#0a0a1e" })',
+  );
+
 export const ConfigOverridesSchema = z
   .object({
     "pixi.maxFramerate": PixiMaxFramerateSchema.optional(),
     "layout.widgets": WidgetLayoutSchema.optional(),
     "layout.statusBars": StatusBarLayoutSchema.optional(),
     "layout.controlBars": ControlBarLayoutSchema.optional(),
+    "theme.gameColors": GameColorOverridesSchema.optional(),
   })
   .strict();
 
@@ -86,12 +94,67 @@ export type ConfigOverrides = z.infer<typeof ConfigOverridesSchema>;
 // =============================================================================
 
 /**
+ * Flatten a nested object into dot-path keys, collecting only string leaf values.
+ * E.g. { world: { background: "#1a1a2e" } } → [["world.background", "#1a1a2e"]]
+ */
+function flattenColorPaths(
+  obj: Record<string, unknown>,
+  prefix = "",
+): [string, string][] {
+  const result: [string, string][] = [];
+  for (const [key, value] of Object.entries(obj)) {
+    const path = prefix ? `${prefix}.${key}` : key;
+    if (typeof value === "string") {
+      result.push([path, value]);
+    } else if (
+      value !== null &&
+      typeof value === "object" &&
+      !Array.isArray(value)
+    ) {
+      result.push(...flattenColorPaths(value as Record<string, unknown>, path));
+    }
+  }
+  return result;
+}
+
+/**
  * JSON Schema generated from the Zod schema.
  * Used by Monaco Editor for autocomplete and validation.
+ * Post-processes the schema to inject known game color paths for autocomplete.
  */
 export function getConfigJsonSchema(): object {
-  return zodToJsonSchema(ConfigOverridesSchema, {
+  const schema = zodToJsonSchema(ConfigOverridesSchema, {
     name: "ConfigOverrides",
     $refStrategy: "none", // Inline all refs for Monaco compatibility
-  });
+  }) as Record<string, unknown>;
+
+  // Inject specific color path properties into theme.gameColors for autocomplete.
+  // zodToJsonSchema wraps the schema under definitions.ConfigOverrides when `name` is given.
+  const definitions = schema.definitions as
+    | Record<string, Record<string, unknown>>
+    | undefined;
+  const rootSchema = definitions?.ConfigOverrides ?? schema;
+  const properties = (rootSchema as { properties?: Record<string, unknown> })
+    .properties;
+  const gameColorsSchema = properties?.["theme.gameColors"] as
+    | Record<string, unknown>
+    | undefined;
+  if (gameColorsSchema) {
+    const colorPaths = flattenColorPaths(
+      defaultGameColors as unknown as Record<string, unknown>,
+    );
+    const properties: Record<string, object> = {};
+    for (const [path, defaultValue] of colorPaths) {
+      properties[path] = {
+        type: "string",
+        pattern: "^#[0-9a-fA-F]{6}$",
+        default: defaultValue,
+        description: `Color override (default: ${defaultValue})`,
+      };
+    }
+    gameColorsSchema.properties = properties;
+    // Keep additionalProperties so unknown paths still validate as strings
+  }
+
+  return schema;
 }

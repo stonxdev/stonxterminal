@@ -42,6 +42,12 @@ export const CONFIG_SCHEMA: ConfigSchema = {
     },
     description: "Control bar slot assignments",
   },
+  "theme.gameColors": {
+    type: "object",
+    default: {},
+    description:
+      'Game color overrides as dot-path keys to hex values (e.g. { "world.background": "#0a0a1e" })',
+  },
 };
 
 /**

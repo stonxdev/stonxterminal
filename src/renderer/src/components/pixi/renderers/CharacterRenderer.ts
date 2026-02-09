@@ -4,12 +4,14 @@
 // Renders characters as sprites with direction indicators
 
 import { Assets, Container, Graphics, Sprite, type Texture } from "pixi.js";
+import type { JobProgressInfo } from "../../../simulation/jobs/types";
 import {
   type Direction,
   getCharacterCenterPosition,
   getCharacterDirection,
 } from "../../../simulation/movement";
 import type { Character, EntityId } from "../../../simulation/types";
+import type { ResolvedGameColors } from "../../../theming/game-color-store";
 
 // =============================================================================
 // CONSTANTS
@@ -24,6 +26,9 @@ const DIRECTION_INDICATOR_LENGTH = 8;
 /** Selection ring padding */
 const SELECTION_PADDING = 4;
 
+const JOB_INDICATOR_RADIUS = 4;
+const JOB_INDICATOR_Y_OFFSET = -22;
+
 // =============================================================================
 // CHARACTER GRAPHICS
 // =============================================================================
@@ -33,6 +38,7 @@ interface CharacterGraphics {
   body: Sprite;
   directionIndicator: Graphics;
   selectionRing: Graphics;
+  jobIndicator: Graphics;
 }
 
 /** Character sprite size (32x32 pixels, fits one cell) */
@@ -53,13 +59,26 @@ export class CharacterRenderer {
   private parentContainer: Container;
   private cellSize: number;
   private graphics: Map<EntityId, CharacterGraphics> = new Map();
+  private colors: ResolvedGameColors;
 
   /** Cached character texture (loaded via preloadAssets) */
   private static characterTexture: Texture | null = null;
 
-  constructor(parentContainer: Container, cellSize: number) {
+  constructor(
+    parentContainer: Container,
+    cellSize: number,
+    colors: ResolvedGameColors,
+  ) {
     this.parentContainer = parentContainer;
     this.cellSize = cellSize;
+    this.colors = colors;
+  }
+
+  /**
+   * Update the colors used by this renderer.
+   */
+  updateColors(colors: ResolvedGameColors): void {
+    this.colors = colors;
   }
 
   /**
@@ -88,11 +107,13 @@ export class CharacterRenderer {
    * @param characters - Map of all characters to render
    * @param selectedIds - Set of selected character IDs (supports multi-selection)
    * @param zLevel - Current z-level to filter characters by (optional)
+   * @param jobProgress - Active job progress info per character (optional)
    */
   update(
     characters: Map<EntityId, Character>,
     selectedIds: Set<EntityId>,
     zLevel?: number,
+    jobProgress?: Map<EntityId, JobProgressInfo>,
   ): void {
     // Track which characters we've seen
     const seenIds = new Set<EntityId>();
@@ -116,10 +137,12 @@ export class CharacterRenderer {
       }
 
       // Update position and appearance
+      const jobInfo = jobProgress?.get(id) ?? null;
       this.updateCharacterGraphics(
         charGraphics,
         character,
         selectedIds.has(id),
+        jobInfo?.jobType ?? null,
       );
     }
 
@@ -162,11 +185,17 @@ export class CharacterRenderer {
     const directionIndicator = new Graphics();
     container.addChild(directionIndicator);
 
+    // Job indicator (hidden by default)
+    const jobIndicator = new Graphics();
+    jobIndicator.visible = false;
+    container.addChild(jobIndicator);
+
     return {
       container,
       body,
       directionIndicator,
       selectionRing,
+      jobIndicator,
     };
   }
 
@@ -230,10 +259,11 @@ export class CharacterRenderer {
       return;
     }
 
+    const highlightColor = this.colors.selection.highlight;
     const radius = CHARACTER_HALF_SIZE + SELECTION_PADDING;
 
     graphics.circle(0, 0, radius);
-    graphics.stroke({ width: 3, color: 0x00ffff });
+    graphics.stroke({ width: 3, color: highlightColor });
 
     // Animated corners (could add animation later)
     const cornerSize = 6;
@@ -243,25 +273,50 @@ export class CharacterRenderer {
     graphics.moveTo(-offset, -offset + cornerSize);
     graphics.lineTo(-offset, -offset);
     graphics.lineTo(-offset + cornerSize, -offset);
-    graphics.stroke({ width: 2, color: 0x00ffff });
+    graphics.stroke({ width: 2, color: highlightColor });
 
     // Top-right
     graphics.moveTo(offset - cornerSize, -offset);
     graphics.lineTo(offset, -offset);
     graphics.lineTo(offset, -offset + cornerSize);
-    graphics.stroke({ width: 2, color: 0x00ffff });
+    graphics.stroke({ width: 2, color: highlightColor });
 
     // Bottom-left
     graphics.moveTo(-offset, offset - cornerSize);
     graphics.lineTo(-offset, offset);
     graphics.lineTo(-offset + cornerSize, offset);
-    graphics.stroke({ width: 2, color: 0x00ffff });
+    graphics.stroke({ width: 2, color: highlightColor });
 
     // Bottom-right
     graphics.moveTo(offset - cornerSize, offset);
     graphics.lineTo(offset, offset);
     graphics.lineTo(offset, offset - cornerSize);
-    graphics.stroke({ width: 2, color: 0x00ffff });
+    graphics.stroke({ width: 2, color: highlightColor });
+  }
+
+  /**
+   * Draw the job indicator dot above the character.
+   */
+  private drawJobIndicator(graphics: Graphics, jobType: string | null): void {
+    graphics.clear();
+
+    if (!jobType) {
+      graphics.visible = false;
+      return;
+    }
+
+    graphics.visible = true;
+    const color =
+      this.colors.jobs.byType[jobType] ?? this.colors.jobs.defaultJob;
+
+    graphics.circle(0, JOB_INDICATOR_Y_OFFSET, JOB_INDICATOR_RADIUS);
+    graphics.fill(color);
+    graphics.circle(0, JOB_INDICATOR_Y_OFFSET, JOB_INDICATOR_RADIUS);
+    graphics.stroke({
+      width: 1,
+      color: this.colors.jobs.indicatorBorder,
+      alpha: 0.5,
+    });
   }
 
   /**
@@ -271,6 +326,7 @@ export class CharacterRenderer {
     charGraphics: CharacterGraphics,
     character: Character,
     isSelected: boolean,
+    jobType: string | null,
   ): void {
     // Update position
     const center = getCharacterCenterPosition(character, this.cellSize);
@@ -287,6 +343,9 @@ export class CharacterRenderer {
 
     // Update selection ring
     this.drawSelectionRing(charGraphics.selectionRing, isSelected);
+
+    // Update job indicator
+    this.drawJobIndicator(charGraphics.jobIndicator, jobType);
   }
 
   /**

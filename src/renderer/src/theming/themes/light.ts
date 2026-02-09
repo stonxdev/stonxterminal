@@ -1,9 +1,11 @@
+import { defaultGameColors } from "../default-game-colors";
 import type { ColonyTheme } from "../theme";
 
 export const light: ColonyTheme = {
   name: "Light",
   type: "light",
   id: "light",
+  gameColors: defaultGameColors,
   colors: {
     // Base colors
     background: "oklch(1 0 0)",

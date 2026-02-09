@@ -1,3 +1,4 @@
+import { useGameColorStore } from "../theming/game-color-store";
 import type { ColorScale } from "./types";
 
 // =============================================================================
@@ -75,49 +76,15 @@ export function normalizeValue(
 }
 
 // =============================================================================
-// PREDEFINED COLOR SCALES
+// RESOLVED COLOR SCALES (from game color store)
 // =============================================================================
 
-/**
- * Temperature scale: Blue (cold) -> Cyan -> Yellow -> Red (hot)
- * For temperature ranging roughly -20C to 50C
- */
-export const TEMPERATURE_SCALE: ColorScale = {
-  type: "diverging",
-  midpoint: 0.5,
-  stops: [
-    { value: 0.0, color: 0x0000ff }, // Blue (cold)
-    { value: 0.25, color: 0x00ffff }, // Cyan
-    { value: 0.5, color: 0xffff00 }, // Yellow (neutral)
-    { value: 0.75, color: 0xff8800 }, // Orange
-    { value: 1.0, color: 0xff0000 }, // Red (hot)
-  ],
-};
+export type HeatmapScaleId = "temperature" | "moisture" | "movementCost";
 
 /**
- * Moisture scale: Brown (dry) -> Yellow -> Green -> Blue (wet)
+ * Get the latest resolved color scale from the game color store.
+ * Call at render time for live theme-responsive scales.
  */
-export const MOISTURE_SCALE: ColorScale = {
-  type: "gradient",
-  stops: [
-    { value: 0.0, color: 0x8b4513 }, // Saddle brown (dry)
-    { value: 0.25, color: 0xdaa520 }, // Goldenrod
-    { value: 0.5, color: 0x9acd32 }, // Yellow-green
-    { value: 0.75, color: 0x228b22 }, // Forest green
-    { value: 1.0, color: 0x1e90ff }, // Dodger blue (wet)
-  ],
-};
-
-/**
- * Movement cost scale: Green (easy) -> Yellow -> Red (hard) -> Black (impassable)
- */
-export const MOVEMENT_COST_SCALE: ColorScale = {
-  type: "gradient",
-  stops: [
-    { value: 0.0, color: 0x00ff00 }, // Green (cost 1)
-    { value: 0.25, color: 0xffff00 }, // Yellow
-    { value: 0.5, color: 0xff8800 }, // Orange
-    { value: 0.75, color: 0xff0000 }, // Red
-    { value: 1.0, color: 0x000000 }, // Black (impassable)
-  ],
-};
+export function getResolvedScale(id: HeatmapScaleId): ColorScale {
+  return useGameColorStore.getState().resolved.heatmaps[id];
+}

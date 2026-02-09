@@ -2,9 +2,10 @@
 // SELECT MODE HANDLER
 // =============================================================================
 
-import { commandRegistry } from "../../commands";
 import { useGameStore } from "../../game-state/store";
 import { getSelectedColonistIds } from "../../game-state/utils";
+import { resolveActions } from "../../simulation/jobs";
+import type { Position3D } from "../../world/types";
 import type { InteractionContext, InteractionModeHandler } from "../types";
 
 /** Maximum distance (in pixels) to still count as a click vs drag */
@@ -111,8 +112,8 @@ export class SelectModeHandler implements InteractionModeHandler {
   }
 
   /**
-   * Handle right-click to issue move command via command dispatch
-   * Supports both single and multi-entity selection
+   * Handle right-click to issue context-sensitive action.
+   * Resolves available actions for the target tile and executes the highest-priority one.
    */
   private handleRightClick(ctx: InteractionContext): void {
     const characterIds = getSelectedColonistIds(
@@ -120,14 +121,26 @@ export class SelectModeHandler implements InteractionModeHandler {
     );
     if (characterIds.length === 0) return;
 
-    commandRegistry.dispatch("character.moveTo", {
-      characterIds,
-      destination: {
-        x: ctx.worldPosition.x,
-        y: ctx.worldPosition.y,
-        z: ctx.zLevel,
-      },
-    });
+    const { world } = useGameStore.getState();
+    if (!world) return;
+
+    const position: Position3D = {
+      x: ctx.worldPosition.x,
+      y: ctx.worldPosition.y,
+      z: ctx.zLevel,
+    };
+
+    // Resolve available actions for the target tile
+    const actions = resolveActions(position, world);
+    if (actions.length === 0) return;
+
+    // Use highest-priority action (future: show context menu when multiple)
+    const action = actions[0];
+
+    for (const characterId of characterIds) {
+      const job = action.createJob(characterId, position);
+      useGameStore.getState().assignJob(job);
+    }
   }
 
   onHover(ctx: InteractionContext): void {

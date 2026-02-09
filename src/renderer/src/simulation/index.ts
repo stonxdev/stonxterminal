@@ -4,7 +4,22 @@
 
 // Entity Store
 export { EntityStore, entityStore } from "./entity-store";
-
+// Jobs
+export {
+  ACTION_RULES,
+  createChopJob,
+  createMineJob,
+  createMoveJob,
+  generateJobId,
+  type Job,
+  JobProcessor,
+  type JobProgressInfo,
+  JobQueue,
+  type JobStatus,
+  type JobStep,
+  jobQueue,
+  resolveActions,
+} from "./jobs";
 // Movement
 export {
   type Direction,
@@ -23,7 +38,6 @@ export {
   smootherStep,
   smoothStep,
 } from "./movement";
-
 // Pathfinding
 export {
   ALL_DIRECTIONS,
@@ -44,7 +58,6 @@ export {
   positionKey,
   positionsEqual,
 } from "./pathfinding";
-
 // Simulation Loop
 export {
   MS_PER_TICK,

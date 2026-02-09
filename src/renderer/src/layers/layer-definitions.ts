@@ -1,9 +1,4 @@
-import {
-  MOISTURE_SCALE,
-  MOVEMENT_COST_SCALE,
-  normalizeValue,
-  TEMPERATURE_SCALE,
-} from "./color-scales";
+import { getResolvedScale, normalizeValue } from "./color-scales";
 import { layerRegistry } from "./layer-registry";
 import type { FeatureLayerDefinition, HeatMapLayerDefinition } from "./types";
 
@@ -20,7 +15,7 @@ export const moistureLayer: HeatMapLayerDefinition = {
   defaultEnabled: false,
   zIndex: 100,
   getValue: (tile) => tile.terrain.moisture,
-  colorScale: MOISTURE_SCALE,
+  colorScale: getResolvedScale("moisture"),
   opacity: 0.5,
   labelFormat: "{value}%",
 };
@@ -34,7 +29,7 @@ export const temperatureLayer: HeatMapLayerDefinition = {
   defaultEnabled: false,
   zIndex: 101,
   getValue: (tile) => normalizeValue(tile.terrain.temperature, -20, 50),
-  colorScale: TEMPERATURE_SCALE,
+  colorScale: getResolvedScale("temperature"),
   opacity: 0.5,
   valueRange: { min: -20, max: 50 },
   labelFormat: "{value}C",
@@ -53,7 +48,7 @@ export const movementCostLayer: HeatMapLayerDefinition = {
     // Normalize movement cost (1 = normal, higher = harder)
     return normalizeValue(tile.pathfinding.movementCost, 1, 10);
   },
-  colorScale: MOVEMENT_COST_SCALE,
+  colorScale: getResolvedScale("movementCost"),
   opacity: 0.5,
   valueRange: { min: 1, max: 10 },
   labelFormat: "Cost: {value}",

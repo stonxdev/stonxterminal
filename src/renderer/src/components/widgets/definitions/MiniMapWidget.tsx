@@ -1,53 +1,23 @@
 import { CELL_SIZE } from "@renderer/components/pixi/World";
 import { useGameStore } from "@renderer/game-state";
 import { viewportStore } from "@renderer/lib/viewport-simple";
-import type { StructureType, TerrainType, ZLevel } from "@renderer/world/types";
+import {
+  type ResolvedGameColors,
+  useGameColorStore,
+} from "@renderer/theming/game-color-store";
+import type { ZLevel } from "@renderer/world/types";
 import { Map as MapIcon } from "lucide-react";
 import { useEffect, useRef } from "react";
 import type { WidgetComponentProps, WidgetDefinition } from "../types";
 
 // =============================================================================
-// COLOR MAPS
-// =============================================================================
-
-const TERRAIN_COLORS: Record<TerrainType, [number, number, number, number]> = {
-  soil: [139, 119, 85, 255],
-  sand: [210, 190, 140, 255],
-  clay: [180, 130, 90, 255],
-  gravel: [160, 160, 155, 255],
-  rock: [128, 128, 128, 255],
-  granite: [100, 100, 105, 255],
-  limestone: [180, 180, 170, 255],
-  marble: [220, 220, 225, 255],
-  obsidian: [30, 30, 35, 255],
-  water_shallow: [70, 150, 200, 255],
-  water_deep: [20, 60, 150, 255],
-  lava: [230, 60, 20, 255],
-  void: [0, 0, 0, 255],
-};
-
-/** Only visually significant structures for the 1px-per-tile overview */
-const STRUCTURE_COLORS_RGBA: Partial<
-  Record<StructureType, [number, number, number, number]>
-> = {
-  wall_stone: [80, 80, 80, 255],
-  wall_wood: [139, 69, 19, 255],
-  wall_metal: [184, 184, 184, 255],
-  wall_brick: [178, 34, 34, 255],
-  door_wood: [205, 133, 63, 255],
-  door_metal: [160, 160, 160, 255],
-  door_auto: [144, 238, 144, 255],
-  tree_oak: [34, 139, 34, 255],
-  tree_pine: [0, 100, 0, 255],
-  bush: [50, 205, 50, 255],
-  boulder: [90, 90, 90, 255],
-};
-
-// =============================================================================
 // TERRAIN IMAGE GENERATION
 // =============================================================================
 
-function generateTerrainImage(level: ZLevel): ImageData {
+function generateTerrainImage(
+  level: ZLevel,
+  colors: ResolvedGameColors,
+): ImageData {
   const { width, height, tiles } = level;
   const imageData = new ImageData(width, height);
   const data = imageData.data;
@@ -56,14 +26,14 @@ function generateTerrainImage(level: ZLevel): ImageData {
     const tile = tiles[i];
     const offset = i * 4;
 
-    const color = TERRAIN_COLORS[tile.terrain.type];
+    const color = colors.terrain.rgba[tile.terrain.type];
     data[offset] = color[0];
     data[offset + 1] = color[1];
     data[offset + 2] = color[2];
     data[offset + 3] = color[3];
 
     if (tile.structure && tile.structure.type !== "none") {
-      const sc = STRUCTURE_COLORS_RGBA[tile.structure.type];
+      const sc = colors.structures.rgba[tile.structure.type];
       if (sc) {
         data[offset] = sc[0];
         data[offset + 1] = sc[1];
@@ -145,7 +115,7 @@ function MiniMap() {
   // Canvas logical size (CSS pixels, not backing store)
   const canvasSizeRef = useRef({ width: 0, height: 0 });
 
-  // Regenerate terrain bitmap when world/z-level changes
+  // Regenerate terrain bitmap when world/z-level or colors change
   useEffect(() => {
     const update = () => {
       const { world, currentZLevel } = useGameStore.getState();
@@ -153,7 +123,8 @@ function MiniMap() {
       const level = world.levels.get(currentZLevel);
       if (!level) return;
 
-      const imageData = generateTerrainImage(level);
+      const colors = useGameColorStore.getState().resolved;
+      const imageData = generateTerrainImage(level, colors);
       worldSizeRef.current = { width: level.width, height: level.height };
 
       createImageBitmap(imageData).then((bitmap) => {
@@ -179,7 +150,7 @@ function MiniMap() {
     // Subscribe to world/z-level changes
     let prevWorld = useGameStore.getState().world;
     let prevZ = useGameStore.getState().currentZLevel;
-    const unsub = useGameStore.subscribe((state) => {
+    const unsubGame = useGameStore.subscribe((state) => {
       if (state.world !== prevWorld || state.currentZLevel !== prevZ) {
         prevWorld = state.world;
         prevZ = state.currentZLevel;
@@ -187,8 +158,14 @@ function MiniMap() {
       }
     });
 
+    // Subscribe to color changes to regenerate terrain image
+    const unsubColors = useGameColorStore.subscribe(() => {
+      update();
+    });
+
     return () => {
-      unsub();
+      unsubGame();
+      unsubColors();
       bitmapRef.current?.close();
       bitmapRef.current = null;
     };
@@ -204,27 +181,13 @@ function MiniMap() {
     if (!ctx) return;
 
     // --- Resize Observer ---
+    // Only flag that resize is needed — actual canvas resize happens in the rAF
+    // loop right before render, so the canvas is never blank between frames.
+    let pendingResize: { width: number; height: number } | null = null;
     const observer = new ResizeObserver(([entry]) => {
       const { width, height } = entry.contentRect;
       if (width === 0 || height === 0) return;
-      const dpr = window.devicePixelRatio;
-      canvas.width = width * dpr;
-      canvas.height = height * dpr;
-      canvas.style.width = `${width}px`;
-      canvas.style.height = `${height}px`;
-      canvasSizeRef.current = { width, height };
-
-      const fit = fitToCanvas(
-        worldSizeRef.current.width,
-        worldSizeRef.current.height,
-        width,
-        height,
-      );
-      if (fit) {
-        zoomRef.current = fit.zoom;
-        panRef.current = { x: fit.x, y: fit.y };
-        dirtyRef.current = true;
-      }
+      pendingResize = { width, height };
     });
     observer.observe(container);
 
@@ -237,7 +200,8 @@ function MiniMap() {
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, w, h);
-      ctx.fillStyle = "#1a1a2e";
+      const renderColors = useGameColorStore.getState().resolved;
+      ctx.fillStyle = renderColors.minimap.background;
       ctx.fillRect(0, 0, w, h);
 
       // Apply mini-map transform
@@ -254,7 +218,7 @@ function MiniMap() {
       // Draw characters
       const { simulation, currentZLevel } = useGameStore.getState();
       const dotSize = Math.max(1, 3 / zoomRef.current);
-      ctx.fillStyle = "#ff4444";
+      ctx.fillStyle = renderColors.characters.minimapDot;
       for (const character of simulation.characters.values()) {
         if (character.position.z === currentZLevel) {
           const tx = character.position.x + character.visualOffset.x;
@@ -272,7 +236,8 @@ function MiniMap() {
         const tileRight = bounds.right / CELL_SIZE;
         const tileBottom = bounds.bottom / CELL_SIZE;
 
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+        ctx.globalAlpha = 0.9;
+        ctx.strokeStyle = renderColors.minimap.viewportRect;
         ctx.lineWidth = 2 / zoomRef.current;
         ctx.strokeRect(
           tileLeft,
@@ -280,6 +245,7 @@ function MiniMap() {
           tileRight - tileLeft,
           tileBottom - tileTop,
         );
+        ctx.globalAlpha = 1.0;
       }
 
       ctx.restore();
@@ -288,6 +254,29 @@ function MiniMap() {
     // --- rAF loop with dirty-flag gating ---
     let rafId: number;
     const loop = () => {
+      // Apply pending resize right before render (avoids blank-frame flicker)
+      if (pendingResize) {
+        const { width, height } = pendingResize;
+        pendingResize = null;
+        const dpr = window.devicePixelRatio;
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        canvas.style.width = `${width}px`;
+        canvas.style.height = `${height}px`;
+        canvasSizeRef.current = { width, height };
+
+        const fit = fitToCanvas(
+          worldSizeRef.current.width,
+          worldSizeRef.current.height,
+          width,
+          height,
+        );
+        if (fit) {
+          zoomRef.current = fit.zoom;
+          panRef.current = { x: fit.x, y: fit.y };
+        }
+      }
+
       // Check if viewport bounds changed
       const viewport = viewportStore.getViewport();
       if (viewport) {

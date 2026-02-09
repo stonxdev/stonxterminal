@@ -25,12 +25,15 @@ import {
   ModalRenderer,
   useModal,
 } from "../components/floating/modal";
+import { useConfigStore } from "../config/config-store";
 import { useGameStore } from "../game-state";
 import { defaultKeybindings } from "../keybindings/defaultKeybindings";
 import { registerKeybindings } from "../keybindings/registerKeybindings";
 import { logger } from "../lib/logger";
 import { viewportStore } from "../lib/viewport-simple";
 import type { Command, EntityId } from "../simulation/types";
+import { setNestedValue } from "../theming/color-utils";
+import { useGameColorStore } from "../theming/game-color-store";
 import { injectThemeVariables } from "../theming/runtime-theme-generator";
 import { type AvailableThemeId, themeMap } from "../theming/themes";
 import type { Position3D } from "../world/types";
@@ -164,6 +167,40 @@ const ColonyContextInner: FC<{ children: ReactNode }> = ({ children }) => {
 
     // Set initial theme
     document.documentElement.setAttribute("data-theme", activeThemeId);
+
+    // Resolve game colors from theme + user overrides
+    const resolveColors = () => {
+      const theme = themeMap[activeThemeId];
+      const baseColors = structuredClone(theme.gameColors);
+      const overrides = useConfigStore.getState().get("theme.gameColors");
+      if (
+        overrides &&
+        typeof overrides === "object" &&
+        !Array.isArray(overrides)
+      ) {
+        for (const [path, value] of Object.entries(
+          overrides as Record<string, string>,
+        )) {
+          setNestedValue(
+            baseColors as unknown as Record<string, unknown>,
+            path,
+            value,
+          );
+        }
+      }
+      useGameColorStore.getState().resolve(baseColors);
+    };
+    resolveColors();
+
+    // Subscribe to config changes for live color updates
+    const unsub = useConfigStore.subscribe((state, prev) => {
+      if (
+        state.computed["theme.gameColors"] !== prev.computed["theme.gameColors"]
+      ) {
+        resolveColors();
+      }
+    });
+    return () => unsub();
   }, [activeThemeId]);
 
   // Register commands on mount
