@@ -56,6 +56,51 @@ export interface GameColors {
     moisture: ColorScaleHex;
     movementCost: ColorScaleHex;
   };
+  palette: PaletteColors;
+}
+
+/** All 31 opaque colors from the universal sprite palette (palette.txt). */
+export interface PaletteColors {
+  // Basics
+  black: string;
+  // Grays
+  charcoal: string;
+  darkGray: string;
+  gray: string;
+  mediumGray: string;
+  lightGray: string;
+  silver: string;
+  // Whites
+  white: string;
+  // Browns
+  darkBark: string;
+  bark: string;
+  dirt: string;
+  tan: string;
+  // Greens
+  deepForest: string;
+  forest: string;
+  green: string;
+  lime: string;
+  // Teals
+  seaGreen: string;
+  mediumSea: string;
+  // Blues
+  deepOcean: string;
+  ocean: string;
+  water: string;
+  sky: string;
+  // Warm
+  crimson: string;
+  lava: string;
+  orange: string;
+  gold: string;
+  sand: string;
+  // Skin & Special
+  lightSkin: string;
+  mediumSkin: string;
+  darkSkin: string;
+  olive: string;
 }
 
 // =============================================================================

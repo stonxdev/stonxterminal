@@ -10,7 +10,8 @@ import type { ColorScale } from "../layers/types";
 import type { StructureType, TerrainType } from "../world/types";
 import { hexToPixi, hexToRGBA, resolveColorScale } from "./color-utils";
 import { defaultGameColors } from "./default-game-colors";
-import type { GameColors } from "./theme";
+import { paletteNameToBaseHex } from "./default-palette-colors";
+import type { GameColors, PaletteColors } from "./theme";
 
 // =============================================================================
 // RESOLVED GAME COLORS — precomputed for each consumer format
@@ -64,6 +65,12 @@ export interface ResolvedGameColors {
     moisture: ColorScale;
     movementCost: ColorScale;
   };
+  palette: {
+    /** Base hex → override hex replacement map (only entries that differ from the baked PNG colors) */
+    replacementMap: Map<string, string>;
+    /** Full resolved palette: name → hex */
+    colors: PaletteColors;
+  };
 }
 
 // =============================================================================
@@ -101,6 +108,16 @@ function resolveGameColors(gc: GameColors): ResolvedGameColors {
     mine: jobMine,
     move: jobMove,
   };
+
+  // Build palette replacement map (base baked hex → overridden hex)
+  const replacementMap = new Map<string, string>();
+  for (const [name, currentHex] of Object.entries(gc.palette)) {
+    const baseHex =
+      paletteNameToBaseHex[name as keyof typeof paletteNameToBaseHex];
+    if (baseHex && currentHex.toLowerCase() !== baseHex) {
+      replacementMap.set(baseHex, currentHex.toLowerCase());
+    }
+  }
 
   return {
     world: {
@@ -143,6 +160,10 @@ function resolveGameColors(gc: GameColors): ResolvedGameColors {
       temperature: resolveColorScale(gc.heatmaps.temperature),
       moisture: resolveColorScale(gc.heatmaps.moisture),
       movementCost: resolveColorScale(gc.heatmaps.movementCost),
+    },
+    palette: {
+      replacementMap,
+      colors: gc.palette,
     },
   };
 }

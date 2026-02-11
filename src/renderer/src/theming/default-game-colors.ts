@@ -5,6 +5,7 @@
 // Every value is a "#RRGGBB" hex string — the canonical format.
 // All three themes import this as their base and can override specific sections.
 
+import { defaultPaletteColors } from "./default-palette-colors";
 import type { GameColors } from "./theme";
 
 export const defaultGameColors: GameColors = {
@@ -145,4 +146,9 @@ export const defaultGameColors: GameColors = {
       ],
     },
   },
+
+  // ---------------------------------------------------------------------------
+  // Sprite palette (from palette.txt)
+  // ---------------------------------------------------------------------------
+  palette: defaultPaletteColors,
 };

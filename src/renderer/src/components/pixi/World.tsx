@@ -1,6 +1,7 @@
 import { commandRegistry } from "@renderer/commands";
 import { useConfigStore } from "@renderer/config";
 import { logger } from "@renderer/lib/logger";
+import { PaletteTextureManager } from "@renderer/lib/palette-texture-manager";
 import { usePerformanceStore } from "@renderer/lib/performance-store";
 import { SimpleViewport, viewportStore } from "@renderer/lib/viewport-simple";
 import type {
@@ -13,7 +14,6 @@ import type {
 } from "@renderer/world/types";
 import {
   Application,
-  Assets,
   Container,
   Graphics,
   Sprite,
@@ -45,6 +45,9 @@ import {
 // =============================================================================
 
 export const CELL_SIZE = 32; // Pixels per cell - exported for interaction system
+
+// Singleton palette texture manager — handles color replacement for all sprites
+const paletteTextureManager = new PaletteTextureManager();
 
 // =============================================================================
 // TERRAIN SPRITES
@@ -78,10 +81,9 @@ async function preloadTerrainTextures(): Promise<void> {
 
   for (const terrainType of terrainTypes) {
     try {
-      const texture = await Assets.load<Texture>(
+      const texture = await paletteTextureManager.loadTexture(
         TERRAIN_SPRITE_PATHS[terrainType],
       );
-      texture.source.scaleMode = "nearest"; // Pixel-perfect scaling
       terrainTextures.set(terrainType, texture);
     } catch (error) {
       logger.error(
@@ -130,10 +132,9 @@ async function preloadStructureTextures(): Promise<void> {
 
   for (const structureType of structureTypes) {
     try {
-      const texture = await Assets.load<Texture>(
+      const texture = await paletteTextureManager.loadTexture(
         STRUCTURE_SPRITE_PATHS[structureType],
       );
-      texture.source.scaleMode = "nearest"; // Pixel-perfect scaling
       structureTextures.set(structureType, texture);
     } catch (error) {
       logger.error(
@@ -196,8 +197,9 @@ async function preloadItemTextures(): Promise<void> {
 
   for (const itemType of itemTypes) {
     try {
-      const texture = await Assets.load<Texture>(ITEM_SPRITE_PATHS[itemType]);
-      texture.source.scaleMode = "nearest"; // Pixel-perfect scaling
+      const texture = await paletteTextureManager.loadTexture(
+        ITEM_SPRITE_PATHS[itemType],
+      );
       itemTextures.set(itemType, texture);
     } catch (error) {
       logger.error(
@@ -234,6 +236,7 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
   const hoverGraphicsRef = useRef<Graphics | null>(null);
 
   // Feature layer graphics refs for visibility toggling (O(1) performance)
+  const terrainContainerRef = useRef<Container | null>(null);
   const treesContainerRef = useRef<Container | null>(null);
   const structuresGraphicsRef = useRef<Graphics | null>(null);
   const itemsGraphicsRef = useRef<Graphics | null>(null);
@@ -465,7 +468,7 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
       // Get initial layer visibility
       const initialLayerVisibility = useLayerStore.getState().visibility;
 
-      // Preload textures before rendering
+      // Preload textures before rendering (uses palette manager for color replacement)
       await preloadTerrainTextures();
       await preloadStructureTextures();
       await preloadItemTextures();
@@ -475,6 +478,7 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
         "pixi",
       ]);
       const {
+        terrainContainer,
         treesContainer,
         structuresGraphics,
         itemsGraphics,
@@ -483,6 +487,7 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
       } = renderWorld(viewport, level, initialColors);
 
       // Store refs for visibility toggling
+      terrainContainerRef.current = terrainContainer;
       treesContainerRef.current = treesContainer;
       structuresGraphicsRef.current = structuresGraphics;
       itemsGraphicsRef.current = itemsGraphics;
@@ -529,7 +534,7 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
       jobProgressRendererRef.current = jobProgressRenderer;
 
       // Preload character assets and create renderer
-      await CharacterRenderer.preloadAssets();
+      await CharacterRenderer.preloadAssets(paletteTextureManager);
       const characterContainer = new Container();
       viewport.addChild(characterContainer);
       const characterRenderer = new CharacterRenderer(
@@ -776,6 +781,7 @@ const World: React.FC<WorldProps> = ({ world, zLevel }) => {
 
 /** Result of rendering world - separate containers/graphics for each feature layer */
 interface RenderWorldResult {
+  terrainContainer: Container;
   treesContainer: Container;
   structuresGraphics: Graphics;
   itemsGraphics: Graphics;
@@ -911,6 +917,7 @@ function renderWorld(
   viewport.addChild(label);
 
   return {
+    terrainContainer,
     treesContainer,
     structuresGraphics,
     itemsGraphics,

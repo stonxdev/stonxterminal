@@ -3,7 +3,8 @@
 // =============================================================================
 // Renders characters as sprites with direction indicators
 
-import { Assets, Container, Graphics, Sprite, type Texture } from "pixi.js";
+import type { PaletteTextureManager } from "@renderer/lib/palette-texture-manager";
+import { Container, Graphics, Sprite, type Texture } from "pixi.js";
 import type { JobProgressInfo } from "../../../simulation/jobs/types";
 import {
   type Direction,
@@ -45,7 +46,7 @@ interface CharacterGraphics {
 const CHARACTER_SPRITE_SIZE = 32;
 
 /** Character sprite path */
-const CHARACTER_SPRITE_PATH = "/sprites/characters/male-1/male-1.png";
+export const CHARACTER_SPRITE_PATH = "/sprites/characters/male-1/male-1.png";
 
 // =============================================================================
 // CHARACTER RENDERER CLASS
@@ -84,21 +85,29 @@ export class CharacterRenderer {
   /**
    * Preload character sprite assets. Call this before creating any CharacterRenderer instances.
    */
-  static async preloadAssets(): Promise<void> {
+  static async preloadAssets(
+    textureManager: PaletteTextureManager,
+  ): Promise<void> {
     if (CharacterRenderer.characterTexture) {
       return;
     }
     try {
-      const texture = await Assets.load<Texture>(CHARACTER_SPRITE_PATH);
-      // Use nearest-neighbor scaling for crisp pixel art
-      texture.source.scaleMode = "nearest";
-      CharacterRenderer.characterTexture = texture;
+      CharacterRenderer.characterTexture = await textureManager.loadTexture(
+        CHARACTER_SPRITE_PATH,
+      );
     } catch (error) {
       console.error(
         "[CharacterRenderer] Failed to load character texture:",
         error,
       );
     }
+  }
+
+  /**
+   * Update the static character texture (called when palette colors change).
+   */
+  static updateTexture(texture: Texture): void {
+    CharacterRenderer.characterTexture = texture;
   }
 
   /**
