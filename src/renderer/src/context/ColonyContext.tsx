@@ -29,10 +29,7 @@ import {
 import { useConfigStore } from "../config/config-store";
 import { COMMAND_IDS } from "../config/registry-ids";
 import { useGameStore } from "../game-state";
-import {
-  registerKeybindings,
-  updateKeybindings,
-} from "../keybindings/registerKeybindings";
+import { keybindingManager } from "../keybindings/KeybindingManager";
 import { logger } from "../lib/logger";
 import { viewportStore } from "../lib/viewport-simple";
 import type { Command, EntityId } from "../simulation/types";
@@ -272,12 +269,12 @@ const ColonyContextInner: FC<{ children: ReactNode }> = ({ children }) => {
       }));
     };
 
-    registerKeybindings(resolveKeybindings());
+    keybindingManager.registerKeybindings(resolveKeybindings());
 
     // Subscribe to config changes for live keybinding updates
     const unsub = useConfigStore.subscribe((state, prev) => {
       if (state.computed.keybindings !== prev.computed.keybindings) {
-        updateKeybindings(resolveKeybindings());
+        keybindingManager.registerKeybindings(resolveKeybindings());
       }
     });
 

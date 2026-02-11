@@ -13,6 +13,7 @@ import type { KeybindingState, ParsedKeybinding } from "./types";
  */
 class KeybindingManager {
   private keybindings: ParsedKeybinding[] = [];
+  private isListenerAttached = false;
   private state: KeybindingState = {
     currentChord: [],
     chordTimeout: null,
@@ -23,7 +24,7 @@ class KeybindingManager {
   private readonly CHORD_TIMEOUT = 1000;
 
   /**
-   * Registers an array of keybindings
+   * Registers an array of keybindings and attaches the global listener if needed.
    */
   registerKeybindings(keybindings: Keybinding[]): void {
     // Clear existing keybindings
@@ -35,7 +36,17 @@ class KeybindingManager {
       const parsedKeybindings = parseKeybinding(keybinding);
       this.keybindings.push(...parsedKeybindings);
     }
+
+    // Attach global keyboard listener if not already attached
+    if (!this.isListenerAttached) {
+      document.addEventListener("keydown", this.handleGlobalKeydown, true);
+      this.isListenerAttached = true;
+    }
   }
+
+  private handleGlobalKeydown = async (event: KeyboardEvent): Promise<void> => {
+    await this.handleKeyboardEvent(event);
+  };
 
   /**
    * Handles keyboard events and executes matching commands
@@ -257,6 +268,11 @@ class KeybindingManager {
   clear(): void {
     this.keybindings = [];
     this.resetChordState();
+
+    if (this.isListenerAttached) {
+      document.removeEventListener("keydown", this.handleGlobalKeydown, true);
+      this.isListenerAttached = false;
+    }
   }
 
   /**
