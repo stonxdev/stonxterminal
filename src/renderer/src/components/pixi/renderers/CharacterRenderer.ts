@@ -104,13 +104,6 @@ export class CharacterRenderer {
   }
 
   /**
-   * Update the static character texture (called when palette colors change).
-   */
-  static updateTexture(texture: Texture): void {
-    CharacterRenderer.characterTexture = texture;
-  }
-
-  /**
    * Update all character graphics.
    *
    * @param characters - Map of all characters to render
