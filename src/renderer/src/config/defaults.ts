@@ -50,9 +50,9 @@ export const CONFIG_SCHEMA: ConfigSchema = {
   },
   keybindings: {
     type: "array",
-    default: [],
+    default: [{ key: ["meta+k", "ctrl+k"], command: "workbench.runCommand" }],
     description:
-      'Keybinding overrides: array of { key, command, args? } entries. Replaces defaults for the same command. Prefix key with "-" to remove a default.',
+      "Keybinding definitions. Each entry maps a key combination to a command. Use an array for platform alternatives.",
   },
 };
 

@@ -20,6 +20,7 @@ import {
   workbenchSetTheme,
   worldSetZoom,
 } from "../commands/definitions";
+import type { Keybinding } from "../commands/types";
 import {
   ModalProvider,
   ModalRenderer,
@@ -28,10 +29,6 @@ import {
 import { useConfigStore } from "../config/config-store";
 import { COMMAND_IDS } from "../config/registry-ids";
 import { useGameStore } from "../game-state";
-import {
-  defaultKeybindings,
-  type UserKeybindingEntry,
-} from "../keybindings/defaultKeybindings";
 import {
   registerKeybindings,
   updateKeybindings,
@@ -262,13 +259,17 @@ const ColonyContextInner: FC<{ children: ReactNode }> = ({ children }) => {
       }
     }
 
-    // Resolve keybindings from defaults + user config
-    const resolveKeybindings = () => {
-      const userEntries = useConfigStore.getState().get("keybindings");
-      const entries = Array.isArray(userEntries)
-        ? (userEntries as unknown as UserKeybindingEntry[])
-        : [];
-      return defaultKeybindings.mergeWithUserOverrides(entries);
+    // Resolve keybindings from config (defaults + user overrides)
+    const resolveKeybindings = (): Keybinding[] => {
+      const value = useConfigStore.getState().get("keybindings");
+      if (!Array.isArray(value)) return [];
+      return (value as Record<string, unknown>[]).map((entry) => ({
+        key: entry.key as string | string[],
+        command: entry.command as string,
+        ...(entry.args
+          ? { payload: entry.args as Record<string, unknown> }
+          : {}),
+      }));
     };
 
     registerKeybindings(resolveKeybindings());

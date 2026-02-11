@@ -30,8 +30,8 @@ import type { CommandDefinition } from "./types";
  * @param definition - The command definition
  * @returns A typed command definition
  */
-export function defineCommand<TPayload = void, TId extends string = string>(
-  definition: CommandDefinition<TPayload> & { id: TId },
-): CommandDefinition<TPayload> & { id: TId } {
+export function defineCommand<TPayload = void>(
+  definition: CommandDefinition<TPayload>,
+): CommandDefinition<TPayload> {
   return definition;
 }

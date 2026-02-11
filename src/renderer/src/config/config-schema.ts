@@ -78,13 +78,13 @@ const ThemeOverridesSchema = z
 
 const CommandIdSchema = z.enum(COMMAND_IDS);
 
+const KeybindingKeySchema = z.union([z.string(), z.array(z.string()).min(1)]);
+
 const KeybindingEntrySchema = z
   .object({
-    key: z
-      .string()
-      .describe(
-        'Key combination in VS Code format (e.g. "ctrl+k", "meta+shift+p", "ctrl+k ctrl+c"). Prefix with "-" to remove a default binding.',
-      ),
+    key: KeybindingKeySchema.describe(
+      'Key combination in VS Code format (e.g. "ctrl+k", "meta+shift+p"). Use an array for platform alternatives: ["meta+k", "ctrl+k"].',
+    ),
     command: CommandIdSchema.describe("The command to execute"),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     args: z
@@ -97,7 +97,7 @@ const KeybindingEntrySchema = z
 const KeybindingsSchema = z
   .array(KeybindingEntrySchema)
   .describe(
-    'Keybinding overrides. Entries replace default bindings for the same command. Prefix key with "-" to remove a default binding.',
+    "Keybinding definitions. Each entry maps a key combination to a command.",
   );
 
 export const ConfigOverridesSchema = z
