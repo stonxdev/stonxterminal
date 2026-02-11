@@ -25,23 +25,23 @@ export function ConfigEditorToolbar({
   }
 
   return (
-    <div className="flex items-center gap-2 h-8 px-3 border-b border-border bg-secondary/50">
+    <div className="flex items-center gap-2 h-8 px-3 border-b border-border">
       <Button
         variant="secondary"
+        size="xs"
         onClick={onSave}
         disabled={!isDirty}
-        className="h-6 px-2 text-xs"
       >
-        <Save className="w-3 h-3" />
+        <Save />
         Save
       </Button>
       <Button
         variant="secondary"
+        size="xs"
         onClick={onRestore}
         disabled={!isDirty}
-        className="h-6 px-2 text-xs"
       >
-        <RotateCcw className="w-3 h-3" />
+        <RotateCcw />
         Restore
       </Button>
       {parseError ? (

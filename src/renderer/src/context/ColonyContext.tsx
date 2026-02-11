@@ -32,9 +32,13 @@ import { registerKeybindings } from "../keybindings/registerKeybindings";
 import { logger } from "../lib/logger";
 import { viewportStore } from "../lib/viewport-simple";
 import type { Command, EntityId } from "../simulation/types";
-import { setNestedValue } from "../theming/color-utils";
+import { setNestedValue, splitThemeOverrides } from "../theming/color-utils";
 import { useGameColorStore } from "../theming/game-color-store";
-import { injectThemeVariables } from "../theming/runtime-theme-generator";
+import {
+  clearUIColorOverrides,
+  injectThemeVariables,
+  injectUIColorOverrides,
+} from "../theming/runtime-theme-generator";
 import { type AvailableThemeId, themeMap } from "../theming/themes";
 import type { Position3D } from "../world/types";
 import type {
@@ -168,39 +172,44 @@ const ColonyContextInner: FC<{ children: ReactNode }> = ({ children }) => {
     // Set initial theme
     document.documentElement.setAttribute("data-theme", activeThemeId);
 
-    // Resolve game colors from theme + user overrides
-    const resolveColors = () => {
+    // Resolve theme overrides (both game colors and UI colors)
+    const resolveTheme = () => {
       const theme = themeMap[activeThemeId];
-      const baseColors = structuredClone(theme.gameColors);
-      const overrides = useConfigStore.getState().get("theme.gameColors");
-      if (
-        overrides &&
-        typeof overrides === "object" &&
-        !Array.isArray(overrides)
-      ) {
-        for (const [path, value] of Object.entries(
-          overrides as Record<string, string>,
-        )) {
-          setNestedValue(
-            baseColors as unknown as Record<string, unknown>,
-            path,
-            value,
-          );
-        }
-      }
-      useGameColorStore.getState().resolve(baseColors);
-    };
-    resolveColors();
+      const allOverrides = useConfigStore.getState().get("theme");
+      const { uiOverrides, gameOverrides } = splitThemeOverrides(
+        allOverrides &&
+          typeof allOverrides === "object" &&
+          !Array.isArray(allOverrides)
+          ? (allOverrides as Record<string, string>)
+          : {},
+      );
 
-    // Subscribe to config changes for live color updates
+      // Game colors: deep-merge overrides into theme defaults, resolve for Pixi
+      const baseGameColors = structuredClone(theme.gameColors);
+      for (const [path, value] of Object.entries(gameOverrides)) {
+        setNestedValue(
+          baseGameColors as unknown as Record<string, unknown>,
+          path,
+          value,
+        );
+      }
+      useGameColorStore.getState().resolve(baseGameColors);
+
+      // UI colors: inject CSS variable overrides
+      injectUIColorOverrides(activeThemeId, uiOverrides);
+    };
+    resolveTheme();
+
+    // Subscribe to config changes for live updates
     const unsub = useConfigStore.subscribe((state, prev) => {
-      if (
-        state.computed["theme.gameColors"] !== prev.computed["theme.gameColors"]
-      ) {
-        resolveColors();
+      if (state.computed.theme !== prev.computed.theme) {
+        resolveTheme();
       }
     });
-    return () => unsub();
+    return () => {
+      unsub();
+      clearUIColorOverrides();
+    };
   }, [activeThemeId]);
 
   // Register commands on mount

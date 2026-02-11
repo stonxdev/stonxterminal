@@ -82,3 +82,23 @@ export function setNestedValue(
   }
   current[keys[keys.length - 1]] = value;
 }
+
+/**
+ * Split a flat theme overrides record into UI color overrides and game color overrides.
+ * Keys starting with "ui." are UI overrides (prefix stripped); all others are game overrides.
+ */
+export function splitThemeOverrides(overrides: Record<string, string>): {
+  uiOverrides: Record<string, string>;
+  gameOverrides: Record<string, string>;
+} {
+  const uiOverrides: Record<string, string> = {};
+  const gameOverrides: Record<string, string> = {};
+  for (const [key, value] of Object.entries(overrides)) {
+    if (key.startsWith("ui.")) {
+      uiOverrides[key.slice(3)] = value;
+    } else {
+      gameOverrides[key] = value;
+    }
+  }
+  return { uiOverrides, gameOverrides };
+}

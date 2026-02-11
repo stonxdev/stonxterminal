@@ -111,11 +111,11 @@ export interface ColonyTheme {
   id: string;
   name: string;
   type: "light" | "dark";
-  colors: ColonyThemeColors;
+  colors: UIColors;
   gameColors: GameColors;
 }
 
-export type ColonyThemeColors = {
+export type UIColors = {
   // Base colors
   background: string;
   foreground: string;

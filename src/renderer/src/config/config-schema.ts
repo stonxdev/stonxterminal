@@ -1,4 +1,5 @@
 import { defaultGameColors } from "@renderer/theming/default-game-colors";
+import { dark } from "@renderer/theming/themes/dark";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { CONTROL_BAR_IDS, STATUS_BAR_IDS, WIDGET_IDS } from "./registry-ids";
@@ -64,10 +65,10 @@ const ControlBarLayoutSchema = z
  * This defines all valid configuration keys and their types.
  * Using .strict() to disallow unknown keys.
  */
-const GameColorOverridesSchema = z
+const ThemeOverridesSchema = z
   .record(z.string(), z.string())
   .describe(
-    'Game color overrides as dot-path keys to hex values (e.g. { "world.background": "#0a0a1e" })',
+    'Theme color overrides: game colors as dot-path keys (e.g. "world.background": "#0a0a1e") and UI colors with "ui." prefix (e.g. "ui.background": "oklch(0.2 0 0)")',
   );
 
 export const ConfigOverridesSchema = z
@@ -76,7 +77,7 @@ export const ConfigOverridesSchema = z
     "layout.widgets": WidgetLayoutSchema.optional(),
     "layout.statusBars": StatusBarLayoutSchema.optional(),
     "layout.controlBars": ControlBarLayoutSchema.optional(),
-    "theme.gameColors": GameColorOverridesSchema.optional(),
+    theme: ThemeOverridesSchema.optional(),
   })
   .strict();
 
@@ -128,7 +129,7 @@ export function getConfigJsonSchema(): object {
     $refStrategy: "none", // Inline all refs for Monaco compatibility
   }) as Record<string, unknown>;
 
-  // Inject specific color path properties into theme.gameColors for autocomplete.
+  // Inject specific color path properties into "theme" for autocomplete.
   // zodToJsonSchema wraps the schema under definitions.ConfigOverrides when `name` is given.
   const definitions = schema.definitions as
     | Record<string, Record<string, unknown>>
@@ -136,23 +137,33 @@ export function getConfigJsonSchema(): object {
   const rootSchema = definitions?.ConfigOverrides ?? schema;
   const properties = (rootSchema as { properties?: Record<string, unknown> })
     .properties;
-  const gameColorsSchema = properties?.["theme.gameColors"] as
-    | Record<string, unknown>
-    | undefined;
-  if (gameColorsSchema) {
-    const colorPaths = flattenColorPaths(
+  const themeSchema = properties?.theme as Record<string, unknown> | undefined;
+  if (themeSchema) {
+    const autocompleteProps: Record<string, object> = {};
+
+    // Game color paths (e.g., "world.background", "palette.dirt")
+    const gameColorPaths = flattenColorPaths(
       defaultGameColors as unknown as Record<string, unknown>,
     );
-    const properties: Record<string, object> = {};
-    for (const [path, defaultValue] of colorPaths) {
-      properties[path] = {
+    for (const [path, defaultValue] of gameColorPaths) {
+      autocompleteProps[path] = {
         type: "string",
         pattern: "^#[0-9a-fA-F]{6}$",
         default: defaultValue,
-        description: `Color override (default: ${defaultValue})`,
+        description: `Game color override (default: ${defaultValue})`,
       };
     }
-    gameColorsSchema.properties = properties;
+
+    // UI color paths (e.g., "ui.background", "ui.primary")
+    for (const [property, defaultValue] of Object.entries(dark.colors)) {
+      autocompleteProps[`ui.${property}`] = {
+        type: "string",
+        default: defaultValue,
+        description: `UI color override (default: ${defaultValue})`,
+      };
+    }
+
+    themeSchema.properties = autocompleteProps;
     // Keep additionalProperties so unknown paths still validate as strings
   }
 

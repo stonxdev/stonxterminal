@@ -71,3 +71,43 @@ export function injectThemeVariables(themes: ColonyTheme[]): void {
 
   logger.info(`Injected ${themes.length} theme(s) into DOM`, ["theme"]);
 }
+
+const UI_OVERRIDES_STYLE_ID = "colony-theme-ui-overrides";
+
+/**
+ * Injects (or updates) UI color overrides as CSS variables for the active theme.
+ * Uses a separate style element after the base theme styles so overrides win
+ * via source order (same specificity, later in DOM).
+ */
+export function injectUIColorOverrides(
+  themeId: string,
+  overrides: Record<string, string>,
+): void {
+  // Remove existing override style
+  const existing = document.getElementById(UI_OVERRIDES_STYLE_ID);
+  if (existing) {
+    existing.remove();
+  }
+
+  const entries = Object.entries(overrides);
+  if (entries.length === 0) return;
+
+  const cssVars = generateCSSVariables(overrides);
+  const css = `  [data-theme="${themeId}"] {\n${cssVars}\n  }`;
+
+  const style = document.createElement("style");
+  style.id = UI_OVERRIDES_STYLE_ID;
+  style.type = "text/css";
+  style.textContent = css;
+  document.head.appendChild(style);
+}
+
+/**
+ * Remove all UI color overrides.
+ */
+export function clearUIColorOverrides(): void {
+  const existing = document.getElementById(UI_OVERRIDES_STYLE_ID);
+  if (existing) {
+    existing.remove();
+  }
+}

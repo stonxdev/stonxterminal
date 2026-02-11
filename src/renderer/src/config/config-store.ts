@@ -163,7 +163,25 @@ export const useConfigStore = create<ConfigStore>((set, get) => ({
       const result = await storage.config.loadConfig();
 
       if (result.success && result.data) {
-        const { text, lastValidJson, parseError } = result.data;
+        let { text, lastValidJson, parseError } = result.data;
+
+        // Migrate legacy "theme.gameColors" key to "theme"
+        if (
+          lastValidJson &&
+          "theme.gameColors" in lastValidJson &&
+          !("theme" in lastValidJson)
+        ) {
+          lastValidJson = {
+            ...lastValidJson,
+            theme: lastValidJson["theme.gameColors"],
+          };
+          delete (lastValidJson as Record<string, unknown>)["theme.gameColors"];
+          text = JSON.stringify(lastValidJson, null, 2);
+          logger.info('Migrated config key "theme.gameColors" → "theme"', [
+            "config",
+          ]);
+        }
+
         set((state) => ({
           overridesText: text,
           overrides: lastValidJson,
