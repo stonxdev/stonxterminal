@@ -2,7 +2,12 @@ import { defaultGameColors } from "@renderer/theming/default-game-colors";
 import { dark } from "@renderer/theming/themes/dark";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import { CONTROL_BAR_IDS, STATUS_BAR_IDS, WIDGET_IDS } from "./registry-ids";
+import {
+  COMMAND_IDS,
+  CONTROL_BAR_IDS,
+  STATUS_BAR_IDS,
+  WIDGET_IDS,
+} from "./registry-ids";
 
 /**
  * Zod schemas for configuration validation.
@@ -71,6 +76,30 @@ const ThemeOverridesSchema = z
     'Theme color overrides: game colors as dot-path keys (e.g. "world.background": "#0a0a1e") and UI colors with "ui." prefix (e.g. "ui.background": "oklch(0.2 0 0)")',
   );
 
+const CommandIdSchema = z.enum(COMMAND_IDS);
+
+const KeybindingEntrySchema = z
+  .object({
+    key: z
+      .string()
+      .describe(
+        'Key combination in VS Code format (e.g. "ctrl+k", "meta+shift+p", "ctrl+k ctrl+c"). Prefix with "-" to remove a default binding.',
+      ),
+    command: CommandIdSchema.describe("The command to execute"),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    args: z
+      .record(z.string(), z.any())
+      .optional()
+      .describe("Optional arguments passed to the command"),
+  })
+  .describe("Keybinding entry");
+
+const KeybindingsSchema = z
+  .array(KeybindingEntrySchema)
+  .describe(
+    'Keybinding overrides. Entries replace default bindings for the same command. Prefix key with "-" to remove a default binding.',
+  );
+
 export const ConfigOverridesSchema = z
   .object({
     "pixi.maxFramerate": PixiMaxFramerateSchema.optional(),
@@ -78,6 +107,7 @@ export const ConfigOverridesSchema = z
     "layout.statusBars": StatusBarLayoutSchema.optional(),
     "layout.controlBars": ControlBarLayoutSchema.optional(),
     theme: ThemeOverridesSchema.optional(),
+    keybindings: KeybindingsSchema.optional(),
   })
   .strict();
 

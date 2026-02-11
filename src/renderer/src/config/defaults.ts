@@ -48,6 +48,12 @@ export const CONFIG_SCHEMA: ConfigSchema = {
     description:
       'Theme color overrides: game colors as dot-path keys (e.g. "world.background": "#0a0a1e") and UI colors with "ui." prefix (e.g. "ui.background": "oklch(0.2 0 0)")',
   },
+  keybindings: {
+    type: "array",
+    default: [],
+    description:
+      'Keybinding overrides: array of { key, command, args? } entries. Replaces defaults for the same command. Prefix key with "-" to remove a default.',
+  },
 };
 
 /**

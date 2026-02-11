@@ -26,9 +26,16 @@ import {
   useModal,
 } from "../components/floating/modal";
 import { useConfigStore } from "../config/config-store";
+import { COMMAND_IDS } from "../config/registry-ids";
 import { useGameStore } from "../game-state";
-import { defaultKeybindings } from "../keybindings/defaultKeybindings";
-import { registerKeybindings } from "../keybindings/registerKeybindings";
+import {
+  defaultKeybindings,
+  type UserKeybindingEntry,
+} from "../keybindings/defaultKeybindings";
+import {
+  registerKeybindings,
+  updateKeybindings,
+} from "../keybindings/registerKeybindings";
 import { logger } from "../lib/logger";
 import { viewportStore } from "../lib/viewport-simple";
 import type { Command, EntityId } from "../simulation/types";
@@ -239,9 +246,43 @@ const ColonyContextInner: FC<{ children: ReactNode }> = ({ children }) => {
     // Set the context for the command registry
     commandRegistry.setContext(contextData);
 
-    // Register keybindings
-    const keybindings = defaultKeybindings.get();
-    registerKeybindings(keybindings);
+    // Dev-time check: warn if registered commands don't match COMMAND_IDS
+    if (import.meta.env.DEV) {
+      const registered = new Set(
+        commandRegistry.getAllCommands().map((c) => c.id),
+      );
+      const declared = new Set<string>(COMMAND_IDS);
+      for (const id of registered) {
+        if (!declared.has(id)) {
+          logger.warn(
+            `Command "${id}" is registered but missing from COMMAND_IDS in registry-ids.ts`,
+            ["commands"],
+          );
+        }
+      }
+    }
+
+    // Resolve keybindings from defaults + user config
+    const resolveKeybindings = () => {
+      const userEntries = useConfigStore.getState().get("keybindings");
+      const entries = Array.isArray(userEntries)
+        ? (userEntries as unknown as UserKeybindingEntry[])
+        : [];
+      return defaultKeybindings.mergeWithUserOverrides(entries);
+    };
+
+    registerKeybindings(resolveKeybindings());
+
+    // Subscribe to config changes for live keybinding updates
+    const unsub = useConfigStore.subscribe((state, prev) => {
+      if (state.computed.keybindings !== prev.computed.keybindings) {
+        updateKeybindings(resolveKeybindings());
+      }
+    });
+
+    return () => {
+      unsub();
+    };
   }, [contextData]);
 
   return (
