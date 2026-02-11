@@ -25,9 +25,9 @@ export function ConfigEditorToolbar({
   }
 
   return (
-    <div className="flex items-center gap-2 h-8 px-3 border-b border-border">
+    <div className="flex items-center gap-1 h-8 px-1 border-b border-border">
       <Button
-        variant="secondary"
+        variant="outline"
         size="xs"
         onClick={onSave}
         disabled={!isDirty}
@@ -36,7 +36,7 @@ export function ConfigEditorToolbar({
         Save
       </Button>
       <Button
-        variant="secondary"
+        variant="outline"
         size="xs"
         onClick={onRestore}
         disabled={!isDirty}
