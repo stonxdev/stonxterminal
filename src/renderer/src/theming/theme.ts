@@ -1,4 +1,4 @@
-import type { StructureType, TerrainType } from "../world/types";
+import type { StructureType } from "../world/types";
 
 // =============================================================================
 // COLOR SCALE (hex-string variant for theme definitions)
@@ -46,7 +46,6 @@ export interface GameColors {
     border: string;
   };
   structures: Record<StructureType, string>;
-  terrain: Record<TerrainType, string>;
   minimap: {
     background: string;
     viewportRect: string;

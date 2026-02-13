@@ -10,7 +10,10 @@ import type { ColorScale } from "../layers/types";
 import type { StructureType, TerrainType } from "../world/types";
 import { hexToPixi, hexToRGBA, resolveColorScale } from "./color-utils";
 import { defaultGameColors } from "./default-game-colors";
-import { paletteNameToBaseHex } from "./default-palette-colors";
+import {
+  paletteNameToBaseHex,
+  terrainToPaletteName,
+} from "./default-palette-colors";
 import type { GameColors, PaletteColors } from "./theme";
 
 // =============================================================================
@@ -90,13 +93,17 @@ function resolveGameColors(gc: GameColors): ResolvedGameColors {
     structRgba[st] = hexToRGBA(hex);
   }
 
-  // Build terrain rgba map
+  // Build terrain rgba map from palette colors via terrain→palette mapping
   const terrainRgba = {} as Record<
     TerrainType,
     [number, number, number, number]
   >;
-  for (const [key, hex] of Object.entries(gc.terrain)) {
-    terrainRgba[key as TerrainType] = hexToRGBA(hex);
+  for (const [terrainType, paletteName] of Object.entries(
+    terrainToPaletteName,
+  )) {
+    terrainRgba[terrainType as TerrainType] = hexToRGBA(
+      gc.palette[paletteName],
+    );
   }
 
   // Build job type lookup

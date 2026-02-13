@@ -84,25 +84,6 @@ export const defaultGameColors: GameColors = {
   },
 
   // ---------------------------------------------------------------------------
-  // Terrain (from MiniMapWidget.tsx TERRAIN_COLORS, RGBA → hex)
-  // ---------------------------------------------------------------------------
-  terrain: {
-    soil: "#8b7755",
-    sand: "#d2be8c",
-    clay: "#b4825a",
-    gravel: "#a0a09b",
-    rock: "#808080",
-    granite: "#646469",
-    limestone: "#b4b4aa",
-    marble: "#dcdce1",
-    obsidian: "#1e1e23",
-    water_shallow: "#4696c8",
-    water_deep: "#143c96",
-    lava: "#e63c14",
-    void: "#000000",
-  },
-
-  // ---------------------------------------------------------------------------
   // Minimap (from MiniMapWidget.tsx)
   // ---------------------------------------------------------------------------
   minimap: {

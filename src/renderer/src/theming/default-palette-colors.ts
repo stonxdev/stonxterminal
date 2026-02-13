@@ -6,6 +6,7 @@
 // Each key is a camelCase name matching the palette.txt descriptive name.
 // Values are canonical "#RRGGBB" hex strings.
 
+import type { TerrainType } from "../world/types";
 import type { PaletteColors } from "./theme";
 
 /** Default palette colors keyed by descriptive name */
@@ -95,3 +96,20 @@ export const paletteNameToBaseHex: Record<keyof PaletteColors, string> =
       hex.toLowerCase(),
     ]),
   ) as Record<keyof PaletteColors, string>;
+
+/** Map from terrain type to the palette color it should use on the minimap */
+export const terrainToPaletteName: Record<TerrainType, keyof PaletteColors> = {
+  soil: "dirt",
+  sand: "sand",
+  clay: "mediumSkin",
+  gravel: "lightGray",
+  rock: "mediumGray",
+  granite: "gray",
+  limestone: "silver",
+  marble: "white",
+  obsidian: "charcoal",
+  water_shallow: "water",
+  water_deep: "ocean",
+  lava: "lava",
+  void: "black",
+};
