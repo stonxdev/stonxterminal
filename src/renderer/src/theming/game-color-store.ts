@@ -9,11 +9,7 @@ import { create } from "zustand";
 import type { ColorScale } from "../layers/types";
 import type { StructureType, TerrainType } from "../world/types";
 import { hexToPixi, hexToRGBA, resolveColorScale } from "./color-utils";
-import {
-  defaultGameColors,
-  paletteNameToBaseHex,
-  terrainToPaletteName,
-} from "./default-game-colors";
+import { defaultGameColors } from "./default-game-colors";
 import type { GameColors, PaletteColors } from "./theme";
 
 // =============================================================================
@@ -56,12 +52,10 @@ export interface ResolvedGameColors {
     pixi: Record<StructureType, number>;
     rgba: Record<StructureType, [number, number, number, number]>;
   };
-  terrain: {
-    rgba: Record<TerrainType, [number, number, number, number]>;
-  };
   minimap: {
     background: string;
     viewportRect: string;
+    terrain: Record<TerrainType, [number, number, number, number]>;
   };
   heatmaps: {
     temperature: ColorScale;
@@ -93,17 +87,15 @@ function resolveGameColors(gc: GameColors): ResolvedGameColors {
     structRgba[st] = hexToRGBA(hex);
   }
 
-  // Build terrain rgba map from palette colors via terrain→palette mapping
+  // Build minimap terrain rgba map
   const terrainRgba = {} as Record<
     TerrainType,
     [number, number, number, number]
   >;
-  for (const [terrainType, paletteName] of Object.entries(
-    terrainToPaletteName,
-  )) {
-    terrainRgba[terrainType as TerrainType] = hexToRGBA(
-      gc.palette[paletteName],
-    );
+  for (const [key, hex] of Object.entries(gc.minimap)) {
+    if (key !== "background" && key !== "viewportRect") {
+      terrainRgba[key as TerrainType] = hexToRGBA(hex);
+    }
   }
 
   // Build job type lookup
@@ -120,7 +112,7 @@ function resolveGameColors(gc: GameColors): ResolvedGameColors {
   const replacementMap = new Map<string, string>();
   for (const [name, currentHex] of Object.entries(gc.palette)) {
     const baseHex =
-      paletteNameToBaseHex[name as keyof typeof paletteNameToBaseHex];
+      defaultGameColors.palette[name as keyof PaletteColors]?.toLowerCase();
     if (baseHex && currentHex.toLowerCase() !== baseHex) {
       replacementMap.set(baseHex, currentHex.toLowerCase());
     }
@@ -158,10 +150,10 @@ function resolveGameColors(gc: GameColors): ResolvedGameColors {
       border: hexToPixi(gc.progressBar.border),
     },
     structures: { pixi: structPixi, rgba: structRgba },
-    terrain: { rgba: terrainRgba },
     minimap: {
       background: gc.minimap.background,
       viewportRect: gc.minimap.viewportRect,
+      terrain: terrainRgba,
     },
     heatmaps: {
       temperature: resolveColorScale(gc.heatmaps.temperature),

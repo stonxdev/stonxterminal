@@ -1,4 +1,4 @@
-import type { StructureType } from "../world/types";
+import type { StructureType, TerrainType } from "../world/types";
 
 // =============================================================================
 // COLOR SCALE (hex-string variant for theme definitions)
@@ -49,7 +49,7 @@ export interface GameColors {
   minimap: {
     background: string;
     viewportRect: string;
-  };
+  } & Record<TerrainType, string>;
   heatmaps: {
     temperature: ColorScaleHex;
     moisture: ColorScaleHex;

@@ -5,8 +5,7 @@
 // Every value is a "#RRGGBB" hex string — the canonical format.
 // All three themes import this as their base and can override specific sections.
 
-import type { TerrainType } from "../world/types";
-import type { GameColors, PaletteColors } from "./theme";
+import type { GameColors } from "./theme";
 
 export const defaultGameColors: GameColors = {
   // ---------------------------------------------------------------------------
@@ -89,6 +88,19 @@ export const defaultGameColors: GameColors = {
   minimap: {
     background: "#1a1a2e",
     viewportRect: "#ffffff",
+    soil: "#7a5a10",
+    sand: "#d4b896",
+    clay: "#c19a6b",
+    gravel: "#a0a0a0",
+    rock: "#7a7a7a",
+    granite: "#5c5c5c",
+    limestone: "#d0d0d0",
+    marble: "#ffffff",
+    obsidian: "#1a1a1a",
+    water_shallow: "#4090d0",
+    water_deep: "#1e5090",
+    lava: "#ff4500",
+    void: "#000000",
   },
 
   // ---------------------------------------------------------------------------
@@ -173,34 +185,4 @@ export const defaultGameColors: GameColors = {
     darkSkin: "#8b5a2b",
     olive: "#6b8e23",
   },
-};
-
-// =============================================================================
-// DERIVED PALETTE HELPERS
-// =============================================================================
-
-/** Map from palette name to the base hex baked into sprite PNGs */
-export const paletteNameToBaseHex: Record<keyof PaletteColors, string> =
-  Object.fromEntries(
-    Object.entries(defaultGameColors.palette).map(([name, hex]) => [
-      name,
-      hex.toLowerCase(),
-    ]),
-  ) as Record<keyof PaletteColors, string>;
-
-/** Map from terrain type to the palette color it should use on the minimap */
-export const terrainToPaletteName: Record<TerrainType, keyof PaletteColors> = {
-  soil: "dirt",
-  sand: "sand",
-  clay: "mediumSkin",
-  gravel: "lightGray",
-  rock: "mediumGray",
-  granite: "gray",
-  limestone: "silver",
-  marble: "white",
-  obsidian: "charcoal",
-  water_shallow: "water",
-  water_deep: "ocean",
-  lava: "lava",
-  void: "black",
 };

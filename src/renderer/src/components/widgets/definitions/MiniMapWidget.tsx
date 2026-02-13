@@ -26,7 +26,7 @@ function generateTerrainImage(
     const tile = tiles[i];
     const offset = i * 4;
 
-    const color = colors.terrain.rgba[tile.terrain.type];
+    const color = colors.minimap.terrain[tile.terrain.type];
     data[offset] = color[0];
     data[offset + 1] = color[1];
     data[offset + 2] = color[2];
