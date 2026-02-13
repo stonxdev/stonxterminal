@@ -5,12 +5,12 @@
 // Every value is a "#RRGGBB" hex string — the canonical format.
 // All three themes import this as their base and can override specific sections.
 
-import { defaultPaletteColors } from "./default-palette-colors";
-import type { GameColors } from "./theme";
+import type { TerrainType } from "../world/types";
+import type { GameColors, PaletteColors } from "./theme";
 
 export const defaultGameColors: GameColors = {
   // ---------------------------------------------------------------------------
-  // World renderer (from World.tsx)
+  // World renderer
   // ---------------------------------------------------------------------------
   world: {
     background: "#1a1a2e",
@@ -21,7 +21,7 @@ export const defaultGameColors: GameColors = {
   },
 
   // ---------------------------------------------------------------------------
-  // Selection & hover (from World.tsx)
+  // Selection & hover
   // ---------------------------------------------------------------------------
   selection: {
     highlight: "#00ffff",
@@ -30,7 +30,7 @@ export const defaultGameColors: GameColors = {
   },
 
   // ---------------------------------------------------------------------------
-  // Characters (from GameScreen.tsx)
+  // Characters
   // ---------------------------------------------------------------------------
   characters: {
     colonistPalette: ["#4a90d9", "#d94a4a", "#4ad94a"],
@@ -39,7 +39,7 @@ export const defaultGameColors: GameColors = {
   },
 
   // ---------------------------------------------------------------------------
-  // Job indicators (from CharacterRenderer.ts)
+  // Job indicators
   // ---------------------------------------------------------------------------
   jobs: {
     chop: "#8b4513",
@@ -50,7 +50,7 @@ export const defaultGameColors: GameColors = {
   },
 
   // ---------------------------------------------------------------------------
-  // Progress bar (from JobProgressRenderer.ts)
+  // Progress bar
   // ---------------------------------------------------------------------------
   progressBar: {
     background: "#222222",
@@ -59,7 +59,7 @@ export const defaultGameColors: GameColors = {
   },
 
   // ---------------------------------------------------------------------------
-  // Structures (from World.tsx STRUCTURE_COLORS)
+  // Structures
   // ---------------------------------------------------------------------------
   structures: {
     none: "#000000",
@@ -84,7 +84,7 @@ export const defaultGameColors: GameColors = {
   },
 
   // ---------------------------------------------------------------------------
-  // Minimap (from MiniMapWidget.tsx)
+  // Minimap
   // ---------------------------------------------------------------------------
   minimap: {
     background: "#1a1a2e",
@@ -92,7 +92,7 @@ export const defaultGameColors: GameColors = {
   },
 
   // ---------------------------------------------------------------------------
-  // Heatmap color scales (from color-scales.ts)
+  // Heatmap color scales
   // ---------------------------------------------------------------------------
   heatmaps: {
     temperature: {
@@ -131,5 +131,76 @@ export const defaultGameColors: GameColors = {
   // ---------------------------------------------------------------------------
   // Sprite palette (from palette.txt)
   // ---------------------------------------------------------------------------
-  palette: defaultPaletteColors,
+  palette: {
+    // Basics
+    black: "#000000",
+    // Grays
+    charcoal: "#1a1a1a",
+    darkGray: "#3a3a3a",
+    gray: "#5c5c5c",
+    mediumGray: "#7a7a7a",
+    lightGray: "#a0a0a0",
+    silver: "#d0d0d0",
+    // Whites
+    white: "#ffffff",
+    // Browns
+    darkBark: "#3d2e20",
+    bark: "#5c4833",
+    dirt: "#7a5a10",
+    tan: "#9c7a1e",
+    // Greens
+    deepForest: "#003300",
+    forest: "#006400",
+    green: "#228b22",
+    lime: "#32cd32",
+    // Teals
+    seaGreen: "#2e8b57",
+    mediumSea: "#3cb371",
+    // Blues
+    deepOcean: "#0a2a4a",
+    ocean: "#1e5090",
+    water: "#4090d0",
+    sky: "#80c0f0",
+    // Warm
+    crimson: "#aa2200",
+    lava: "#ff4500",
+    orange: "#ff8c00",
+    gold: "#ffcc00",
+    sand: "#d4b896",
+    // Skin & Special
+    lightSkin: "#f5deb3",
+    mediumSkin: "#c19a6b",
+    darkSkin: "#8b5a2b",
+    olive: "#6b8e23",
+  },
+};
+
+// =============================================================================
+// DERIVED PALETTE HELPERS
+// =============================================================================
+
+/** Map from palette name to the base hex baked into sprite PNGs */
+export const paletteNameToBaseHex: Record<keyof PaletteColors, string> =
+  Object.fromEntries(
+    Object.entries(defaultGameColors.palette).map(([name, hex]) => [
+      name,
+      hex.toLowerCase(),
+    ]),
+  ) as Record<keyof PaletteColors, string>;
+
+/** Map from terrain type to the palette color it should use on the minimap */
+export const terrainToPaletteName: Record<TerrainType, keyof PaletteColors> = {
+  soil: "dirt",
+  sand: "sand",
+  clay: "mediumSkin",
+  gravel: "lightGray",
+  rock: "mediumGray",
+  granite: "gray",
+  limestone: "silver",
+  marble: "white",
+  obsidian: "charcoal",
+  water_shallow: "water",
+  water_deep: "ocean",
+  lava: "lava",
+  void: "black",
 };

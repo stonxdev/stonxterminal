@@ -9,11 +9,11 @@ import { create } from "zustand";
 import type { ColorScale } from "../layers/types";
 import type { StructureType, TerrainType } from "../world/types";
 import { hexToPixi, hexToRGBA, resolveColorScale } from "./color-utils";
-import { defaultGameColors } from "./default-game-colors";
 import {
+  defaultGameColors,
   paletteNameToBaseHex,
   terrainToPaletteName,
-} from "./default-palette-colors";
+} from "./default-game-colors";
 import type { GameColors, PaletteColors } from "./theme";
 
 // =============================================================================
