@@ -43,17 +43,6 @@ export function canRemoveWidget(widgetId: WidgetId): boolean {
   return !definition.placement?.pinned;
 }
 
-/**
- * Check if a widget can be moved to a different slot.
- * Returns false if the widget is pinned or if the target slot is not allowed.
- */
-export function canMoveWidgetToSlot(
-  widgetId: WidgetId,
-  newSlotId: WidgetSlotId,
-): boolean {
-  return canRemoveWidget(widgetId) && canAddWidgetToSlot(widgetId, newSlotId);
-}
-
 // =============================================================================
 // CONFIG INTEGRATION
 // =============================================================================
@@ -156,8 +145,6 @@ interface WidgetLayoutActions {
   addWidgetToSlot: (widgetId: WidgetId, slotId: WidgetSlotId) => boolean;
   /** Remove a widget from its current slot. Returns false if widget is pinned. */
   removeWidgetFromSlot: (widgetId: WidgetId) => boolean;
-  /** Move a widget to a different slot. Returns false if constraints prevent it. */
-  moveWidgetToSlot: (widgetId: WidgetId, newSlotId: WidgetSlotId) => boolean;
   /** Reorder widgets within a slot */
   reorderWidgetsInSlot: (slotId: WidgetSlotId, widgetIds: WidgetId[]) => void;
   /** Reset to default layout */
@@ -170,7 +157,7 @@ type WidgetLayoutStore = WidgetLayoutState & WidgetLayoutActions;
 // STORE
 // =============================================================================
 
-export const useWidgetLayoutStore = create<WidgetLayoutStore>()((set, get) => ({
+export const useWidgetLayoutStore = create<WidgetLayoutStore>()((set) => ({
   layout: getInitialLayout(),
 
   addWidgetToSlot: (widgetId, slotId) => {
@@ -195,16 +182,8 @@ export const useWidgetLayoutStore = create<WidgetLayoutStore>()((set, get) => ({
     }
 
     set((state) => {
-      // Remove from any existing slot first (only if not pinned)
       const newSlots = { ...state.layout.slots };
-      if (!definition?.placement?.pinned) {
-        for (const slot of Object.keys(newSlots) as WidgetSlotId[]) {
-          newSlots[slot] = (newSlots[slot] ?? []).filter(
-            (id) => id !== widgetId,
-          );
-        }
-      }
-      // Add to new slot if not already there
+      // Add to slot if not already there
       const currentSlot = newSlots[slotId] ?? [];
       if (!currentSlot.includes(widgetId)) {
         newSlots[slotId] = [...currentSlot, widgetId];
@@ -233,18 +212,6 @@ export const useWidgetLayoutStore = create<WidgetLayoutStore>()((set, get) => ({
       return { layout: { slots: newSlots } };
     });
     return true;
-  },
-
-  moveWidgetToSlot: (widgetId, newSlotId) => {
-    // Check if widget can be moved
-    if (!canMoveWidgetToSlot(widgetId, newSlotId)) {
-      console.warn(
-        `Widget "${widgetId}" cannot be moved to slot "${newSlotId}" due to placement constraints`,
-      );
-      return false;
-    }
-
-    return get().addWidgetToSlot(widgetId, newSlotId);
   },
 
   reorderWidgetsInSlot: (slotId, widgetIds) => {

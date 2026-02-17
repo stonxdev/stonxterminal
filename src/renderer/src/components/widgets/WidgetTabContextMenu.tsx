@@ -11,7 +11,7 @@ import { SLOT_LABELS } from "./slot-labels";
 import type { WidgetId, WidgetSlotId } from "./types";
 import { MAIN_SLOTS, SIDEBAR_SLOTS } from "./types";
 import {
-  canMoveWidgetToSlot,
+  canAddWidgetToSlot,
   canRemoveWidget,
   useWidgetLayoutStore,
 } from "./widget-layout-store";
@@ -26,7 +26,7 @@ export function WidgetTabContextMenu({
   widgetId,
   currentSlotId,
 }: WidgetTabContextMenuProps) {
-  const moveWidgetToSlot = useWidgetLayoutStore((s) => s.moveWidgetToSlot);
+  const addWidgetToSlot = useWidgetLayoutStore((s) => s.addWidgetToSlot);
   const removeWidgetFromSlot = useWidgetLayoutStore(
     (s) => s.removeWidgetFromSlot,
   );
@@ -34,35 +34,34 @@ export function WidgetTabContextMenu({
 
   if (!definition) return null;
 
-  const isPinned = definition.placement?.pinned ?? false;
   const isWide = definition.size === "wide";
   const canRemove = canRemoveWidget(widgetId);
 
   const allSlots: WidgetSlotId[] = [...SIDEBAR_SLOTS, ...MAIN_SLOTS];
-  const moveTargets = allSlots
+  const addTargets = allSlots
     .filter((s) => s !== currentSlotId)
     .map((slotId) => ({
       slotId,
       label: SLOT_LABELS[slotId],
-      enabled: canMoveWidgetToSlot(widgetId, slotId),
+      enabled: canAddWidgetToSlot(widgetId, slotId),
     }));
 
-  const hasAnyMoveTarget = moveTargets.some((t) => t.enabled);
+  const hasAnyAddTarget = addTargets.some((t) => t.enabled);
 
   return (
     <>
-      {!isPinned && hasAnyMoveTarget && (
+      {hasAnyAddTarget && (
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>
             <ArrowRightFromLine className="h-4 w-4" />
-            Move to Panel
+            Add to Panel
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent>
-            {moveTargets.map(({ slotId, label, enabled }) => (
+            {addTargets.map(({ slotId, label, enabled }) => (
               <DropdownMenuItem
                 key={slotId}
                 disabled={!enabled}
-                onClick={() => moveWidgetToSlot(widgetId, slotId)}
+                onClick={() => addWidgetToSlot(widgetId, slotId)}
               >
                 {label}
               </DropdownMenuItem>
