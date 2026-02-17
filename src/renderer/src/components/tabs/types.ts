@@ -24,6 +24,8 @@ export interface TabItem {
   dirty?: boolean;
   /** Content to render when this tab is active */
   content: ReactNode;
+  /** Optional context menu items rendered in a dropdown on the tab */
+  contextMenu?: ReactNode;
 }
 
 /**
@@ -67,4 +69,6 @@ export interface TabsProps {
    * @default false
    */
   keepMounted?: boolean;
+  /** Optional trailing element rendered at the end of the tab list (e.g., settings icon) */
+  trailingAction?: ReactNode;
 }

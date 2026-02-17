@@ -13,6 +13,7 @@ export function Tabs({
   variant = "primary",
   className,
   keepMounted = false,
+  trailingAction,
 }: TabsProps) {
   const tabListRef = useRef<HTMLDivElement>(null);
 
@@ -83,6 +84,11 @@ export function Tabs({
             onClose={tab.closable ? handleClose : undefined}
           />
         ))}
+        {trailingAction && (
+          <div className="ml-auto flex items-center shrink-0 px-1">
+            {trailingAction}
+          </div>
+        )}
       </div>
 
       {/* Tab Panel(s) */}

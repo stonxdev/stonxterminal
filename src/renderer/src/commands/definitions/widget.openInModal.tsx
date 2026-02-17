@@ -4,6 +4,7 @@ import {
   ModalFrame,
   ModalFrameStructured,
 } from "../../components/floating/modal";
+import { WidgetModalActions } from "../../components/widgets/WidgetModalActions";
 import { widgetRegistry } from "../../components/widgets/widget-registry";
 import type { MenuItem } from "../../menu/types";
 import { type Infer, nu } from "../../schemas";
@@ -56,6 +57,9 @@ export const widgetOpenInModal = defineCommand<OpenInModalPayload>({
               <div className="flex items-center gap-2">
                 {widget.icon && <widget.icon size={20} />}
                 <h2 className="text-lg font-semibold">{widget.label}</h2>
+                <div className="ml-auto">
+                  <WidgetModalActions widgetId={widget.id} />
+                </div>
               </div>
             }
             body={

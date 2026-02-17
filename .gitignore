@@ -280,3 +280,6 @@ Thumbs.db
 
 *storybook.log
 storybook-static
+
+# Auto Claude data directory
+.auto-claude/

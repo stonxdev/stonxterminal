@@ -1,9 +1,14 @@
 import { cn } from "@renderer/utils/cn";
-import { X } from "lucide-react";
+import { EllipsisVertical, X } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "../dropdown-menu";
 import type { TabProps } from "./types";
 
 export function Tab({ tab, isActive, variant, onSelect, onClose }: TabProps) {
-  const { id, label, icon: Icon, closable, dirty } = tab;
+  const { id, label, icon: Icon, closable, dirty, contextMenu } = tab;
 
   const handleClick = () => {
     onSelect(id);
@@ -54,6 +59,28 @@ export function Tab({ tab, isActive, variant, onSelect, onClose }: TabProps) {
           className="h-2 w-2 rounded-full bg-foreground shrink-0"
           title="Unsaved changes"
         />
+      )}
+      {contextMenu && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              tabIndex={-1}
+              onClick={(e) => e.stopPropagation()}
+              className={cn(
+                "h-4 w-4 shrink-0 rounded flex items-center justify-center cursor-pointer",
+                "opacity-0 group-hover:opacity-40 hover:!opacity-100 hover:bg-accent",
+                isActive && "!opacity-60",
+              )}
+              aria-label={`Options for ${label}`}
+            >
+              <EllipsisVertical className="h-3 w-3" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" side="bottom">
+            {contextMenu}
+          </DropdownMenuContent>
+        </DropdownMenu>
       )}
       {closable && (
         <button

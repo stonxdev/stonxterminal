@@ -3,7 +3,9 @@ import { useCommand } from "@renderer/commands/useCommand";
 import { useMemo, useState } from "react";
 import type { TabItem } from "../tabs";
 import { Tabs } from "../tabs";
+import { SlotAddWidgetMenu } from "./SlotAddWidgetMenu";
 import type { WidgetId, WidgetSlotId } from "./types";
+import { WidgetTabContextMenu } from "./WidgetTabContextMenu";
 import { useWidgetLayoutStore, useWidgetsForSlot } from "./widget-layout-store";
 import { widgetRegistry } from "./widget-registry";
 
@@ -69,6 +71,9 @@ export function WidgetSlot({
         icon: definition.icon,
         closable: !isPinned,
         content: <Component widgetId={widgetId} slotId={slotId} />,
+        contextMenu: (
+          <WidgetTabContextMenu widgetId={widgetId} currentSlotId={slotId} />
+        ),
       });
     }
 
@@ -89,6 +94,7 @@ export function WidgetSlot({
       variant={variant}
       className={className}
       keepMounted={keepMounted}
+      trailingAction={<SlotAddWidgetMenu slotId={slotId} />}
     />
   );
 }
